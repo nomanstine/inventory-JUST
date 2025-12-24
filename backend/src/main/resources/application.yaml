@@ -1,0 +1,54 @@
+spring:
+  application:
+    name: backend
+  # profiles:
+  #   active: test
+  datasource:
+    url: jdbc:mysql://localhost:3306/inventory_test_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+    username: inventory_user
+    password: inventory_pass
+    driverClassName: com.mysql.cj.jdbc.Driver
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      connection-timeout: 20000
+      idle-timeout: 300000
+      max-lifetime: 1200000
+  jpa:
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+  data:
+    rest:
+      detection-strategy: annotated
+      use-hal-as-default-json: false
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+  output:
+    ansi:
+      enabled: always
+
+logging:
+  level:
+    ROOT: Error
+    org.springframework: INFO
+    # org.apache.catalina: INFO
+    # org.apache.tomcat: INFO
+  pattern:
+    console: "%clr(%d{yyyy-MM-dd HH:mm:ss}){green} %clr([%level]){bold} %clr([%thread]){red} : %msg%n"
+
+springdoc:
+  api-docs:
+    path: /api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+
+jwt:
+  secret: abcdefghij1234567890abcdefghij1234567890abcdefghij1234567890ab
+  expiration: 86400000

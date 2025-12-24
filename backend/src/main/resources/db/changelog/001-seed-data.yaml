@@ -1,0 +1,683 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1-seed-initial-data
+      author: system
+      changes:
+        # Seed Roles
+        - insert:
+            tableName: roles
+            columns:
+              - column:
+                  name: id
+                  value: 1
+              - column:
+                  name: name
+                  value: Admin
+              - column:
+                  name: description
+                  value: System Administrator
+ 
+        - insert:
+            tableName: roles
+            columns:
+              - column:
+                  name: id
+                  value: 2
+              - column:
+                  name: name
+                  value: User
+              - column:
+                  name: description
+                  value: Regular User
+
+        # Seed Categories
+        - insert:
+            tableName: categories
+            columns:
+              - column:
+                  name: id
+                  value: 1
+              - column:
+                  name: name
+                  value: Electronics
+              - column:
+                  name: description
+                  value: Electronic devices and accessories
+        
+        - insert:
+            tableName: categories
+            columns:
+              - column:
+                  name: id
+                  value: 2
+              - column:
+                  name: name
+                  value: Furniture
+              - column:
+                  name: description
+                  value: Office furniture and fixtures
+        
+        - insert:
+            tableName: categories
+            columns:
+              - column:
+                  name: id
+                  value: 3
+              - column:
+                  name: name
+                  value: Stationery
+              - column:
+                  name: description
+                  value: Office supplies and stationery
+
+        # Seed Units
+        - insert:
+            tableName: units
+            columns:
+              - column:
+                  name: id
+                  value: 1
+              - column:
+                  name: name
+                  value: Pieces
+              - column:
+                  name: description
+                  value: Individual pieces
+        
+        - insert:
+            tableName: units
+            columns:
+              - column:
+                  name: id
+                  value: 2
+              - column:
+                  name: name
+                  value: Box
+              - column:
+                  name: description
+                  value: Box of items
+        
+        - insert:
+            tableName: units
+            columns:
+              - column:
+                  name: id
+                  value: 3
+              - column:
+                  name: name
+                  value: Set
+              - column:
+                  name: description
+                  value: Set of items
+
+        # Seed JUST Offices (Hierarchical Structure)
+        # Level 1: Main Office (Root)
+        - insert:
+            tableName: offices
+            columns:
+              - column:
+                  name: id
+                  value: 1
+              - column:
+                  name: name
+                  value: JUST Main Office
+              - column:
+                  name: code
+                  value: JUST-MAIN
+              - column:
+                  name: description
+                  value: Jashore University of Science and Technology - Main Administrative Office
+              - column:
+                  name: parent_id
+                  valueComputed: null
+
+        # Level 2: Faculty Offices
+        - insert:
+            tableName: offices
+            columns:
+              - column:
+                  name: id
+                  value: 2
+              - column:
+                  name: name
+                  value: Faculty of Engineering
+              - column:
+                  name: code
+                  value: FET
+              - column:
+                  name: description
+                  value: Faculty of Engineering
+              - column:
+                  name: parent_id
+                  value: 1
+
+        - insert:
+            tableName: offices
+            columns:
+              - column:
+                  name: id
+                  value: 3
+              - column:
+                  name: name
+                  value: Faculty of Science
+              - column:
+                  name: code
+                  value: FS
+              - column:
+                  name: description
+                  value: Faculty of Science
+              - column:
+                  name: parent_id
+                  value: 1
+
+        # Level 3: Departments under Faculty of Engineering
+        - insert:
+            tableName: offices
+            columns:
+              - column:
+                  name: id
+                  value: 5
+              - column:
+                  name: name
+                  value: Department of CSE
+              - column:
+                  name: code
+                  value: CSE
+              - column:
+                  name: description
+                  value: Computer Science and Engineering Department
+              - column:
+                  name: parent_id
+                  value: 2
+
+        - insert:
+            tableName: offices
+            columns:
+              - column:
+                  name: id
+                  value: 6
+              - column:
+                  name: name
+                  value: Department of EEE
+              - column:
+                  name: code
+                  value: EEE
+              - column:
+                  name: description
+                  value: Electrical and Electronic Engineering Department
+              - column:
+                  name: parent_id
+                  value: 2
+
+        # Level 3: Departments under Faculty of Science
+        - insert:
+            tableName: offices
+            columns:
+              - column:
+                  name: id
+                  value: 8
+              - column:
+                  name: name
+                  value: Department of Mathematics
+              - column:
+                  name: code
+                  value: MATH
+              - column:
+                  name: description
+                  value: Mathematics Department
+              - column:
+                  name: parent_id
+                  value: 3
+
+        - insert:
+            tableName: offices
+            columns:
+              - column:
+                  name: id
+                  value: 9
+              - column:
+                  name: name
+                  value: Department of Physics
+              - column:
+                  name: code
+                  value: PHY
+              - column:
+                  name: description
+                  value: Physics Department
+              - column:
+                  name: parent_id
+                  value: 3
+
+        # Administrative Offices
+        - insert:
+            tableName: offices
+            columns:
+              - column:
+                  name: id
+                  value: 10
+              - column:
+                  name: name
+                  value: Registrar Office
+              - column:
+                  name: code
+                  value: JUST-REG
+              - column:
+                  name: description
+                  value: Registrar Administrative Office
+              - column:
+                  name: parent_id
+                  value: 1
+
+        - insert:
+            tableName: offices
+            columns:
+              - column:
+                  name: id
+                  value: 11
+              - column:
+                  name: name
+                  value: Store and Procurement
+              - column:
+                  name: code
+                  value: JUST-STORE
+              - column:
+                  name: description
+                  value: Central Store and Procurement Office
+              - column:
+                  name: parent_id
+                  value: 1
+
+        # Seed Users
+        # Admin User
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  value: 1
+              - column:
+                  name: full_name
+                  value: System Administrator
+              - column:
+                  name: username
+                  value: admin
+              - column:
+                  name: password
+                  value: $2b$10$sSatKGzLcqnUIquETlwOA.n9Ildbnq0DZ/IgRPnRrosisg36GPoOO
+              - column:
+                  name: email
+                  value: admin@just.edu.bd
+              - column:
+                  name: role_id
+                  value: 1
+              - column:
+                  name: office_id
+                  value: 1
+
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  value: 10
+              - column:
+                  name: full_name
+                  value: CSE Administrator
+              - column:
+                  name: username
+                  value: cse.admin
+              - column:
+                  name: password
+                  value: $2b$10$sSatKGzLcqnUIquETlwOA.n9Ildbnq0DZ/IgRPnRrosisg36GPoOO
+              - column:
+                  name: email
+                  value: cse.admin@just.edu.bd
+              - column:
+                  name: role_id
+                  value: 1
+              - column:
+                  name: office_id
+                  value: 5
+
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  value: 11
+              - column:
+                  name: full_name
+                  value: FET Administrator
+              - column:
+                  name: username
+                  value: fet.admin
+              - column:
+                  name: password
+                  value: $2b$10$sSatKGzLcqnUIquETlwOA.n9Ildbnq0DZ/IgRPnRrosisg36GPoOO
+              - column:
+                  name: email
+                  value: fet.admin@just.edu.bd
+              - column:
+                  name: role_id
+                  value: 1
+              - column:
+                  name: office_id
+                  value: 2
+
+        # Regular Users
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  value: 2
+              - column:
+                  name: full_name
+                  value: Faculty of Engineering User
+              - column:
+                  name: username
+                  value: fet.user
+              - column:
+                  name: password
+                  value: $2b$10$sSatKGzLcqnUIquETlwOA.n9Ildbnq0DZ/IgRPnRrosisg36GPoOO
+              - column:
+                  name: email
+                  value: fet.user@just.edu.bd
+              - column:
+                  name: role_id
+                  value: 2
+              - column:
+                  name: office_id
+                  value: 2
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  value: 3
+              - column:
+                  name: full_name
+                  value: Faculty of Science User
+              - column:
+                  name: username
+                  value: fs.user
+              - column:
+                  name: password
+                  value: $2b$10$sSatKGzLcqnUIquETlwOA.n9Ildbnq0DZ/IgRPnRrosisg36GPoOO
+              - column:
+                  name: email
+                  value: fs.user@just.edu.bd
+              - column:
+                  name: role_id
+                  value: 2
+              - column:
+                  name: office_id
+                  value: 3
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  value: 4
+              - column:
+                  name: full_name
+                  value: Department of EEE User
+              - column:
+                  name: username
+                  value: eee.user
+              - column:
+                  name: password
+                  value: $2b$10$sSatKGzLcqnUIquETlwOA.n9Ildbnq0DZ/IgRPnRrosisg36GPoOO
+              - column:
+                  name: email
+                  value: eee.user@just.edu.bd
+              - column:
+                  name: role_id
+                  value: 2
+              - column:
+                  name: office_id
+                  value: 6
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  value: 5
+              - column:
+                  name: full_name
+                  value: Department of CSE User
+              - column:
+                  name: username
+                  value: cse.user
+              - column:
+                  name: password
+                  value: $2b$10$sSatKGzLcqnUIquETlwOA.n9Ildbnq0DZ/IgRPnRrosisg36GPoOO
+              - column:
+                  name: email
+                  value: cse.user@just.edu.bd
+              - column:
+                  name: role_id
+                  value: 2
+              - column:
+                  name: office_id
+                  value: 5
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  value: 6
+              - column:
+                  name: full_name
+                  value: Department of Mathematics User
+              - column:
+                  name: username
+                  value: math.user
+              - column:
+                  name: password
+                  value: $2b$10$sSatKGzLcqnUIquETlwOA.n9Ildbnq0DZ/IgRPnRrosisg36GPoOO
+              - column:
+                  name: email
+                  value: math.user@just.edu.bd
+              - column:
+                  name: role_id
+                  value: 2
+              - column:
+                  name: office_id
+                  value: 8
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  value: 7
+              - column:
+                  name: full_name
+                  value: Department of Physics User
+              - column:
+                  name: username
+                  value: phy.user
+              - column:
+                  name: password
+                  value: $2b$10$sSatKGzLcqnUIquETlwOA.n9Ildbnq0DZ/IgRPnRrosisg36GPoOO
+              - column:
+                  name: email
+                  value: phy.user@just.edu.bd
+              - column:
+                  name: role_id
+                  value: 2
+              - column:
+                  name: office_id
+                  value: 9
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  value: 8
+              - column:
+                  name: full_name
+                  value: Registrar Office User
+              - column:
+                  name: username
+                  value: reg.user
+              - column:
+                  name: password
+                  value: $2b$10$sSatKGzLcqnUIquETlwOA.n9Ildbnq0DZ/IgRPnRrosisg36GPoOO
+              - column:
+                  name: email
+                  value: reg.user@just.edu.bd
+              - column:
+                  name: role_id
+                  value: 2
+              - column:
+                  name: office_id
+                  value: 10
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  value: 9
+              - column:
+                  name: full_name
+                  value: Store and Procurement User
+              - column:
+                  name: username
+                  value: store.user
+              - column:
+                  name: password
+                  value: $2b$10$sSatKGzLcqnUIquETlwOA.n9Ildbnq0DZ/IgRPnRrosisg36GPoOO
+              - column:
+                  name: email
+                  value: store.user@just.edu.bd
+              - column:
+                  name: role_id
+                  value: 2
+              - column:
+                  name: office_id
+                  value: 11
+
+        - insert:
+            tableName: inventories
+            columns:
+              - column:
+                  name: id
+                  value: 1
+              - column:
+                  name: office_id
+                  value: 1
+
+        - insert:
+            tableName: inventories
+            columns:
+              - column:
+                  name: id
+                  value: 2
+              - column:
+                  name: office_id
+                  value: 2
+
+        - insert:
+            tableName: inventories
+            columns:
+              - column:
+                  name: id
+                  value: 3
+              - column:
+                  name: office_id
+                  value: 5
+
+        - insert:
+            tableName: inventories
+            columns:
+              - column:
+                  name: id
+                  value: 4
+              - column:
+                  name: office_id
+                  value: 11
+
+        # Seed Items (Master Catalog - No quantities, offices, or inventories)
+        - insert:
+            tableName: items
+            columns:
+              - column:
+                  name: id
+                  value: 1
+              - column:
+                  name: name
+                  value: Desktop Computer
+              - column:
+                  name: description
+                  value: Dell OptiPlex 7090 Desktop
+              - column:
+                  name: category_id
+                  value: 1
+              - column:
+                  name: unit_id
+                  value: 1
+              - column:
+                  name: price
+                  value: 75000.00
+
+        - insert:
+            tableName: items
+            columns:
+              - column:
+                  name: id
+                  value: 2
+              - column:
+                  name: name
+                  value: Laptop
+              - column:
+                  name: description
+                  value: HP ProBook 450 G9
+              - column:
+                  name: category_id
+                  value: 1
+              - column:
+                  name: unit_id
+                  value: 1
+              - column:
+                  name: price
+                  value: 95000.00
+
+        - insert:
+            tableName: items
+            columns:
+              - column:
+                  name: id
+                  value: 3
+              - column:
+                  name: name
+                  value: Printer
+              - column:
+                  name: description
+                  value: HP LaserJet Pro M404dn
+              - column:
+                  name: category_id
+                  value: 1
+              - column:
+                  name: unit_id
+                  value: 1
+              - column:
+                  name: price
+                  value: 35000.00
+
+
+  - changeSet:
+      id: 2-reset-sequences
+      author: system
+      changes:
+        # Reset auto-increment sequences to avoid conflicts with seeded data
+        - sql:
+            sql: ALTER TABLE users AUTO_INCREMENT = 11
+        - sql:
+            sql: ALTER TABLE roles AUTO_INCREMENT = 3
+        - sql:
+            sql: ALTER TABLE offices AUTO_INCREMENT = 12
+        - sql:
+            sql: ALTER TABLE categories AUTO_INCREMENT = 4
+        - sql:
+            sql: ALTER TABLE units AUTO_INCREMENT = 4

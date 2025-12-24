@@ -1,0 +1,47 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1-add-transaction-status-fields
+      author: system
+      changes:
+        - addColumn:
+            tableName: item_transactions
+            columns:
+              - column:
+                  name: status
+                  type: VARCHAR(20)
+                  defaultValue: PENDING
+                  constraints:
+                    nullable: false
+              - column:
+                  name: confirmed_by_user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: true
+                    foreignKeyName: fk_transaction_confirmed_by
+                    references: users(id)
+              - column:
+                  name: confirmed_date
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: true
+
+  - changeSet:
+      id: 2-update-existing-transactions
+      author: system
+      changes:
+        - sql:
+            sql: UPDATE item_transactions SET status = 'CONFIRMED' WHERE status IS NULL OR status = 'PENDING'
+
+  - changeSet:
+      id: 3-add-fulfilled-quantity
+      author: system
+      changes:
+        - addColumn:
+            tableName: item_requests
+            columns:
+              - column:
+                  name: fulfilled_quantity
+                  type: DOUBLE
+                  defaultValue: 0
+                  constraints:
+                    nullable: true

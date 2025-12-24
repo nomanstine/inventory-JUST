@@ -1,0 +1,447 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1-create-tables
+      author: system
+      changes:
+        # Create roles table
+        - createTable:
+            tableName: roles
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+              - column:
+                  name: description
+                  type: VARCHAR(255)
+
+        # Create offices table
+        - createTable:
+            tableName: offices
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+              - column:
+                  name: description
+                  type: VARCHAR(255)
+              - column:
+                  name: code
+                  type: VARCHAR(255)
+              - column:
+                  name: parent_id
+                  type: BIGINT
+                  constraints:
+                    foreignKeyName: fk_office_parent
+                    references: offices(id)
+
+        # Create users table
+        - createTable:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: full_name
+                  type: VARCHAR(255)
+              - column:
+                  name: username
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: password
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: email
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: role_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_user_role
+                    references: roles(id)
+              - column:
+                  name: office_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_user_office
+                    references: offices(id)
+
+        # Create categories table
+        - createTable:
+            tableName: categories
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: description
+                  type: VARCHAR(255)
+
+        # Create units table
+        - createTable:
+            tableName: units
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: description
+                  type: VARCHAR(255)
+
+        # Create items table
+        - createTable:
+            tableName: items
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: description
+                  type: VARCHAR(255)
+              - column:
+                  name: price
+                  type: DOUBLE
+              - column:
+                  name: category_id
+                  type: BIGINT
+                  constraints:
+                    foreignKeyName: fk_item_category
+                    references: categories(id)
+              - column:
+                  name: unit_id
+                  type: BIGINT
+                  constraints:
+                    foreignKeyName: fk_item_unit
+                    references: units(id)
+
+        # Create inventories table
+        - createTable:
+            tableName: inventories
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: office_id
+                  type: BIGINT
+                  constraints:
+                    foreignKeyName: fk_inventory_office
+                    references: offices(id)
+
+        # Create item_instances table
+        - createTable:
+            tableName: item_instances
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: item_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_item_instance_item
+                    references: items(id)
+              - column:
+                  name: barcode
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: inventory_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_item_instance_inventory
+                    references: inventories(id)
+              - column:
+                  name: owner_office_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_item_instance_office
+                    references: offices(id)
+              - column:
+                  name: status
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: serial_number
+                  type: VARCHAR(255)
+              - column:
+                  name: purchase_date
+                  type: TIMESTAMP
+              - column:
+                  name: warranty_expiry
+                  type: TIMESTAMP
+              - column:
+                  name: remarks
+                  type: VARCHAR(500)
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+
+        # Create item_transactions table
+        - createTable:
+            tableName: item_transactions
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: item_instance_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_transaction_item_instance
+                    references: item_instances(id)
+              - column:
+                  name: from_office_id
+                  type: BIGINT
+                  constraints:
+                    foreignKeyName: fk_transaction_from_office
+                    references: offices(id)
+              - column:
+                  name: to_office_id
+                  type: BIGINT
+                  constraints:
+                    foreignKeyName: fk_transaction_to_office
+                    references: offices(id)
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_transaction_user
+                    references: users(id)
+              - column:
+                  name: transaction_type
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: quantity
+                  type: DOUBLE
+                  constraints:
+                    nullable: false
+              - column:
+                  name: remarks
+                  type: VARCHAR(500)
+              - column:
+                  name: transaction_date
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+
+        # Create item_requests table
+        - createTable:
+            tableName: item_requests
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: item_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_request_item
+                    references: items(id)
+              - column:
+                  name: fulfilled_item_instance_id
+                  type: BIGINT
+                  constraints:
+                    foreignKeyName: fk_request_fulfilled_instance
+                    references: item_instances(id)
+              - column:
+                  name: requesting_office_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_request_requesting_office
+                    references: offices(id)
+              - column:
+                  name: parent_office_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_request_parent_office
+                    references: offices(id)
+              - column:
+                  name: requested_by_user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_request_requested_by
+                    references: users(id)
+              - column:
+                  name: approved_by_user_id
+                  type: BIGINT
+                  constraints:
+                    foreignKeyName: fk_request_approved_by
+                    references: users(id)
+              - column:
+                  name: requested_quantity
+                  type: DOUBLE
+                  constraints:
+                    nullable: false
+              - column:
+                  name: approved_quantity
+                  type: DOUBLE
+              - column:
+                  name: status
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: reason
+                  type: VARCHAR(500)
+              - column:
+                  name: remarks
+                  type: VARCHAR(500)
+              - column:
+                  name: requested_date
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: approved_date
+                  type: TIMESTAMP
+              - column:
+                  name: rejected_date
+                  type: TIMESTAMP
+              - column:
+                  name: fulfilled_date
+                  type: TIMESTAMP
+
+        # Create purchases table
+        - createTable:
+            tableName: purchases
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: item_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_purchase_item
+                    references: items(id)
+              - column:
+                  name: quantity
+                  type: DOUBLE
+                  constraints:
+                    nullable: false
+              - column:
+                  name: purchased_by_user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_purchase_user
+                    references: users(id)
+              - column:
+                  name: office_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_purchase_office
+                    references: offices(id)
+              - column:
+                  name: unit_price
+                  type: DOUBLE
+                  constraints:
+                    nullable: false
+              - column:
+                  name: supplier
+                  type: VARCHAR(255)
+              - column:
+                  name: remarks
+                  type: VARCHAR(500)
+              - column:
+                  name: purchased_date
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
