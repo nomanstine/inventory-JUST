@@ -2,22 +2,63 @@ import api from "@/lib/api";
 import { ItemInstance } from "./inventoryService";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+export interface TransactionHistory {
+  transactionId: number;
+  transactionType: string;
+  status: string;
+  date: string;
+  fromOffice?: string;
+  fromOfficeCode?: string;
+  toOffice?: string;
+  toOfficeCode?: string;
+  initiatedBy: string;
+  initiatedByUsername: string;
+  confirmedBy?: string;
+  confirmedByUsername?: string;
+  confirmedDate?: string;
+  quantity: number;
+  remarks?: string;
+}
+
+export interface PurchaseInformation {
+  purchaseId: number;
+  quantity: number;
+  unitPrice: number;
+  totalCost: number;
+  supplier?: string;
+  purchasedBy: string;
+  purchasedByUsername: string;
+  purchasedForOffice: string;
+  purchaseDate: string;
+  remarks?: string;
+}
+
+export interface MovementSummary {
+  totalTransfers: number;
+  confirmedTransfers: number;
+  rejectedTransfers: number;
+  pendingTransfers: number;
+}
+
 export interface BarcodeSearchResult {
-  itemInstance: ItemInstance;
-  transactionHistory: Array<{
-    id: number;
-    transactionDate: string;
-    transactionType: string;
-    fromOffice?: {
-      id: number;
-      name: string;
-    };
-    toOffice?: {
-      id: number;
-      name: string;
-    };
-    remarks?: string;
-  }>;
+  barcode: string;
+  itemId: number;
+  itemName: string;
+  itemDescription?: string;
+  category: string;
+  serialNumber?: string;
+  currentStatus: string;
+  currentOwnerOffice: string;
+  currentOwnerOfficeCode?: string;
+  purchaseDate?: string;
+  warrantyExpiry?: string;
+  remarks?: string;
+  createdAt: string;
+  purchaseInformation?: PurchaseInformation;
+  movementHistory: TransactionHistory[];
+  totalMovements: number;
+  movementSummary: MovementSummary;
+  officeJourney: string[];
 }
 
 // Track item by barcode
