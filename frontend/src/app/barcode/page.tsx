@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useTrackByBarcode } from '@/services/trackingService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -12,6 +13,16 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 export default function BarcodePage() {
   const [barcode, setBarcode] = useState('');
   const [searchBarcode, setSearchBarcode] = useState('');
+
+  const searchParams = useSearchParams();
+  const barcodeParam = searchParams.get('barcode');
+
+  useEffect(() => {
+    if (barcodeParam && !barcode) {
+      setBarcode(barcodeParam);
+      setSearchBarcode(barcodeParam);
+    }
+  }, [barcodeParam, barcode]);
 
   const { data, isLoading, error } = useTrackByBarcode(searchBarcode);
 

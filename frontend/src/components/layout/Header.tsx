@@ -22,8 +22,8 @@ export default function Header() {
   const handleBarcodeSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (barcode.trim()) {
-      // Navigate to item tracking page with barcode
-      router.push(`/items/track?barcode=${encodeURIComponent(barcode.trim())}`);
+      // Navigate to barcode page with barcode
+      router.push(`/barcode?barcode=${encodeURIComponent(barcode.trim())}`);
       setBarcode('');
     }
   };
