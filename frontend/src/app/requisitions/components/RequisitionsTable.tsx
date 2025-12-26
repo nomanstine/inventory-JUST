@@ -81,7 +81,7 @@ export function RequisitionsTable({
   };
 
   const showConfirmAction = (request: ItemRequest) => {
-    return isAdmin && activeTab === 'fulfilled' && request.status === 'FULFILLED';
+    return isAdmin && activeTab === 'fulfilled' && (request.status === 'FULFILLED' || request.status === 'PARTIALLY_FULFILLED');
   };
 
   return (

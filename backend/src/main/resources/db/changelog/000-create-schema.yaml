@@ -272,80 +272,6 @@ databaseChangeLog:
                   constraints:
                     nullable: false
 
-        # Create item_transactions table
-        - createTable:
-            tableName: item_transactions
-            columns:
-              - column:
-                  name: id
-                  type: BIGINT
-                  autoIncrement: true
-                  constraints:
-                    primaryKey: true
-                    nullable: false
-              - column:
-                  name: item_instance_id
-                  type: BIGINT
-                  constraints:
-                    nullable: false
-                    foreignKeyName: fk_transaction_item_instance
-                    references: item_instances(id)
-              - column:
-                  name: from_office_id
-                  type: BIGINT
-                  constraints:
-                    foreignKeyName: fk_transaction_from_office
-                    references: offices(id)
-              - column:
-                  name: to_office_id
-                  type: BIGINT
-                  constraints:
-                    foreignKeyName: fk_transaction_to_office
-                    references: offices(id)
-              - column:
-                  name: user_id
-                  type: BIGINT
-                  constraints:
-                    nullable: false
-                    foreignKeyName: fk_transaction_user
-                    references: users(id)
-              - column:
-                  name: transaction_type
-                  type: VARCHAR(50)
-                  constraints:
-                    nullable: false
-              - column:
-                  name: quantity
-                  type: DOUBLE
-                  constraints:
-                    nullable: false
-              - column:
-                  name: remarks
-                  type: VARCHAR(500)
-              - column:
-                  name: transaction_date
-                  type: TIMESTAMP
-                  constraints:
-                    nullable: false
-              - column:
-                  name: status
-                  type: VARCHAR(20)
-                  defaultValue: CONFIRMED
-                  constraints:
-                    nullable: false
-              - column:
-                  name: confirmed_by_user_id
-                  type: BIGINT
-                  constraints:
-                    nullable: true
-                    foreignKeyName: fk_transaction_confirmed_by
-                    references: users(id)
-              - column:
-                  name: confirmed_date
-                  type: TIMESTAMP
-                  constraints:
-                    nullable: true
-
         # Create item_requests table
         - createTable:
             tableName: item_requests
@@ -436,6 +362,104 @@ databaseChangeLog:
                   defaultValue: 0
                   constraints:
                     nullable: true
+              - column:
+                  name: confirmed_by_user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: true
+                    foreignKeyName: fk_request_confirmed_by
+                    references: users(id)
+              - column:
+                  name: confirmed_date
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: true
+              - column:
+                  name: confirmation_remarks
+                  type: VARCHAR(500)
+                  constraints:
+                    nullable: true
+
+        # Create item_transactions table
+        - createTable:
+            tableName: item_transactions
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: item_instance_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_transaction_item_instance
+                    references: item_instances(id)
+              - column:
+                  name: from_office_id
+                  type: BIGINT
+                  constraints:
+                    foreignKeyName: fk_transaction_from_office
+                    references: offices(id)
+              - column:
+                  name: to_office_id
+                  type: BIGINT
+                  constraints:
+                    foreignKeyName: fk_transaction_to_office
+                    references: offices(id)
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_transaction_user
+                    references: users(id)
+              - column:
+                  name: transaction_type
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: quantity
+                  type: DOUBLE
+                  constraints:
+                    nullable: false
+              - column:
+                  name: remarks
+                  type: VARCHAR(500)
+              - column:
+                  name: transaction_date
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: VARCHAR(20)
+                  defaultValue: CONFIRMED
+                  constraints:
+                    nullable: false
+              - column:
+                  name: confirmed_by_user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: true
+                    foreignKeyName: fk_transaction_confirmed_by
+                    references: users(id)
+              - column:
+                  name: confirmed_date
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: true
+              - column:
+                  name: item_request_id
+                  type: BIGINT
+                  constraints:
+                    nullable: true
+                    foreignKeyName: fk_transaction_item_request
+                    references: item_requests(id)
 
         # Create purchases table
         - createTable:

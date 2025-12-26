@@ -11,7 +11,3 @@ databaseChangeLog:
       file: db/changelog/004-seed-units.yaml
   - include:
       file: db/changelog/005-seed-items.yaml
-  - include:
-      file: db/changelog/006-add-confirmation-fields.yaml
-  - include:
-      file: db/changelog/007-add-item-request-link-to-transactions.yaml

@@ -183,8 +183,9 @@ public class ItemRequestService {
         ItemRequest request = getItemRequestById(requestId);
         
         // Check if request can be confirmed
-        if (request.getStatus() != ItemRequest.RequestStatus.FULFILLED) {
-            throw new RuntimeException("Only fully fulfilled requests can be confirmed");
+        if (request.getStatus() != ItemRequest.RequestStatus.FULFILLED && 
+            request.getStatus() != ItemRequest.RequestStatus.PARTIALLY_FULFILLED) {
+            throw new RuntimeException("Only fulfilled or partially fulfilled requests can be confirmed");
         }
         
         User confirmer = userRepository.findById(confirmedByUserId)

@@ -20,12 +20,20 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Eye, Package } from "lucide-react";
+import { Eye, Package, History } from "lucide-react";
 import { useTableActions } from "@/hooks/useTableActions";
-import { useMyOfficeInventory, ItemInstance } from "@/services/inventoryService";
+import { 
+  useMyOfficeInventory, 
+  ItemInstance, 
+  useMyOfficePurchases, 
+  Purchase, 
+  useMyOfficeTransactionHistory, 
+  ItemTransaction 
+} from "@/services/inventoryService";
 import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const searchConfig = {
   placeholder: "Search inventory items...",
@@ -36,21 +44,6 @@ const paginationConfig = {
   itemsPerPage: 10,
   showEllipsis: true,
   maxVisiblePages: 5,
-};
-
-const statusColors: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-  AVAILABLE: "secondary",
-  IN_USE: "default",
-  UNDER_MAINTENANCE: "outline",
-  DAMAGED: "destructive",
-  DISPOSED: "destructive",
-};
-
-const conditionColors: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-  NEW: "secondary",
-  GOOD: "default",
-  FAIR: "outline",
-  POOR: "destructive",
 };
 
 const RowActions = ({ item, onView }: { item: ItemInstance, onView: (item: any) => void }) => (
@@ -70,8 +63,7 @@ const searchInInventory = (items: ItemInstance[], query: string): ItemInstance[]
     instance.barcode.toLowerCase().includes(lowerQuery) ||
     instance.item.name.toLowerCase().includes(lowerQuery) ||
     (instance.item.description?.toLowerCase().includes(lowerQuery) ?? false) ||
-    instance.ownerOffice.name.toLowerCase().includes(lowerQuery) ||
-    (instance.currentOffice?.name.toLowerCase().includes(lowerQuery) ?? false)
+    instance.ownerOffice.name.toLowerCase().includes(lowerQuery)
   );
 };
 
@@ -88,10 +80,6 @@ function Body({ data }: { data: ItemInstance[] }){
             <TableHead>Barcode</TableHead>
             <TableHead>Item Name</TableHead>
             <TableHead>Category</TableHead>
-            <TableHead>Owner Office</TableHead>
-            <TableHead>Current Office</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Condition</TableHead>
             <TableHead>Purchase Date</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
@@ -104,40 +92,6 @@ function Body({ data }: { data: ItemInstance[] }){
             <TableCell>
               {instance.item.category ? (
                 <Badge variant="outline">{instance.item.category.name}</Badge>
-              ) : (
-                <span className="text-gray-400">-</span>
-              )}
-            </TableCell>
-            <TableCell>
-              <div className="flex flex-col">
-                <span className="font-medium">{instance.ownerOffice.name}</span>
-                {instance.ownerOffice.code && (
-                  <span className="text-xs text-gray-500">{instance.ownerOffice.code}</span>
-                )}
-              </div>
-            </TableCell>
-            <TableCell>
-              {instance.currentOffice ? (
-                <div className="flex flex-col">
-                  <span className="font-medium">{instance.currentOffice.name}</span>
-                  {instance.currentOffice.code && (
-                    <span className="text-xs text-gray-500">{instance.currentOffice.code}</span>
-                  )}
-                </div>
-              ) : (
-                <span className="text-gray-400">-</span>
-              )}
-            </TableCell>
-            <TableCell>
-              <Badge variant={statusColors[instance.status] || "default"}>
-                {instance.status.replace(/_/g, ' ')}
-              </Badge>
-            </TableCell>
-            <TableCell>
-              {instance.condition ? (
-                <Badge variant={conditionColors[instance.condition] || "default"}>
-                  {instance.condition}
-                </Badge>
               ) : (
                 <span className="text-gray-400">-</span>
               )}
@@ -161,9 +115,91 @@ function Body({ data }: { data: ItemInstance[] }){
   )
 }
 
+function HistoryTable({ purchases, transactions }: { purchases: Purchase[], transactions: ItemTransaction[] }) {
+  const { user } = useAuth();
+  
+  // Create combined history with + and - indicators
+  const historyItems = [
+    // Additions (+)
+    ...purchases.map(purchase => ({ 
+      type: '+',
+      itemName: purchase.item.name,
+      source: purchase.supplier || 'Supplier',
+      quantity: purchase.quantity,
+      date: purchase.purchasedDate,
+      reason: 'Purchase'
+    })),
+    ...transactions.filter(t => t.toOffice.id === parseInt(user?.officeId || '0') && t.status !== 'PENDING').map(transaction => ({ 
+      type: '+',
+      itemName: transaction.itemInstance.item.name,
+      source: transaction.fromOffice?.name || 'Unknown',
+      quantity: transaction.quantity,
+      date: transaction.transactionDate,
+      reason: 'Transfer In'
+    })),
+    // Deductions (-)
+    ...transactions.filter(t => t.fromOffice.id === parseInt(user?.officeId || '0') && t.status !== 'PENDING').map(transaction => ({ 
+      type: '-',
+      itemName: transaction.itemInstance.item.name,
+      source: transaction.toOffice?.name || 'Unknown',
+      quantity: transaction.quantity,
+      date: transaction.transactionDate,
+      reason: 'Transfer Out'
+    }))
+  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+  return (
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>Inventory History</CardTitle>
+          <CardDescription>All additions (+) and deductions (-) to your inventory</CardDescription>
+        </CardHeader>
+      </Card>
+
+      <div className="mx-auto my-8 max-w-7xl">
+        <Table>
+          <TableCaption>Complete inventory movement history.</TableCaption>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Type</TableHead>
+              <TableHead>Item Name</TableHead>
+              <TableHead>Source/Destination</TableHead>
+              <TableHead>Quantity</TableHead>
+              <TableHead>Reason</TableHead>
+              <TableHead>Date</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {historyItems.map((item, index) => (
+              <TableRow key={`${item.type}-${index}`}>
+                <TableCell>
+                  <Badge variant={item.type === '+' ? 'default' : 'destructive'}>
+                    {item.type}
+                  </Badge>
+                </TableCell>
+                <TableCell className="font-medium">{item.itemName}</TableCell>
+                <TableCell>{item.source}</TableCell>
+                <TableCell>{item.quantity}</TableCell>
+                <TableCell>{item.reason}</TableCell>
+                <TableCell>
+                  {new Date(item.date).toLocaleDateString()}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </>
+  );
+}
+
 export default function InventoryPage() {
   const { user } = useAuth();
-  const { data: items = [], isLoading, error } = useMyOfficeInventory();
+  const { data: items = [], isLoading: itemsLoading, error: itemsError } = useMyOfficeInventory();
+  const { data: purchases = [], isLoading: purchasesLoading, error: purchasesError } = useMyOfficePurchases();
+  const { data: transactions = [], isLoading: transactionsLoading, error: transactionsError } = useMyOfficeTransactionHistory();
+  
   const [searchQuery, setSearchQuery] = useState("");
   const [searchedData, setSearchedData] = useState<ItemInstance[]>([]);
   const [paginatedData, setPaginatedData] = useState<ItemInstance[]>([]);
@@ -191,7 +227,7 @@ export default function InventoryPage() {
     );
   }
 
-  if (isLoading) {
+  if (itemsLoading || purchasesLoading || transactionsLoading) {
     return (
       <PageLayout
         header={<Header title="My Office Inventory" subtitle="" />}
@@ -207,7 +243,7 @@ export default function InventoryPage() {
     );
   }
 
-  if (error) {
+  if (itemsError || purchasesError || transactionsError) {
     return (
       <PageLayout
         header={<Header title="My Office Inventory" subtitle="" />}
@@ -230,56 +266,74 @@ export default function InventoryPage() {
       header={
         <Header 
           title="My Office Inventory" 
-          subtitle="View all items belonging to your office"
-          searchbar={
-            <input
-              type="text"
-              placeholder="Search inventory items..."
-              className="border rounded px-3 py-2 w-64"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          }
+          subtitle="View current items and complete history"
         />
       }
       body={
-        <>
-          <div className="mx-auto my-4 max-w-7xl">
-            <Card>
-              <CardHeader>
-                <CardTitle>Inventory Summary</CardTitle>
-                <CardDescription>
-                  Total items in your office: <span className="font-bold text-lg">{items.length}</span>
-                  {searchQuery && (
-                    <> | Filtered: <span className="font-bold text-lg">{searchedData.length}</span></>
-                  )}
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </div>
+        <div className="mx-auto my-4 max-w-7xl">
+          <Tabs defaultValue="current" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="current" className="flex items-center gap-2">
+                <Package className="w-4 h-4" />
+                Current Items ({items.length})
+              </TabsTrigger>
+              <TabsTrigger value="history" className="flex items-center gap-2">
+                <History className="w-4 h-4" />
+                History ({purchases.length + transactions.filter(t => t.status !== 'PENDING').length})
+              </TabsTrigger>
+            </TabsList>
 
-          {searchedData.length === 0 ? (
-            <div className="flex items-center justify-center h-[30vh]">
-              <div className="text-center">
-                <Package className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                <p className="text-gray-500">
-                  {items.length === 0 
-                    ? "No inventory items found in your office"
-                    : "No items match your search"}
-                </p>
+            <TabsContent value="current" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Current Inventory</CardTitle>
+                  <CardDescription>
+                    Items currently in your office inventory
+                    {searchQuery && (
+                      <> | Filtered: <span className="font-bold text-lg">{searchedData.length}</span></>
+                    )}
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+
+              <div className="mb-4">
+                <input
+                  type="text"
+                  placeholder="Search inventory items..."
+                  className="border rounded px-3 py-2 w-64"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
               </div>
-            </div>
-          ) : (
-            <>
-              <Body data={paginatedData} />
-              <Pagination
-                data={searchedData}
-                config={paginationConfig}
-                onPaginatedData={setPaginatedData}
-              />
-            </>
-          )}
-        </>
+
+              {searchedData.length === 0 ? (
+                <div className="flex items-center justify-center h-[30vh]">
+                  <div className="text-center">
+                    <Package className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                    <p className="text-gray-500">
+                      {items.length === 0 
+                        ? "No inventory items found in your office"
+                        : "No items match your search"}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <Body data={paginatedData} />
+                  <Pagination
+                    data={searchedData}
+                    config={paginationConfig}
+                    onPaginatedData={setPaginatedData}
+                  />
+                </>
+              )}
+            </TabsContent>
+
+            <TabsContent value="history" className="space-y-4">
+              <HistoryTable purchases={purchases} transactions={transactions} />
+            </TabsContent>
+          </Tabs>
+        </div>
       }
     />
   );
