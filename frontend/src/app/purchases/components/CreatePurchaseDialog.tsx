@@ -233,7 +233,7 @@ export function CreatePurchaseDialog({
                     />
                   </div>
                   <div className="col-span-2 text-sm text-center">
-                    ${(item.quantity * item.unitPrice).toFixed(2)}
+                    ৳{(item.quantity * item.unitPrice).toFixed(2)}
                   </div>
                   <div className="col-span-1 flex justify-center">
                     <Button
@@ -249,7 +249,7 @@ export function CreatePurchaseDialog({
               ))}
               <div className="grid grid-cols-12 gap-2 pt-2 border-t font-semibold">
                 <div className="col-span-9 text-right">Total Amount:</div>
-                <div className="col-span-2 text-center">${totalAmount.toFixed(2)}</div>
+                <div className="col-span-2 text-center">৳{totalAmount.toFixed(2)}</div>
                 <div className="col-span-1"></div>
               </div>
             </div>

@@ -1,6 +1,6 @@
 "use client";
-import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect, use } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { PageLayout, Header } from "@/components/page";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,23 +8,28 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { User, Mail, Building2, Shield, Edit, Key } from "lucide-react";
-import { EditProfileDialog } from "./components/EditProfileDialog";
-import { ChangePasswordDialog } from "./components/ChangePasswordDialog";
+import { EditProfileDialog } from "../components/EditProfileDialog";
+import { ChangePasswordDialog } from "../components/ChangePasswordDialog";
 import { useUser } from "@/services/userService";
 
-export default function ProfilePage() {
+interface ProfilePageProps {
+  params: Promise<{
+    id: string;
+  }>;
+}
+
+export default function UserProfilePage({ params }: ProfilePageProps) {
   const { isAuthenticated, user: currentUser } = useAuth();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const userId = searchParams.get("userId");
+  const { id: userId } = use(params);
 
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
 
-  const { data: viewedUser, isLoading: isLoadingUser } = useUser(userId || "");
+  const { data: viewedUser, isLoading: isLoadingUser } = useUser(userId);
 
-  const user = viewedUser || currentUser;
-  const isOwnProfile = !userId || userId === currentUser?.id;
+  const user = viewedUser;
+  const isOwnProfile = userId === currentUser?.id;
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -32,7 +37,7 @@ export default function ProfilePage() {
     }
   }, [isAuthenticated, router]);
 
-  if (!isAuthenticated || (!user && !isLoadingUser)) {
+  if (!isAuthenticated) {
     return (
       <PageLayout
         header={<Header title="Profile" subtitle="Loading..." />}
@@ -41,7 +46,7 @@ export default function ProfilePage() {
     );
   }
 
-  if (isLoadingUser) {
+  if (isLoadingUser || !user) {
     return (
       <PageLayout
         header={<Header title="Profile" subtitle="Loading..." />}
@@ -53,7 +58,7 @@ export default function ProfilePage() {
   return (
     <PageLayout
       header={
-        <Header 
+        <Header
           title={isOwnProfile ? "My Profile" : `${user?.fullName || user?.name || user?.username}'s Profile`}
           subtitle={isOwnProfile ? "Manage your account information" : "View user information"}
         />
@@ -100,7 +105,7 @@ export default function ProfilePage() {
                     <Building2 className="h-4 w-4 mr-2" />
                     Office
                   </div>
-                  <p className="text-base font-medium">{user.officeName || "Not assigned"}</p>
+                  <p className="text-base font-medium">{user.office?.name || "Not assigned"}</p>
                 </div>
 
                 {/* Role */}
@@ -110,8 +115,8 @@ export default function ProfilePage() {
                     Role
                   </div>
                   <div>
-                    <Badge variant={user.role === "ADMIN" ? "default" : "secondary"}>
-                      {user.role}
+                    <Badge variant={typeof user.role === 'string' ? (user.role === "ADMIN" ? "default" : "secondary") : (user.role.name === "ADMIN" ? "default" : "secondary")}>
+                      {typeof user.role === 'string' ? user.role : user.role.name}
                     </Badge>
                   </div>
                 </div>
@@ -169,12 +174,12 @@ export default function ProfilePage() {
                 <Separator />
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-500">Office ID</span>
-                  <span className="text-sm font-medium">{user.officeId || "N/A"}</span>
+                  <span className="text-sm font-medium">{user.office?.id || "N/A"}</span>
                 </div>
                 <Separator />
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-500">Account Type</span>
-                  <Badge variant="outline">{user.role}</Badge>
+                  <Badge variant="outline">{typeof user.role === 'string' ? user.role : user.role.name}</Badge>
                 </div>
               </div>
             </CardContent>

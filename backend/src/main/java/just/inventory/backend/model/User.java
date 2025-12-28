@@ -3,6 +3,8 @@ package just.inventory.backend.model;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name = "users")
@@ -14,6 +16,7 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @com.fasterxml.jackson.annotation.JsonProperty("name")
     private String fullName;
 
     @Column(nullable = false, unique = true)
@@ -25,13 +28,23 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @com.fasterxml.jackson.annotation.JsonProperty("name")
+    private String fullName; 
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id", nullable = false)
     @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"users"})
-    private Role role; 
+    private Role role;
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "office_id", nullable = false)
+    @JsonProperty("role")
+    public String getRoleName() {
+        return role != null ? role.getName() : null;
+    }
+
+    @JsonIgnore
+    public Role getRole() {
+        return role;
+    }
     @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"parent", "subOffices", "ownedItems", "users", "inventory", "outgoingTransactions", "incomingTransactions", "sentRequests", "receivedRequests"})
     private Office office;
     

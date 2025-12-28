@@ -10,6 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FileX } from "lucide-react";
+import Link from "next/link";
 import { Purchase } from "@/services/purchaseService";
 
 interface PurchasesTableProps {
@@ -87,11 +88,18 @@ export function PurchasesTable({
                 {new Date(purchase.purchasedDate).toLocaleDateString()}
               </TableCell>
               <TableCell>{purchase.quantity}</TableCell>
-              <TableCell>${purchase.unitPrice.toFixed(2)}</TableCell>
+              <TableCell>৳{purchase.unitPrice.toFixed(2)}</TableCell>
               <TableCell>
-                ${(purchase.quantity * purchase.unitPrice).toFixed(2)}
+                ৳{(purchase.quantity * purchase.unitPrice).toFixed(2)}
               </TableCell>
-              <TableCell>{purchase.purchasedBy.username}</TableCell>
+              <TableCell>
+                <Link 
+                  href={`/profile/${purchase.purchasedBy.id}`}
+                  className="text-blue-600 hover:text-blue-800 hover:underline"
+                >
+                  {purchase.purchasedBy.name || purchase.purchasedBy.username}
+                </Link>
+              </TableCell>
             </TableRow>
           ))
         )}

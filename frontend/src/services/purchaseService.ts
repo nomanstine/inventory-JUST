@@ -20,6 +20,7 @@ export interface Purchase {
     id: number;
     username: string;
     name?: string;
+    fullName?: string;
   };
 }
 
