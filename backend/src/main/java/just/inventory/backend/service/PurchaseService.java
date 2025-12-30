@@ -63,6 +63,7 @@ public class PurchaseService {
             instance.setOwnerOffice(savedPurchase.getOffice());
             instance.setStatus(ItemInstance.ItemStatus.AVAILABLE);
             instance.setPurchaseDate(savedPurchase.getPurchasedDate());
+            instance.setPurchasePrice(savedPurchase.getUnitPrice());
             itemInstanceRepository.save(instance);
         }
         

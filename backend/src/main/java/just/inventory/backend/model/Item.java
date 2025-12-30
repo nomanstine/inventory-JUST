@@ -28,8 +28,6 @@ public class Item {
     @ManyToOne
     @JoinColumn(name = "unit_id")
     private Unit unit;
-
-    private Double price;
     
     @OneToMany(mappedBy = "item", cascade = CascadeType.ALL)
     @com.fasterxml.jackson.annotation.JsonIgnore

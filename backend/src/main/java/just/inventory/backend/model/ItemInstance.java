@@ -42,6 +42,8 @@ public class ItemInstance {
 
     private LocalDateTime purchaseDate;
 
+    private Double purchasePrice;
+
     private LocalDateTime warrantyExpiry;
 
     private String remarks;

@@ -28,9 +28,6 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
-    @com.fasterxml.jackson.annotation.JsonProperty("name")
-    private String fullName; 
-
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id", nullable = false)
     @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"users"})
@@ -45,6 +42,8 @@ public class User {
     public Role getRole() {
         return role;
     }
+    @ManyToOne
+    @JoinColumn(name = "office_id", nullable = false)
     @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"parent", "subOffices", "ownedItems", "users", "inventory", "outgoingTransactions", "incomingTransactions", "sentRequests", "receivedRequests"})
     private Office office;
     

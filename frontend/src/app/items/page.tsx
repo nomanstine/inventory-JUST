@@ -70,7 +70,6 @@ function Body({ data }: { data: Item[] }){
             <TableHead>Name</TableHead>
             <TableHead>Category</TableHead>
             <TableHead>Unit</TableHead>
-            <TableHead>Price (BDT)</TableHead>
             <TableHead>Description</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
@@ -90,13 +89,6 @@ function Body({ data }: { data: Item[] }){
             <TableCell>
               {item.unit ? (
                 <Badge variant="secondary">{item.unit.name}</Badge>
-              ) : (
-                <span className="text-gray-400">-</span>
-              )}
-            </TableCell>
-            <TableCell>
-              {item.price ? (
-                <span className="font-medium">৳{item.price.toLocaleString()}</span>
               ) : (
                 <span className="text-gray-400">-</span>
               )}

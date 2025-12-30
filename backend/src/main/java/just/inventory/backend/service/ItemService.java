@@ -36,7 +36,6 @@ public class ItemService {
                     item.setDescription(itemDetails.getDescription());
                     item.setCategory(itemDetails.getCategory());
                     item.setUnit(itemDetails.getUnit());
-                    item.setPrice(itemDetails.getPrice());
                     return itemRepository.save(item);
                 });
     }

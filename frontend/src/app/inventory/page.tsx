@@ -150,12 +150,6 @@ function HistoryTable({ purchases, transactions }: { purchases: Purchase[], tran
 
   return (
     <>
-      <Card>
-        <CardHeader>
-          <CardTitle>Inventory History</CardTitle>
-          <CardDescription>All additions (+) and deductions (-) to your inventory</CardDescription>
-        </CardHeader>
-      </Card>
 
       <div className="mx-auto my-8 max-w-7xl">
         <Table>
@@ -284,17 +278,6 @@ export default function InventoryPage() {
             </TabsList>
 
             <TabsContent value="current" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Current Inventory</CardTitle>
-                  <CardDescription>
-                    Items currently in your office inventory
-                    {searchQuery && (
-                      <> | Filtered: <span className="font-bold text-lg">{searchedData.length}</span></>
-                    )}
-                  </CardDescription>
-                </CardHeader>
-              </Card>
 
               <div className="mb-4">
                 <input

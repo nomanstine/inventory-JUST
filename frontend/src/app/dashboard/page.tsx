@@ -1,229 +1,348 @@
 "use client";
-import { useState } from "react";
-
-import { 
-  PageLayout, 
-  Header 
-} from "@/components/page";
-
-import { FilterGroup as Filter } from "@/components/filters";
-import { SearchGroup as Search } from "@/components/search";
-import { PaginationGroup as Pagination } from "@/components/pagination";
-import { ActionButton } from "@/components/actions";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 
 import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Eye, Pencil } from "lucide-react";
-import { useTableActions } from "@/hooks/useTableActions";
+  PageLayout,
+  Header
+} from "@/components/page";
 
-const tData = [
-            {"id": 1, "name": "John", "age": 28, "status": "active", "department": "Engineering"},
-            {"id": 2, "name": "Jane", "age": 32, "status": "inactive", "department": "Marketing"},
-            {"id": 3, "name": "Bob", "age": 45, "status": "active", "department": "Engineering"},
-            {"id": 4, "name": "Alice", "age": 29, "status": "inactive", "department": "Sales"},
-            {"id": 5, "name": "Charlie", "age": 35, "status": "active", "department": "Marketing"},
-            {"id": 6, "name": "David", "age": 41, "status": "active", "department": "Engineering"},
-            {"id": 7, "name": "Emma", "age": 27, "status": "inactive", "department": "HR"},
-            {"id": 8, "name": "Frank", "age": 38, "status": "active", "department": "Sales"},
-            {"id": 9, "name": "Grace", "age": 33, "status": "active", "department": "Marketing"},
-            {"id": 10, "name": "Henry", "age": 42, "status": "inactive", "department": "Engineering"},
-            {"id": 11, "name": "Ivy", "age": 30, "status": "active", "department": "HR"},
-            {"id": 12, "name": "Jack", "age": 36, "status": "active", "department": "Sales"},
-            {"id": 13, "name": "Kelly", "age": 31, "status": "inactive", "department": "Marketing"},
-            {"id": 14, "name": "Leo", "age": 39, "status": "active", "department": "Engineering"},
-            {"id": 15, "name": "Mia", "age": 26, "status": "active", "department": "HR"},
-        ];
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Package,
+  TrendingUp,
+  ShoppingCart,
+  ArrowRightLeft,
+  FileText,
+  AlertCircle,
+  CheckCircle,
+  Clock,
+  DollarSign
+} from "lucide-react";
 
-type DataItem = typeof tData[0];
+import { useMyOfficeInventorySummary } from "@/services/inventoryService";
+import { usePurchases } from "@/services/purchaseService";
+import { useItemRequests } from "@/services/itemRequestService";
+import { useMyOfficeTransactionHistory } from "@/services/inventoryService";
 
-const searchConfig = {
-  placeholder: "Search...",
-  searchKeys: ["name", "department"],
-};
-
-const filterConfigs = [
-  {
-    key: "status",
-    options: [
-      { label: "All Statuses", value: "all" },
-      { label: "Active", value: "active" },
-      { label: "Inactive", value: "inactive" },
-    ],
-  },
-  {
-    key: "department",
-    options: [
-      { label: "All Departments", value: "all" },
-      { label: "Engineering", value: "Engineering" },
-      { label: "Marketing", value: "Marketing" },
-      { label: "Sales", value: "Sales" },
-      { label: "HR", value: "HR" },
-    ],
-  },
-];
-
-const paginationConfig = {
-  itemsPerPage: 5,
-  showEllipsis: true,
-  maxVisiblePages: 5,
-};
-
-const Actions = () => (
-  <ActionButton path="/api/items" type="add" label="Create" loadingText="Creating" payload={{"name" : "noman"}} />
-);
-
-
-const RowActions = ({ item, onView, onEdit }: { item: DataItem, onView: (item: any) => void, onEdit: (item: any) => void }) => (
-  <div className="flex gap-2">
-    <Eye 
-      className="w-5 h-5 cursor-pointer hover:text-blue-600" 
-      onClick={() => onView(item)}
-    />
-    <Pencil 
-      className="w-5 h-5 cursor-pointer hover:text-green-600" 
-      onClick={() => onEdit(item)}
-    />
-  </div>
-);
-
-function Body({ data }: { data: DataItem[] }){
-  const { handleView, handleEdit } = useTableActions("/dashboard");
-
-  return(
-    <>
-    <div className="mx-auto my-8 max-w-6xl flex justify-center items-center">
-      <Table>
-        <TableCaption>A list of items.</TableCaption>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Age</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Department</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {data.map((item, index) => (
-          <TableRow key={index}>
-            <TableCell>{item.name}</TableCell>
-            <TableCell>{item.age}</TableCell>
-            <TableCell>{item.status}</TableCell>
-            <TableCell>{item.department}</TableCell>
-            <TableCell>
-              <RowActions 
-                item={item} 
-                onView={handleView} 
-                onEdit={handleEdit} 
-              />
-            </TableCell>
-          </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
-    </>
-  )
+interface InventorySummary {
+  officeId: number;
+  totalItems: number;
+  items: Array<{
+    itemName: string;
+    itemId: number;
+    quantity: number;
+    statusBreakdown: Record<string, number>;
+  }>;
+  overallStatusBreakdown: Record<string, number>;
 }
 
-export default function Dashboard() {
-  const [filteredData, setFilteredData] = useState<DataItem[]>(tData);
-  const [searchedData, setSearchedData] = useState<DataItem[]>(tData);
-  const [paginatedData, setPaginatedData] = useState<DataItem[]>(tData);
+export default function DashboardPage() {
+  const router = useRouter();
+  const { isAuthenticated, user } = useAuth();
+
+  const { data: inventorySummary, isLoading: isLoadingInventory } = useMyOfficeInventorySummary();
+  const { data: purchases = [], isLoading: isLoadingPurchases } = usePurchases();
+  const { data: itemRequests = [], isLoading: isLoadingRequests } = useItemRequests();
+  const { data: transactions = [], isLoading: isLoadingTransactions } = useMyOfficeTransactionHistory();
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push("/");
+    }
+  }, [isAuthenticated, router]);
+
+  if (!isAuthenticated) {
+    return (
+      <PageLayout
+        header={<Header title="Dashboard" subtitle="Loading..." />}
+        body={<div className="flex justify-center items-center h-64">Please wait...</div>}
+      />
+    );
+  }
+
+  const summary = inventorySummary as InventorySummary | undefined;
+
+  // Calculate metrics
+  const totalItems = summary?.totalItems || 0;
+  const availableItems = summary?.overallStatusBreakdown?.AVAILABLE || 0;
+  const inUseItems = summary?.overallStatusBreakdown?.IN_USE || 0;
+  const damagedItems = summary?.overallStatusBreakdown?.DAMAGED || 0;
+  const pendingRequests = itemRequests.filter(r => r.status === 'PENDING').length;
+  const recentPurchases = purchases.slice(0, 5);
+  const recentRequests = itemRequests.slice(0, 5);
+  const recentTransactions = transactions.slice(0, 5);
+
+  const totalPurchaseValue = purchases.reduce((sum, p) => sum + (p.quantity * p.unitPrice), 0);
 
   return (
     <PageLayout
-          header={
-            <Header 
-              title="Dashboard" 
-              subtitle="Welcome to your dashboard" 
-              searchbar={
-                <Search 
-                  data={filteredData}
-                  config={searchConfig}
-                  onSearchedData={setSearchedData}
-                />
-              } 
-              filters={
-                <Filter 
-                  data={tData}
-                  filters={filterConfigs}
-                  onFilteredData={setFilteredData}
-                />
-              } 
-              actions={<Actions />} 
-            /> 
-          }
-          body={<Body data={paginatedData} />}
-          footer={
-            <Pagination
-              data={searchedData}
-              config={paginationConfig}
-              onPaginatedData={setPaginatedData}
-            />
-          }
+      header={
+        <Header
+          title="Dashboard"
+          subtitle="Overview of your office inventory and activities"
+        />
+      }
+      body={
+        <div className="space-y-6">
+          {/* Key Metrics Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Items</CardTitle>
+                <Package className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                {isLoadingInventory ? (
+                  <Skeleton className="h-8 w-16" />
+                ) : (
+                  <div className="text-2xl font-bold">{totalItems}</div>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  In inventory
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Available Items</CardTitle>
+                <CheckCircle className="h-4 w-4 text-green-600" />
+              </CardHeader>
+              <CardContent>
+                {isLoadingInventory ? (
+                  <Skeleton className="h-8 w-16" />
+                ) : (
+                  <div className="text-2xl font-bold text-green-600">{availableItems}</div>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Ready for use
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">In Use</CardTitle>
+                <Clock className="h-4 w-4 text-blue-600" />
+              </CardHeader>
+              <CardContent>
+                {isLoadingInventory ? (
+                  <Skeleton className="h-8 w-16" />
+                ) : (
+                  <div className="text-2xl font-bold text-blue-600">{inUseItems}</div>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Currently assigned
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Pending Requests</CardTitle>
+                <AlertCircle className="h-4 w-4 text-orange-600" />
+              </CardHeader>
+              <CardContent>
+                {isLoadingRequests ? (
+                  <Skeleton className="h-8 w-16" />
+                ) : (
+                  <div className="text-2xl font-bold text-orange-600">{pendingRequests}</div>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Awaiting approval
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Charts and Details */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Inventory Status Breakdown */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Inventory Status</CardTitle>
+                <CardDescription>Breakdown of items by status</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoadingInventory ? (
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-4 w-1/2" />
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <CheckCircle className="h-4 w-4 text-green-600" />
+                        <span className="text-sm">Available</span>
+                      </div>
+                      <Badge variant="secondary">{availableItems}</Badge>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Clock className="h-4 w-4 text-blue-600" />
+                        <span className="text-sm">In Use</span>
+                      </div>
+                      <Badge variant="secondary">{inUseItems}</Badge>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <AlertCircle className="h-4 w-4 text-red-600" />
+                        <span className="text-sm">Damaged</span>
+                      </div>
+                      <Badge variant="secondary">{damagedItems}</Badge>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Recent Purchases */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Recent Purchases</CardTitle>
+                <CardDescription>Latest item acquisitions</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoadingPurchases ? (
+                  <div className="space-y-3">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-4 w-1/2" />
+                  </div>
+                ) : recentPurchases.length > 0 ? (
+                  <div className="space-y-3">
+                    {recentPurchases.map((purchase) => (
+                      <div key={purchase.id} className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium">{purchase.item.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {purchase.quantity} units • ৳{(purchase.quantity * purchase.unitPrice).toFixed(2)}
+                          </p>
+                        </div>
+                        <Badge variant="outline">
+                          {new Date(purchase.purchasedDate).toLocaleDateString()}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No recent purchases</p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Recent Activity */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Recent Item Requests */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Recent Requests</CardTitle>
+                <CardDescription>Latest item requests</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoadingRequests ? (
+                  <div className="space-y-3">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-3/4" />
+                  </div>
+                ) : recentRequests.length > 0 ? (
+                  <div className="space-y-3">
+                    {recentRequests.map((request) => (
+                      <div key={request.id} className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium">{request.item.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {request.requestedQuantity} units • {request.status}
+                          </p>
+                        </div>
+                        <Badge
+                          variant={
+                            request.status === 'APPROVED' ? 'default' :
+                            request.status === 'PENDING' ? 'secondary' :
+                            request.status === 'REJECTED' ? 'destructive' : 'outline'
+                          }
+                        >
+                          {request.status}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No recent requests</p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Recent Transactions */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Recent Transactions</CardTitle>
+                <CardDescription>Latest item movements</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoadingTransactions ? (
+                  <div className="space-y-3">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-3/4" />
+                  </div>
+                ) : recentTransactions.length > 0 ? (
+                  <div className="space-y-3">
+                    {recentTransactions.map((transaction) => (
+                      <div key={transaction.id} className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium">{transaction.itemInstance.item.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {transaction.transactionType} • {transaction.fromOffice.name} → {transaction.toOffice.name}
+                          </p>
+                        </div>
+                        <Badge variant="outline">
+                          {new Date(transaction.transactionDate).toLocaleDateString()}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No recent transactions</p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Top Items */}
+          {summary?.items && summary.items.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Top Items</CardTitle>
+                <CardDescription>Most stocked items in your inventory</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {summary.items.slice(0, 5).map((item) => (
+                    <div key={item.itemId} className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium">{item.itemName}</p>
+                        <p className="text-xs text-muted-foreground">
+                          Available: {item.statusBreakdown.AVAILABLE || 0} •
+                          In Use: {item.statusBreakdown.IN_USE || 0}
+                        </p>
+                      </div>
+                      <Badge variant="secondary">{item.quantity} total</Badge>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      }
     />
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

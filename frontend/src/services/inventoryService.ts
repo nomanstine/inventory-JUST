@@ -16,7 +16,6 @@ export interface ItemInstance {
       id: number;
       name: string;
     };
-    price?: number;
   };
   ownerOffice: {
     id: number;
@@ -31,6 +30,7 @@ export interface ItemInstance {
   status: string;
   condition?: string;
   purchaseDate?: string;
+  purchasePrice?: number;
   warrantyExpiry?: string;
   remarks?: string;
 }

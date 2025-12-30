@@ -11,3 +11,5 @@ databaseChangeLog:
       file: db/changelog/004-seed-units.yaml
   - include:
       file: db/changelog/005-seed-items.yaml
+  - include:
+      file: db/changelog/006-update-item-price.yaml
