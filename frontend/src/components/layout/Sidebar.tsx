@@ -62,7 +62,6 @@ export default function Sidebar() {
       title: 'Operations',
       items: [
         { icon: ShoppingCart, label: 'Purchases', href: '/purchases' },
-        { icon: Send, label: 'Transfers', href: '/distributions' },
         { icon: FileCheck, label: 'Requisitions', href: '/requisitions' },
       ]
     },

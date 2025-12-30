@@ -294,19 +294,25 @@ export default function DashboardPage() {
                   </div>
                 ) : recentTransactions.length > 0 ? (
                   <div className="space-y-3">
-                    {recentTransactions.map((transaction) => (
-                      <div key={transaction.id} className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-medium">{transaction.itemInstance.item.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {transaction.transactionType} • {transaction.fromOffice.name} → {transaction.toOffice.name}
-                          </p>
+                    {recentTransactions.map((transaction) => {
+                      const isOutgoing = transaction.fromOffice.id === summary?.officeId;
+                      const otherOffice = isOutgoing ? transaction.toOffice.name : transaction.fromOffice.name;
+                      const direction = isOutgoing ? 'to' : 'from';
+                      
+                      return (
+                        <div key={transaction.id} className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium">{transaction.itemInstance.item.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {transaction.transactionType} • {direction} {otherOffice}
+                            </p>
+                          </div>
+                          <Badge variant="outline">
+                            {new Date(transaction.transactionDate).toLocaleDateString()}
+                          </Badge>
                         </div>
-                        <Badge variant="outline">
-                          {new Date(transaction.transactionDate).toLocaleDateString()}
-                        </Badge>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <p className="text-sm text-muted-foreground">No recent transactions</p>
