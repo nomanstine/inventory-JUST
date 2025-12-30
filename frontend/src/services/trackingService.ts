@@ -8,12 +8,16 @@ export interface TransactionHistory {
   status: string;
   date: string;
   fromOffice?: string;
+  fromOfficeId?: number;
   fromOfficeCode?: string;
   toOffice?: string;
+  toOfficeId?: number;
   toOfficeCode?: string;
   initiatedBy: string;
+  initiatedById: number;
   initiatedByUsername: string;
   confirmedBy?: string;
+  confirmedById?: number;
   confirmedByUsername?: string;
   confirmedDate?: string;
   quantity: number;
@@ -27,8 +31,10 @@ export interface PurchaseInformation {
   totalCost: number;
   supplier?: string;
   purchasedBy: string;
+  purchasedById: number;
   purchasedByUsername: string;
   purchasedForOffice: string;
+  purchasedForOfficeId: number;
   purchaseDate: string;
   remarks?: string;
 }
@@ -46,9 +52,11 @@ export interface BarcodeSearchResult {
   itemName: string;
   itemDescription?: string;
   category: string;
+  categoryId: number;
   serialNumber?: string;
   currentStatus: string;
   currentOwnerOffice: string;
+  currentOwnerOfficeId: number;
   currentOwnerOfficeCode?: string;
   purchaseDate?: string;
   warrantyExpiry?: string;

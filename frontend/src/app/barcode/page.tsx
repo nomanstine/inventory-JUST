@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useTrackByBarcode } from '@/services/trackingService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -13,6 +13,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 export default function BarcodePage() {
   const [barcode, setBarcode] = useState('');
   const [searchBarcode, setSearchBarcode] = useState('');
+  const router = useRouter();
 
   const searchParams = useSearchParams();
   const barcodeParam = searchParams.get('barcode');
@@ -95,7 +96,7 @@ export default function BarcodePage() {
                 </div>
                 <div>
                   <p className="font-semibold">Category:</p>
-                  <p>{data.category}</p>
+                  <p className="text-blue-600 hover:underline cursor-pointer" onClick={() => router.push(`/categories/${data.categoryId}`)}>{data.category}</p>
                 </div>
                 <div>
                   <p className="font-semibold">Serial Number:</p>
@@ -109,7 +110,7 @@ export default function BarcodePage() {
                 </div>
                 <div>
                   <p className="font-semibold">Owner Office:</p>
-                  <p>{data.currentOwnerOffice}</p>
+                  <p className="text-blue-600 hover:underline cursor-pointer" onClick={() => router.push(`/offices/${data.currentOwnerOfficeId}`)}>{data.currentOwnerOffice}</p>
                 </div>
                 <div>
                   <p className="font-semibold">Purchase Date:</p>
@@ -150,11 +151,11 @@ export default function BarcodePage() {
                   </div>
                   <div>
                     <p className="font-semibold">Unit Price:</p>
-                    <p>${data.purchaseInformation.unitPrice}</p>
+                    <p>৳{data.purchaseInformation.unitPrice}</p>
                   </div>
                   <div>
                     <p className="font-semibold">Total Cost:</p>
-                    <p>${data.purchaseInformation.totalCost}</p>
+                    <p>৳{data.purchaseInformation.totalCost}</p>
                   </div>
                   <div>
                     <p className="font-semibold">Supplier:</p>
@@ -162,11 +163,11 @@ export default function BarcodePage() {
                   </div>
                   <div>
                     <p className="font-semibold">Purchased By:</p>
-                    <p>{data.purchaseInformation.purchasedBy} ({data.purchaseInformation.purchasedByUsername})</p>
+                    <p className="text-blue-600 hover:underline cursor-pointer" onClick={() => router.push(`/profile/${data.purchaseInformation.purchasedById}`)}>{data.purchaseInformation.purchasedBy} ({data.purchaseInformation.purchasedByUsername})</p>
                   </div>
                   <div>
                     <p className="font-semibold">Purchased For Office:</p>
-                    <p>{data.purchaseInformation.purchasedForOffice}</p>
+                    <p className="text-blue-600 hover:underline cursor-pointer" onClick={() => router.push(`/offices/${data.purchaseInformation.purchasedForOfficeId}`)}>{data.purchaseInformation.purchasedForOffice}</p>
                   </div>
                   <div>
                     <p className="font-semibold">Purchase Date:</p>
@@ -208,20 +209,20 @@ export default function BarcodePage() {
                       <div className="mt-2 grid grid-cols-2 gap-2">
                         {transaction.fromOffice && (
                           <p className="text-sm">
-                            <span className="font-medium">From:</span> {transaction.fromOffice} ({transaction.fromOfficeCode})
+                            <span className="font-medium">From:</span> <span className="text-blue-600 hover:underline cursor-pointer" onClick={() => router.push(`/offices/${transaction.fromOfficeId}`)}>{transaction.fromOffice} ({transaction.fromOfficeCode})</span>
                           </p>
                         )}
                         {transaction.toOffice && (
                           <p className="text-sm">
-                            <span className="font-medium">To:</span> {transaction.toOffice} ({transaction.toOfficeCode})
+                            <span className="font-medium">To:</span> <span className="text-blue-600 hover:underline cursor-pointer" onClick={() => router.push(`/offices/${transaction.toOfficeId}`)}>{transaction.toOffice} ({transaction.toOfficeCode})</span>
                           </p>
                         )}
                         <p className="text-sm">
-                          <span className="font-medium">Initiated By:</span> {transaction.initiatedBy} ({transaction.initiatedByUsername})
+                          <span className="font-medium">Initiated By:</span> <span className="text-blue-600 hover:underline cursor-pointer" onClick={() => router.push(`/profile/${transaction.initiatedById}`)}>{transaction.initiatedBy} ({transaction.initiatedByUsername})</span>
                         </p>
                         {transaction.confirmedBy && (
                           <p className="text-sm">
-                            <span className="font-medium">Confirmed By:</span> {transaction.confirmedBy} ({transaction.confirmedByUsername})
+                            <span className="font-medium">Confirmed By:</span> <span className="text-blue-600 hover:underline cursor-pointer" onClick={() => router.push(`/profile/${transaction.confirmedById}`)}>{transaction.confirmedBy} ({transaction.confirmedByUsername})</span>
                           </p>
                         )}
                         {transaction.confirmedDate && (

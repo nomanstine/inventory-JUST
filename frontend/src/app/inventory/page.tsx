@@ -68,7 +68,11 @@ const searchInInventory = (items: ItemInstance[], query: string): ItemInstance[]
 };
 
 function Body({ data }: { data: ItemInstance[] }){
-  const { handleView } = useTableActions("/inventory");
+  const router = useRouter();
+  
+  const handleView = (item: ItemInstance) => {
+    router.push(`/barcode?barcode=${item.barcode}`);
+  };
 
   return(
     <>
@@ -156,25 +160,21 @@ function HistoryTable({ purchases, transactions }: { purchases: Purchase[], tran
           <TableCaption>Complete inventory movement history.</TableCaption>
           <TableHeader>
             <TableRow>
-              <TableHead>Type</TableHead>
               <TableHead>Item Name</TableHead>
               <TableHead>Source/Destination</TableHead>
               <TableHead>Quantity</TableHead>
-              <TableHead>Reason</TableHead>
+              <TableHead>Type</TableHead>
               <TableHead>Date</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {historyItems.map((item, index) => (
               <TableRow key={`${item.type}-${index}`}>
-                <TableCell>
-                  <Badge variant={item.type === '+' ? 'default' : 'destructive'}>
-                    {item.type}
-                  </Badge>
-                </TableCell>
                 <TableCell className="font-medium">{item.itemName}</TableCell>
                 <TableCell>{item.source}</TableCell>
-                <TableCell>{item.quantity}</TableCell>
+                <TableCell className={`font-medium ${item.type === '+' ? 'text-green-600' : 'text-red-600'}`}>
+                  {item.type === '+' ? '+' : '-'}{item.quantity}
+                </TableCell>
                 <TableCell>{item.reason}</TableCell>
                 <TableCell>
                   {new Date(item.date).toLocaleDateString()}

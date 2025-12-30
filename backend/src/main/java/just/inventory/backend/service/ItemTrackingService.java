@@ -32,9 +32,11 @@ public class ItemTrackingService {
         trackingInfo.put("itemName", itemInstance.getItem().getName());
         trackingInfo.put("itemDescription", itemInstance.getItem().getDescription());
         trackingInfo.put("category", itemInstance.getItem().getCategory().getName());
+        trackingInfo.put("categoryId", itemInstance.getItem().getCategory().getId());
         trackingInfo.put("serialNumber", itemInstance.getSerialNumber());
         trackingInfo.put("currentStatus", itemInstance.getStatus());
         trackingInfo.put("currentOwnerOffice", itemInstance.getOwnerOffice().getName());
+        trackingInfo.put("currentOwnerOfficeId", itemInstance.getOwnerOffice().getId());
         trackingInfo.put("currentOwnerOfficeCode", itemInstance.getOwnerOffice().getCode());
         trackingInfo.put("purchaseDate", itemInstance.getPurchaseDate());
         trackingInfo.put("warrantyExpiry", itemInstance.getWarrantyExpiry());
@@ -56,8 +58,10 @@ public class ItemTrackingService {
             purchaseInfo.put("totalCost", purchase.getQuantity() * purchase.getUnitPrice());
             purchaseInfo.put("supplier", purchase.getSupplier());
             purchaseInfo.put("purchasedBy", purchase.getPurchasedBy().getFullName());
+            purchaseInfo.put("purchasedById", purchase.getPurchasedBy().getId());
             purchaseInfo.put("purchasedByUsername", purchase.getPurchasedBy().getUsername());
             purchaseInfo.put("purchasedForOffice", purchase.getOffice().getName());
+            purchaseInfo.put("purchasedForOfficeId", purchase.getOffice().getId());
             purchaseInfo.put("purchaseDate", purchase.getPurchasedDate());
             purchaseInfo.put("remarks", purchase.getRemarks());
             trackingInfo.put("purchaseInformation", purchaseInfo);
@@ -77,19 +81,23 @@ public class ItemTrackingService {
             
             if (transaction.getFromOffice() != null) {
                 movement.put("fromOffice", transaction.getFromOffice().getName());
+                movement.put("fromOfficeId", transaction.getFromOffice().getId());
                 movement.put("fromOfficeCode", transaction.getFromOffice().getCode());
             }
             
             if (transaction.getToOffice() != null) {
                 movement.put("toOffice", transaction.getToOffice().getName());
+                movement.put("toOfficeId", transaction.getToOffice().getId());
                 movement.put("toOfficeCode", transaction.getToOffice().getCode());
             }
             
             movement.put("initiatedBy", transaction.getUser().getFullName());
+            movement.put("initiatedById", transaction.getUser().getId());
             movement.put("initiatedByUsername", transaction.getUser().getUsername());
             
             if (transaction.getConfirmedBy() != null) {
                 movement.put("confirmedBy", transaction.getConfirmedBy().getFullName());
+                movement.put("confirmedById", transaction.getConfirmedBy().getId());
                 movement.put("confirmedByUsername", transaction.getConfirmedBy().getUsername());
                 movement.put("confirmedDate", transaction.getConfirmedDate());
             }
