@@ -70,14 +70,12 @@ export default function Sidebar() {
       items: [
         { icon: BarChart3, label: 'Reports', href: '/reports' },
         { icon: QrCode, label: 'Barcode Scan', href: '/barcode' },
-        { icon: TrendingUp, label: 'Analytics', href: '/analytics' },
       ]
     },
     {
       title: 'System',
       items: [
         { icon: User, label: 'Profile', href: '/profile' },
-        { icon: FileText, label: 'Audit Logs', href: '/logs' },
         { icon: Settings, label: 'Settings', href: '/settings' },
       ]
     }

@@ -99,12 +99,6 @@ export default function OfficePage({ params }: OfficePageProps) {
                   <p className="text-lg">{office.code || '-'}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-500">Status</label>
-                  <Badge variant={office.isActive ? "default" : "secondary"}>
-                    {office.isActive ? "Active" : "Inactive"}
-                  </Badge>
-                </div>
-                <div>
                   <label className="text-sm font-medium text-gray-500">Order</label>
                   <p className="text-lg">{office.order || '-'}</p>
                 </div>

@@ -94,7 +94,6 @@ function Body({ data }: { data: Office[] }){
             <TableHead>Bengali Name</TableHead>
             <TableHead>Type</TableHead>
             <TableHead>Code</TableHead>
-            <TableHead>Status</TableHead>
             <TableHead>Order</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
@@ -107,15 +106,6 @@ function Body({ data }: { data: Office[] }){
             <TableCell>{item.nameBn || '-'}</TableCell>
             <TableCell className="capitalize">{item.type}</TableCell>
             <TableCell>{item.code || '-'}</TableCell>
-            <TableCell>
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                item.isActive
-                  ? 'bg-green-100 text-green-800'
-                  : 'bg-red-100 text-red-800'
-              }`}>
-                {item.isActive ? 'Active' : 'Inactive'}
-              </span>
-            </TableCell>
             <TableCell>{item.order || '-'}</TableCell>
             <TableCell>
               <RowActions
