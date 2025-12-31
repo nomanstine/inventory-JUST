@@ -19,7 +19,7 @@ interface EditCategoryPageProps {
 }
 
 export default function EditCategoryPage({ params }: EditCategoryPageProps) {
-  const { isAuthenticated } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const { id: categoryId } = use(params);
 
@@ -31,11 +31,23 @@ export default function EditCategoryPage({ params }: EditCategoryPageProps) {
     description: "",
   });
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      router.push("/");
-    }
-  }, [isAuthenticated, router]);
+  if (!user) {
+    return (
+      <PageLayout
+        header={<Header title="Edit Category" subtitle="" />}
+        body={
+          <div className="flex items-center justify-center h-[50vh]">
+            <Card className="w-96">
+              <CardHeader>
+                <CardTitle>Authentication Required</CardTitle>
+                <CardDescription>Please log in to edit categories</CardDescription>
+              </CardHeader>
+            </Card>
+          </div>
+        }
+      />
+    );
+  }
 
   useEffect(() => {
     if (category) {

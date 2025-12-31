@@ -17,23 +17,26 @@ interface OfficePageProps {
 }
 
 export default function OfficePage({ params }: OfficePageProps) {
-  const { isAuthenticated } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const { id: officeId } = use(params);
 
   const { data: office, isLoading } = useOffice(parseInt(officeId));
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      router.push("/");
-    }
-  }, [isAuthenticated, router]);
-
-  if (!isAuthenticated) {
+  if (!user) {
     return (
       <PageLayout
-        header={<Header title="Office" subtitle="Loading..." />}
-        body={<div className="flex justify-center items-center h-64">Loading...</div>}
+        header={<Header title="Office" subtitle="" />}
+        body={
+          <div className="flex items-center justify-center h-[50vh]">
+            <Card className="w-96">
+              <CardHeader>
+                <CardTitle>Authentication Required</CardTitle>
+                <CardDescription>Please log in to view office details</CardDescription>
+              </CardHeader>
+            </Card>
+          </div>
+        }
       />
     );
   }

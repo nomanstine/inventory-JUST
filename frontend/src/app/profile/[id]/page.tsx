@@ -19,7 +19,7 @@ interface ProfilePageProps {
 }
 
 export default function UserProfilePage({ params }: ProfilePageProps) {
-  const { isAuthenticated, user: currentUser } = useAuth();
+  const { user: currentUser } = useAuth();
   const router = useRouter();
   const { id: userId } = use(params);
 
@@ -31,17 +31,20 @@ export default function UserProfilePage({ params }: ProfilePageProps) {
   const user = viewedUser;
   const isOwnProfile = userId === currentUser?.id;
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      router.push("/");
-    }
-  }, [isAuthenticated, router]);
-
-  if (!isAuthenticated) {
+  if (!currentUser) {
     return (
       <PageLayout
-        header={<Header title="Profile" subtitle="Loading..." />}
-        body={<div className="flex justify-center items-center h-64">Loading...</div>}
+        header={<Header title="Profile" subtitle="" />}
+        body={
+          <div className="flex items-center justify-center h-[50vh]">
+            <Card className="w-96">
+              <CardHeader>
+                <CardTitle>Authentication Required</CardTitle>
+                <CardDescription>Please log in to view profile</CardDescription>
+              </CardHeader>
+            </Card>
+          </div>
+        }
       />
     );
   }

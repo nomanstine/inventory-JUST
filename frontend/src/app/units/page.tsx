@@ -26,6 +26,7 @@ import { useTableActions } from "@/hooks/useTableActions";
 import { useUnits, Unit } from "@/services/unitService";
 import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 const searchConfig = {
   placeholder: "Search units...",
@@ -93,7 +94,7 @@ function Body({ data }: { data: Unit[] }){
 }
 
 export default function UnitsPage() {
-  const { isAuthenticated } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const [filteredData, setFilteredData] = useState<Unit[]>([]);
   const [searchedData, setSearchedData] = useState<Unit[]>([]);
@@ -101,16 +102,27 @@ export default function UnitsPage() {
 
   const { data: units = [], isLoading, error } = useUnits();
 
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (!isAuthenticated) {
-      router.push("/");
-    }
-  }, [isAuthenticated, router]);
-
   useEffect(() => {
     setFilteredData(units);
   }, [units]);
+
+  if (!user) {
+    return (
+      <PageLayout
+        header={<Header title="Units" subtitle="" />}
+        body={
+          <div className="flex items-center justify-center h-[50vh]">
+            <Card className="w-96">
+              <CardHeader>
+                <CardTitle>Authentication Required</CardTitle>
+                <CardDescription>Please log in to view units</CardDescription>
+              </CardHeader>
+            </Card>
+          </div>
+        }
+      />
+    );
+  }
 
   if (isLoading) {
     return (

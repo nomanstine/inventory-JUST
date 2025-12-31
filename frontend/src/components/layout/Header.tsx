@@ -9,6 +9,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { Logo } from '@/components/Logo';
 
 export default function Header() {
   const { user, logout } = useAuth();
@@ -48,6 +49,7 @@ export default function Header() {
   return (
     <header className="bg-white border-b border-gray-200 px-4 lg:px-6 h-16 flex items-center justify-between sticky top-0 z-20">
       <div className="flex items-center gap-4">
+        <Logo size="md" showText href="/dashboard" />
         <div className="font-semibold text-xl text-gray-900">
           {/* Dashboard */}
         </div>

@@ -22,7 +22,7 @@ interface EditItemPageProps {
 }
 
 export default function EditItemPage({ params }: EditItemPageProps) {
-  const { isAuthenticated } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const { id: itemId } = use(params);
 
@@ -39,11 +39,23 @@ export default function EditItemPage({ params }: EditItemPageProps) {
     price: 0,
   });
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      router.push("/");
-    }
-  }, [isAuthenticated, router]);
+  if (!user) {
+    return (
+      <PageLayout
+        header={<Header title="Edit Item" subtitle="" />}
+        body={
+          <div className="flex items-center justify-center h-[50vh]">
+            <Card className="w-96">
+              <CardHeader>
+                <CardTitle>Authentication Required</CardTitle>
+                <CardDescription>Please log in to edit items</CardDescription>
+              </CardHeader>
+            </Card>
+          </div>
+        }
+      />
+    );
+  }
 
   useEffect(() => {
     if (item) {

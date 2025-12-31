@@ -42,24 +42,27 @@ interface InventorySummary {
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { isAuthenticated, user } = useAuth();
+  const { user } = useAuth();
 
   const { data: inventorySummary, isLoading: isLoadingInventory } = useMyOfficeInventorySummary();
   const { data: purchases = [], isLoading: isLoadingPurchases } = usePurchases();
   const { data: itemRequests = [], isLoading: isLoadingRequests } = useItemRequests();
   const { data: transactions = [], isLoading: isLoadingTransactions } = useMyOfficeTransactionHistory();
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      router.push("/");
-    }
-  }, [isAuthenticated, router]);
-
-  if (!isAuthenticated) {
+  if (!user) {
     return (
       <PageLayout
-        header={<Header title="Dashboard" subtitle="Loading..." />}
-        body={<div className="flex justify-center items-center h-64">Please wait...</div>}
+        header={<Header title="Dashboard" subtitle="" />}
+        body={
+          <div className="flex items-center justify-center h-[50vh]">
+            <Card className="w-96">
+              <CardHeader>
+                <CardTitle>Authentication Required</CardTitle>
+                <CardDescription>Please log in to view dashboard</CardDescription>
+              </CardHeader>
+            </Card>
+          </div>
+        }
       />
     );
   }

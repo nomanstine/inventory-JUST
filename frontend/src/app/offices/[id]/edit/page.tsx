@@ -31,7 +31,7 @@ const officeTypes = [
 ];
 
 export default function EditOfficePage({ params }: EditOfficePageProps) {
-  const { isAuthenticated } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const { id: officeId } = use(params);
 
@@ -50,11 +50,23 @@ export default function EditOfficePage({ params }: EditOfficePageProps) {
     parentId: undefined,
   });
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      router.push("/");
-    }
-  }, [isAuthenticated, router]);
+  if (!user) {
+    return (
+      <PageLayout
+        header={<Header title="Edit Office" subtitle="" />}
+        body={
+          <div className="flex items-center justify-center h-[50vh]">
+            <Card className="w-96">
+              <CardHeader>
+                <CardTitle>Authentication Required</CardTitle>
+                <CardDescription>Please log in to edit offices</CardDescription>
+              </CardHeader>
+            </Card>
+          </div>
+        }
+      />
+    );
+  }
 
   useEffect(() => {
     if (office) {

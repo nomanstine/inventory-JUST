@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 import { 
   PageLayout, 
@@ -40,7 +41,7 @@ const filterConfig = [
 
 export default function PurchasesPage() {
   const router = useRouter();
-  const { isAuthenticated, user } = useAuth();
+  const { user } = useAuth();
   
   const [showCreateDialog, setShowCreateDialog] = useState(false);
 
@@ -76,19 +77,20 @@ export default function PurchasesPage() {
     setPaginatedData(purchases);
   }, [purchases]);
 
-  // Redirect if not authenticated
-  useEffect(() => {
-    if (!isAuthenticated) {
-      router.push("/");
-    }
-  }, [isAuthenticated, router]);
-
-  // Show loading state while checking authentication
-  if (!isAuthenticated) {
+  if (!user) {
     return (
       <PageLayout
-        header={<Header title="Purchases" subtitle="Checking authentication..." />}
-        body={<div className="flex justify-center items-center h-64">Please wait...</div>}
+        header={<Header title="Purchases" subtitle="" />}
+        body={
+          <div className="flex items-center justify-center h-[50vh]">
+            <Card className="w-96">
+              <CardHeader>
+                <CardTitle>Authentication Required</CardTitle>
+                <CardDescription>Please log in to view purchases</CardDescription>
+              </CardHeader>
+            </Card>
+          </div>
+        }
       />
     );
   }

@@ -19,7 +19,7 @@ interface EditUnitPageProps {
 }
 
 export default function EditUnitPage({ params }: EditUnitPageProps) {
-  const { isAuthenticated } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const { id: unitId } = use(params);
 
@@ -31,11 +31,23 @@ export default function EditUnitPage({ params }: EditUnitPageProps) {
     description: "",
   });
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      router.push("/");
-    }
-  }, [isAuthenticated, router]);
+  if (!user) {
+    return (
+      <PageLayout
+        header={<Header title="Edit Unit" subtitle="" />}
+        body={
+          <div className="flex items-center justify-center h-[50vh]">
+            <Card className="w-96">
+              <CardHeader>
+                <CardTitle>Authentication Required</CardTitle>
+                <CardDescription>Please log in to edit units</CardDescription>
+              </CardHeader>
+            </Card>
+          </div>
+        }
+      />
+    );
+  }
 
   useEffect(() => {
     if (unit) {

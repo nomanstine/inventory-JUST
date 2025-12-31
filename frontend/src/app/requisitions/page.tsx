@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 import { 
   PageLayout, 
@@ -56,7 +57,7 @@ const filterConfig = [
 
 export default function RequisitionsPage() {
   const router = useRouter();
-  const { isAuthenticated, user } = useAuth();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'my-requests' | 'incoming' | 'approved' | 'fulfilled' | 'history'>('my-requests');
   
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -129,19 +130,20 @@ export default function RequisitionsPage() {
     setPaginatedData(currentData);
   }, [currentData]);
 
-  // Redirect if not authenticated
-  useEffect(() => {
-    if (!isAuthenticated) {
-      router.push("/");
-    }
-  }, [isAuthenticated, router]);
-
-  // Show loading state while checking authentication
-  if (!isAuthenticated) {
+  if (!user) {
     return (
       <PageLayout
-        header={<Header title="Requisitions" subtitle="Checking authentication..." />}
-        body={<div className="flex justify-center items-center h-64">Please wait...</div>}
+        header={<Header title="Requisitions" subtitle="" />}
+        body={
+          <div className="flex items-center justify-center h-[50vh]">
+            <Card className="w-96">
+              <CardHeader>
+                <CardTitle>Authentication Required</CardTitle>
+                <CardDescription>Please log in to view requisitions</CardDescription>
+              </CardHeader>
+            </Card>
+          </div>
+        }
       />
     );
   }

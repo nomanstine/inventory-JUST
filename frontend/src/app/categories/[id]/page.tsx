@@ -16,23 +16,26 @@ interface CategoryPageProps {
 }
 
 export default function CategoryPage({ params }: CategoryPageProps) {
-  const { isAuthenticated } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const { id: categoryId } = use(params);
 
   const { data: category, isLoading } = useCategory(parseInt(categoryId));
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      router.push("/");
-    }
-  }, [isAuthenticated, router]);
-
-  if (!isAuthenticated) {
+  if (!user) {
     return (
       <PageLayout
-        header={<Header title="Category" subtitle="Loading..." />}
-        body={<div className="flex justify-center items-center h-64">Loading...</div>}
+        header={<Header title="Category" subtitle="" />}
+        body={
+          <div className="flex items-center justify-center h-[50vh]">
+            <Card className="w-96">
+              <CardHeader>
+                <CardTitle>Authentication Required</CardTitle>
+                <CardDescription>Please log in to view category details</CardDescription>
+              </CardHeader>
+            </Card>
+          </div>
+        }
       />
     );
   }

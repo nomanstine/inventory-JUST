@@ -34,6 +34,11 @@ export default function RootLayout({
 
   return (
     <html lang="en">
+      <head>
+        <title>JUST Inventory Management System</title>
+        <meta name="description" content="Jashore University of Science and Technology - Inventory Management System" />
+        <link rel="icon" href="/JUST_Logo.svg" type="image/svg+xml" />
+      </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <Providers>
           <AuthProvider>

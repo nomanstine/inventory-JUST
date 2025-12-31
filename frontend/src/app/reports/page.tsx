@@ -127,24 +127,27 @@ const availableReports: ReportCard[] = [
 ];
 
 export default function ReportsPage() {
-  const { isAuthenticated } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      router.push("/");
-    }
-  }, [isAuthenticated, router]);
-
-  if (!isAuthenticated) {
+  if (!user) {
     return (
       <PageLayout
-        header={<Header title="Reports" subtitle="Loading..." />}
-        body={<div className="flex justify-center items-center h-64">Loading...</div>}
+        header={<Header title="Reports" subtitle="" />}
+        body={
+          <div className="flex items-center justify-center h-[50vh]">
+            <Card className="w-96">
+              <CardHeader>
+                <CardTitle>Authentication Required</CardTitle>
+                <CardDescription>Please log in to view reports</CardDescription>
+              </CardHeader>
+            </Card>
+          </div>
+        }
       />
     );
   }

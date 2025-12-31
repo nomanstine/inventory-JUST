@@ -13,7 +13,7 @@ import { ChangePasswordDialog } from "./components/ChangePasswordDialog";
 import { useUser } from "@/services/userService";
 
 export default function ProfilePage() {
-  const { isAuthenticated, user: currentUser } = useAuth();
+  const { user: currentUser } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const userId = searchParams.get("userId");
@@ -26,17 +26,20 @@ export default function ProfilePage() {
   const user = viewedUser || currentUser;
   const isOwnProfile = !userId || userId === currentUser?.id;
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      router.push("/");
-    }
-  }, [isAuthenticated, router]);
-
-  if (!isAuthenticated || (!user && !isLoadingUser)) {
+  if (!currentUser) {
     return (
       <PageLayout
-        header={<Header title="Profile" subtitle="Loading..." />}
-        body={<div className="flex justify-center items-center h-64">Loading...</div>}
+        header={<Header title="Profile" subtitle="" />}
+        body={
+          <div className="flex items-center justify-center h-[50vh]">
+            <Card className="w-96">
+              <CardHeader>
+                <CardTitle>Authentication Required</CardTitle>
+                <CardDescription>Please log in to view profile</CardDescription>
+              </CardHeader>
+            </Card>
+          </div>
+        }
       />
     );
   }

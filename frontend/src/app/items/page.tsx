@@ -27,6 +27,7 @@ import { useItems, Item } from "@/services/itemService";
 import { useCategories } from "@/services/categoryService";
 import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 const searchConfig = {
   placeholder: "Search items...",
@@ -110,7 +111,7 @@ function Body({ data }: { data: Item[] }){
 }
 
 export default function ItemsPage() {
-  const { isAuthenticated } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const [filteredData, setFilteredData] = useState<Item[]>([]);
   const [searchedData, setSearchedData] = useState<Item[]>([]);
@@ -119,16 +120,27 @@ export default function ItemsPage() {
   const { data: items = [], isLoading, error } = useItems();
   const { data: categories = [] } = useCategories();
 
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (!isAuthenticated) {
-      router.push("/");
-    }
-  }, [isAuthenticated, router]);
-
   useEffect(() => {
     setFilteredData(items);
   }, [items]);
+
+  if (!user) {
+    return (
+      <PageLayout
+        header={<Header title="Items" subtitle="" />}
+        body={
+          <div className="flex items-center justify-center h-[50vh]">
+            <Card className="w-96">
+              <CardHeader>
+                <CardTitle>Authentication Required</CardTitle>
+                <CardDescription>Please log in to view items</CardDescription>
+              </CardHeader>
+            </Card>
+          </div>
+        }
+      />
+    );
+  }
 
   // Create filter configs from categories
   const filterConfigs = [

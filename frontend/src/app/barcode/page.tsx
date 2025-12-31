@@ -3,14 +3,16 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useTrackByBarcode } from '@/services/trackingService';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function BarcodePage() {
+  const { user } = useAuth();
   const [barcode, setBarcode] = useState('');
   const [searchBarcode, setSearchBarcode] = useState('');
   const router = useRouter();
@@ -38,6 +40,22 @@ export default function BarcodePage() {
       handleSearch();
     }
   };
+
+  if (!user) {
+    return (
+      <div className="container mx-auto p-6">
+        <h1 className="text-3xl font-bold mb-6">Barcode Tracking</h1>
+        <div className="flex items-center justify-center h-[50vh]">
+          <Card className="w-96">
+            <CardHeader>
+              <CardTitle>Authentication Required</CardTitle>
+              <CardDescription>Please log in to track barcodes</CardDescription>
+            </CardHeader>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto p-6">

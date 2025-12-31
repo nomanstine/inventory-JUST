@@ -25,6 +25,7 @@ import { Button } from '@/components/ui/button';
 // import { SidebarItems } from '@/types/constant';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import { Logo } from '@/components/Logo';
 // import { canAccessRoute, Role } from '@/lib/policies';
 
 
@@ -114,10 +115,7 @@ export default function Sidebar() {
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-gray-200">
             {!isCollapsed && (
-              <div className="flex items-center gap-2">
-                <Package className="h-5 w-5 text-blue-600" />
-                <span className="font-semibold text-lg">Inventory</span>
-              </div>
+              <Logo size="md" showText href="/dashboard" />
             )}
             <Button
               variant="ghost"

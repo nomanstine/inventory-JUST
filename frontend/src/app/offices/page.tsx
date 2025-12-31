@@ -27,6 +27,7 @@ import { useChildOffices } from "@/services/officeService";
 import { Office } from "@/services/officeService";
 import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 const searchConfig = {
   placeholder: "Search offices...",
@@ -122,7 +123,7 @@ function Body({ data }: { data: Office[] }){
 }
 
 export default function OfficesPage() {
-  const { isAuthenticated, user } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const [filteredData, setFilteredData] = useState<Office[]>([]);
   const [searchedData, setSearchedData] = useState<Office[]>([]);
@@ -132,19 +133,20 @@ export default function OfficesPage() {
   const userOfficeId = user?.officeId ? parseInt(user.officeId) : 0;
   const { data: offices = [], isLoading, error } = useChildOffices(userOfficeId);
 
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (!isAuthenticated) {
-      router.push("/");
-    }
-  }, [isAuthenticated, router]);
-
-  // Don't render anything if not authenticated
-  if (!isAuthenticated) {
+  if (!user) {
     return (
       <PageLayout
-        header={<Header title="Offices" subtitle="Redirecting to login..." />}
-        body={<div className="flex justify-center items-center h-64">Checking authentication...</div>}
+        header={<Header title="Offices" subtitle="" />}
+        body={
+          <div className="flex items-center justify-center h-[50vh]">
+            <Card className="w-96">
+              <CardHeader>
+                <CardTitle>Authentication Required</CardTitle>
+                <CardDescription>Please log in to view offices</CardDescription>
+              </CardHeader>
+            </Card>
+          </div>
+        }
       />
     );
   }

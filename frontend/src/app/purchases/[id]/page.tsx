@@ -8,13 +8,33 @@ import { ArrowLeft, Package, FileText, Calendar, User, Building, DollarSign, Dow
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function PurchaseDetailPage() {
+  const { user } = useAuth();
   const params = useParams();
   const router = useRouter();
   const purchaseId = parseInt(params.id as string);
   
   const { data: purchase, isLoading, error } = usePurchase(purchaseId);
+
+  if (!user) {
+    return (
+      <PageLayout
+        header={<Header title="Purchase Details" subtitle="" />}
+        body={
+          <div className="flex items-center justify-center h-[50vh]">
+            <Card className="w-96">
+              <CardHeader>
+                <CardTitle>Authentication Required</CardTitle>
+                <CardDescription>Please log in to view purchase details</CardDescription>
+              </CardHeader>
+            </Card>
+          </div>
+        }
+      />
+    );
+  }
 
   const downloadPurchasePDF = () => {
     if (!purchase) return;
