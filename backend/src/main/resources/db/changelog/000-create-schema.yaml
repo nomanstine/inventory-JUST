@@ -178,9 +178,6 @@ databaseChangeLog:
                   name: description
                   type: VARCHAR(255)
               - column:
-                  name: price
-                  type: DOUBLE
-              - column:
                   name: category_id
                   type: BIGINT
                   constraints:
@@ -266,6 +263,9 @@ databaseChangeLog:
               - column:
                   name: remarks
                   type: VARCHAR(500)
+              - column:
+                  name: purchase_price
+                  type: DOUBLE
               - column:
                   name: created_at
                   type: TIMESTAMP
@@ -509,6 +509,11 @@ databaseChangeLog:
               - column:
                   name: remarks
                   type: VARCHAR(500)
+              - column:
+                  name: receipt_url
+                  type: VARCHAR(500)
+                  constraints:
+                    nullable: true
               - column:
                   name: purchased_date
                   type: TIMESTAMP

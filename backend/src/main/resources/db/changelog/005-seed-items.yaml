@@ -14,9 +14,6 @@ databaseChangeLog:
                   name: description
                   value: Dell OptiPlex 7090 with Intel i5, 8GB RAM, 256GB SSD
               - column:
-                  name: price
-                  value: 65000.00
-              - column:
                   name: category_id
                   value: 1
               - column:
@@ -33,9 +30,6 @@ databaseChangeLog:
                   name: description
                   value: HP ProBook 450 G8, Intel i7, 16GB RAM, 512GB SSD
               - column:
-                  name: price
-                  value: 85000.00
-              - column:
                   name: category_id
                   value: 1
               - column:
@@ -51,9 +45,6 @@ databaseChangeLog:
               - column:
                   name: description
                   value: Dell PowerEdge R740 Server, Xeon processor
-              - column:
-                  name: price
-                  value: 350000.00
               - column:
                   name: category_id
                   value: 1
@@ -72,9 +63,6 @@ databaseChangeLog:
                   name: description
                   value: Cisco ISR 1100 Series Router
               - column:
-                  name: price
-                  value: 45000.00
-              - column:
                   name: category_id
                   value: 2
               - column:
@@ -90,9 +78,6 @@ databaseChangeLog:
               - column:
                   name: description
                   value: 24-Port Gigabit Managed Switch
-              - column:
-                  name: price
-                  value: 18000.00
               - column:
                   name: category_id
                   value: 2
@@ -110,9 +95,6 @@ databaseChangeLog:
                   name: description
                   value: Ubiquiti UniFi AP AC Pro
               - column:
-                  name: price
-                  value: 8500.00
-              - column:
                   name: category_id
                   value: 2
               - column:
@@ -128,9 +110,6 @@ databaseChangeLog:
               - column:
                   name: description
                   value: Cat6 Ethernet cable, 305m roll
-              - column:
-                  name: price
-                  value: 12000.00
               - column:
                   name: category_id
                   value: 2
@@ -149,9 +128,6 @@ databaseChangeLog:
                   name: description
                   value: HP LaserJet Pro MFP M428fdw
               - column:
-                  name: price
-                  value: 42000.00
-              - column:
                   name: category_id
                   value: 3
               - column:
@@ -167,9 +143,6 @@ databaseChangeLog:
               - column:
                   name: description
                   value: Canon imageFORMULA DR-C225 II
-              - column:
-                  name: price
-                  value: 28000.00
               - column:
                   name: category_id
                   value: 3
@@ -188,9 +161,6 @@ databaseChangeLog:
                   name: description
                   value: Epson EB-2250U WUXGA 3LCD Projector
               - column:
-                  name: price
-                  value: 95000.00
-              - column:
                   name: category_id
                   value: 4
               - column:
@@ -207,9 +177,6 @@ databaseChangeLog:
                   name: description
                   value: Samsung 55 inch 4K LED Display
               - column:
-                  name: price
-                  value: 75000.00
-              - column:
                   name: category_id
                   value: 4
               - column:
@@ -225,9 +192,6 @@ databaseChangeLog:
               - column:
                   name: description
                   value: Shure BLX288/PG58 Dual Wireless System
-              - column:
-                  name: price
-                  value: 45000.00
               - column:
                   name: category_id
                   value: 4
@@ -246,9 +210,6 @@ databaseChangeLog:
                   name: description
                   value: Executive wooden desk with drawers, 5ft x 3ft
               - column:
-                  name: price
-                  value: 18000.00
-              - column:
                   name: category_id
                   value: 5
               - column:
@@ -264,9 +225,6 @@ databaseChangeLog:
               - column:
                   name: description
                   value: Ergonomic office chair with armrests
-              - column:
-                  name: price
-                  value: 8500.00
               - column:
                   name: category_id
                   value: 5
@@ -284,9 +242,6 @@ databaseChangeLog:
                   name: description
                   value: 4-drawer steel filing cabinet
               - column:
-                  name: price
-                  value: 12000.00
-              - column:
                   name: category_id
                   value: 5
               - column:
@@ -302,9 +257,6 @@ databaseChangeLog:
               - column:
                   name: description
                   value: Wooden bookshelf, 6ft height, 5 shelves
-              - column:
-                  name: price
-                  value: 15000.00
               - column:
                   name: category_id
                   value: 5
@@ -323,9 +275,6 @@ databaseChangeLog:
                   name: description
                   value: Single student desk with attached chair
               - column:
-                  name: price
-                  value: 4500.00
-              - column:
                   name: category_id
                   value: 6
               - column:
@@ -342,9 +291,6 @@ databaseChangeLog:
                   name: description
                   value: Wooden bench for 3 students
               - column:
-                  name: price
-                  value: 6500.00
-              - column:
                   name: category_id
                   value: 6
               - column:
@@ -360,9 +306,6 @@ databaseChangeLog:
               - column:
                   name: description
                   value: Magnetic whiteboard 6ft x 4ft with frame
-              - column:
-                  name: price
-                  value: 8500.00
               - column:
                   name: category_id
                   value: 6
@@ -381,9 +324,6 @@ databaseChangeLog:
                   name: description
                   value: 1000x magnification with LED illumination
               - column:
-                  name: price
-                  value: 35000.00
-              - column:
                   name: category_id
                   value: 7
               - column:
@@ -400,9 +340,6 @@ databaseChangeLog:
                   name: description
                   value: Complete set of beakers, flasks, test tubes
               - column:
-                  name: price
-                  value: 12000.00
-              - column:
                   name: category_id
                   value: 7
               - column:
@@ -418,9 +355,6 @@ databaseChangeLog:
               - column:
                   name: description
                   value: Digital hot plate with magnetic stirrer
-              - column:
-                  name: price
-                  value: 18000.00
               - column:
                   name: category_id
                   value: 7
@@ -439,9 +373,6 @@ databaseChangeLog:
                   name: description
                   value: Fluke 87V Digital Multimeter
               - column:
-                  name: price
-                  value: 28000.00
-              - column:
                   name: category_id
                   value: 8
               - column:
@@ -457,9 +388,6 @@ databaseChangeLog:
               - column:
                   name: description
                   value: Digital storage oscilloscope 100MHz
-              - column:
-                  name: price
-                  value: 85000.00
               - column:
                   name: category_id
                   value: 8
@@ -478,9 +406,6 @@ databaseChangeLog:
                   name: description
                   value: ABC type 5kg fire extinguisher
               - column:
-                  name: price
-                  value: 2500.00
-              - column:
                   name: category_id
                   value: 9
               - column:
@@ -497,9 +422,6 @@ databaseChangeLog:
                   name: description
                   value: Complete first aid kit for 50 people
               - column:
-                  name: price
-                  value: 3500.00
-              - column:
                   name: category_id
                   value: 9
               - column:
@@ -515,9 +437,6 @@ databaseChangeLog:
               - column:
                   name: description
                   value: Protective safety goggles for laboratory
-              - column:
-                  name: price
-                  value: 450.00
               - column:
                   name: category_id
                   value: 9
@@ -536,9 +455,6 @@ databaseChangeLog:
                   name: description
                   value: White A4 copier paper 80gsm
               - column:
-                  name: price
-                  value: 350.00
-              - column:
                   name: category_id
                   value: 10
               - column:
@@ -554,9 +470,6 @@ databaseChangeLog:
               - column:
                   name: description
                   value: Blue ballpoint pen
-              - column:
-                  name: price
-                  value: 15.00
               - column:
                   name: category_id
                   value: 10
@@ -574,9 +487,6 @@ databaseChangeLog:
                   name: description
                   value: Whiteboard marker pens, 4 colors
               - column:
-                  name: price
-                  value: 250.00
-              - column:
                   name: category_id
                   value: 10
               - column:
@@ -592,9 +502,6 @@ databaseChangeLog:
               - column:
                   name: description
                   value: Spiral notebook, 200 pages
-              - column:
-                  name: price
-                  value: 120.00
               - column:
                   name: category_id
                   value: 10
@@ -613,9 +520,6 @@ databaseChangeLog:
                   name: description
                   value: Heavy duty stapler, 50 sheet capacity
               - column:
-                  name: price
-                  value: 850.00
-              - column:
                   name: category_id
                   value: 11
               - column:
@@ -632,9 +536,6 @@ databaseChangeLog:
                   name: description
                   value: 2-hole paper punch, 40 sheet capacity
               - column:
-                  name: price
-                  value: 450.00
-              - column:
                   name: category_id
                   value: 11
               - column:
@@ -650,9 +551,6 @@ databaseChangeLog:
               - column:
                   name: description
                   value: Office scissors, 8 inch
-              - column:
-                  name: price
-                  value: 180.00
               - column:
                   name: category_id
                   value: 11
@@ -671,9 +569,6 @@ databaseChangeLog:
                   name: description
                   value: 8-piece screwdriver set with case
               - column:
-                  name: price
-                  value: 1200.00
-              - column:
                   name: category_id
                   value: 14
               - column:
@@ -689,9 +584,6 @@ databaseChangeLog:
               - column:
                   name: description
                   value: Cordless power drill with battery
-              - column:
-                  name: price
-                  value: 8500.00
               - column:
                   name: category_id
                   value: 14
@@ -710,9 +602,6 @@ databaseChangeLog:
                   name: description
                   value: Multipurpose floor cleaning liquid, 5L
               - column:
-                  name: price
-                  value: 650.00
-              - column:
                   name: category_id
                   value: 15
               - column:
@@ -728,9 +617,6 @@ databaseChangeLog:
               - column:
                   name: description
                   value: Complete mopping set with wringer bucket
-              - column:
-                  name: price
-                  value: 1800.00
               - column:
                   name: category_id
                   value: 15
@@ -749,9 +635,6 @@ databaseChangeLog:
                   name: description
                   value: 6-outlet extension cord, 5m cable
               - column:
-                  name: price
-                  value: 850.00
-              - column:
                   name: category_id
                   value: 18
               - column:
@@ -767,9 +650,6 @@ databaseChangeLog:
               - column:
                   name: description
                   value: 12W LED bulb, white light
-              - column:
-                  name: price
-                  value: 250.00
               - column:
                   name: category_id
                   value: 18
