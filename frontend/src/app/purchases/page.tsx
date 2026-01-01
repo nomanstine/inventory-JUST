@@ -58,6 +58,9 @@ export default function PurchasesPage() {
     setPurchaseDate,
     remarks,
     setRemarks,
+    receiptUrl,
+    receiptFile,
+    setReceipt,
     addItem,
     removeItem,
     updateItemQuantity,
@@ -162,10 +165,13 @@ export default function PurchasesPage() {
         invoiceNumber={invoiceNumber}
         purchaseDate={purchaseDate}
         remarks={remarks}
+        receiptUrl={receiptUrl}
+        receiptFile={receiptFile}
         onSupplierChange={setSupplier}
         onInvoiceNumberChange={setInvoiceNumber}
         onPurchaseDateChange={setPurchaseDate}
         onRemarksChange={setRemarks}
+        onReceiptChange={setReceipt}
         onAddItem={addItem}
         onRemoveItem={removeItem}
         onUpdateQuantity={updateItemQuantity}

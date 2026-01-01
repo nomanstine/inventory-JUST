@@ -19,6 +19,8 @@ export function usePurchaseForm() {
   const [invoiceNumber, setInvoiceNumber] = useState<string>("");
   const [purchaseDate, setPurchaseDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [remarks, setRemarks] = useState<string>("");
+  const [receiptUrl, setReceiptUrl] = useState<string>("");
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
 
   const createMutation = useCreatePurchase();
 
@@ -42,6 +44,11 @@ export function usePurchaseForm() {
     ));
   };
 
+  const setReceipt = (url: string, file: File | null) => {
+    setReceiptUrl(url);
+    setReceiptFile(file);
+  };
+
   const validateForm = (): boolean => {
     if (!supplier || purchaseItems.length === 0 || !purchaseDate) {
       return false;
@@ -55,6 +62,8 @@ export function usePurchaseForm() {
     setInvoiceNumber("");
     setPurchaseDate(new Date().toISOString().split('T')[0]);
     setRemarks("");
+    setReceiptUrl("");
+    setReceiptFile(null);
   };
 
   const createPurchase = async (): Promise<boolean> => {
@@ -71,6 +80,7 @@ export function usePurchaseForm() {
           unitPrice: item.unitPrice,
           supplier: supplier,
           remarks: remarks || undefined,
+          receiptUrl: receiptUrl || undefined,
         };
         return createMutation.mutateAsync(purchaseData);
       });
@@ -104,6 +114,9 @@ export function usePurchaseForm() {
     setPurchaseDate,
     remarks,
     setRemarks,
+    receiptUrl,
+    receiptFile,
+    setReceipt,
     addItem,
     removeItem,
     updateItemQuantity,

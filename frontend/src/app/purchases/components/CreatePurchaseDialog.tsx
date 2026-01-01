@@ -20,8 +20,10 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, Plus, Trash2, Package, Calculator, Calendar, FileText } from "lucide-react";
+import { Loader2, Plus, Trash2, Package, Calculator, Calendar, FileText, Upload, X, Image as ImageIcon } from "lucide-react";
 import { PurchaseItemLine } from "../hooks/usePurchaseForm";
+import { uploadToCloudinary } from "@/lib/cloudinary";
+import { toast } from "sonner";
 
 interface Item {
   id: number;
@@ -39,10 +41,13 @@ interface CreatePurchaseDialogProps {
   invoiceNumber: string;
   purchaseDate: string;
   remarks: string;
+  receiptUrl: string;
+  receiptFile: File | null;
   onSupplierChange: (value: string) => void;
   onInvoiceNumberChange: (value: string) => void;
   onPurchaseDateChange: (value: string) => void;
   onRemarksChange: (value: string) => void;
+  onReceiptChange: (url: string, file: File | null) => void;
   onAddItem: (itemId: number, itemName: string, quantity: number, unitPrice: number) => void;
   onRemoveItem: (index: number) => void;
   onUpdateQuantity: (index: number, quantity: number) => void;
@@ -60,10 +65,13 @@ export function CreatePurchaseDialog({
   invoiceNumber,
   purchaseDate,
   remarks,
+  receiptUrl,
+  receiptFile,
   onSupplierChange,
   onInvoiceNumberChange,
   onPurchaseDateChange,
   onRemarksChange,
+  onReceiptChange,
   onAddItem,
   onRemoveItem,
   onUpdateQuantity,
@@ -72,6 +80,8 @@ export function CreatePurchaseDialog({
   const [selectedItemId, setSelectedItemId] = useState<number>(0);
   const [itemQuantity, setItemQuantity] = useState<number>(1);
   const [itemUnitPrice, setItemUnitPrice] = useState<number>(0);
+  const [uploadingReceipt, setUploadingReceipt] = useState<boolean>(false);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
 
   const handleAddItem = () => {
     if (selectedItemId && itemQuantity > 0 && itemUnitPrice >= 0) {
@@ -83,6 +93,34 @@ export function CreatePurchaseDialog({
         setItemUnitPrice(0);
       }
     }
+  };
+
+  const handleReceiptUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingReceipt(true);
+    setUploadProgress(0);
+
+    try {
+      const result = await uploadToCloudinary(file, 'receipts', (progress) => {
+        setUploadProgress(progress);
+      });
+      
+      onReceiptChange(result.secure_url, file);
+      toast.success('Receipt uploaded successfully');
+    } catch (error: any) {
+      console.error('Receipt upload error:', error);
+      toast.error(error.message || 'Failed to upload receipt');
+      onReceiptChange('', null);
+    } finally {
+      setUploadingReceipt(false);
+      setUploadProgress(0);
+    }
+  };
+
+  const handleRemoveReceipt = () => {
+    onReceiptChange('', null);
   };
 
   const totalAmount = purchaseItems.reduce(
@@ -170,6 +208,77 @@ export function CreatePurchaseDialog({
                   rows={3}
                   className="resize-none"
                 />
+              </div>
+
+              {/* Receipt Upload */}
+              <div className="space-y-2">
+                <Label htmlFor="receipt" className="text-sm font-medium flex items-center gap-2">
+                  <Upload className="h-4 w-4" />
+                  Receipt / Invoice Document (Optional)
+                </Label>
+                {!receiptUrl ? (
+                  <div className="flex flex-col gap-2">
+                    <div className="relative">
+                      <Input
+                        id="receipt"
+                        type="file"
+                        accept="image/*,application/pdf"
+                        onChange={handleReceiptUpload}
+                        disabled={uploadingReceipt}
+                        className="cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
+                      />
+                      {uploadingReceipt && (
+                        <div className="absolute inset-0 bg-white/80 flex items-center justify-center rounded-md">
+                          <div className="flex items-center gap-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span className="text-sm">{uploadProgress}%</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Upload receipt image (JPEG, PNG, GIF, WebP) or PDF. Max 10MB.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="border rounded-lg p-3 bg-gray-50">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        {receiptFile && receiptFile.type.startsWith('image/') ? (
+                          <ImageIcon className="h-10 w-10 text-green-600" />
+                        ) : (
+                          <FileText className="h-10 w-10 text-blue-600" />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">
+                            {receiptFile?.name || 'Receipt uploaded'}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {receiptFile ? `${(receiptFile.size / 1024).toFixed(2)} KB` : 'Uploaded successfully'}
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleRemoveReceipt}
+                        className="h-8 w-8 p-0 hover:bg-red-50"
+                      >
+                        <X className="h-4 w-4 text-red-500" />
+                      </Button>
+                    </div>
+                    {receiptFile && receiptFile.type.startsWith('image/') && (
+                      <div className="mt-3 border-t pt-3">
+                        <img 
+                          src={receiptUrl} 
+                          alt="Receipt preview" 
+                          className="max-h-40 rounded object-contain mx-auto"
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

@@ -39,6 +39,9 @@ public class Purchase {
 
     private String remarks;
 
+    @Column(length = 500)
+    private String receiptUrl;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime purchasedDate;
 

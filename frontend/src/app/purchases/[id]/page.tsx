@@ -4,11 +4,12 @@ import { PageLayout, Header } from "@/components/page";
 import { usePurchase } from "@/services/purchaseService";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Package, FileText, Calendar, User, Building, DollarSign, Download } from "lucide-react";
+import { ArrowLeft, Package, FileText, Calendar, User, Building, DollarSign, Download, Receipt as ReceiptIcon, ExternalLink } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { getOptimizedImageUrl, downloadFile } from "@/lib/cloudinary";
 
 export default function PurchaseDetailPage() {
   const { user } = useAuth();
@@ -85,6 +86,22 @@ Generated on: ${new Date().toLocaleString()}
       toast.success('Purchase receipt downloaded');
     } catch (error) {
       console.error('Failed to download purchase receipt:', error);
+      toast.error('Failed to download receipt');
+    }
+  };
+
+  const handleDownloadReceipt = async () => {
+    if (!purchase?.receiptUrl) return;
+    
+    try {
+      const isPdf = purchase.receiptUrl.toLowerCase().endsWith('.pdf');
+      const extension = isPdf ? 'pdf' : 'jpg';
+      const filename = `receipt-purchase-${purchase.id}.${extension}`;
+      
+      await downloadFile(purchase.receiptUrl, filename);
+      toast.success('Receipt downloaded successfully');
+    } catch (error) {
+      console.error('Failed to download receipt:', error);
       toast.error('Failed to download receipt');
     }
   };
@@ -237,6 +254,80 @@ Generated on: ${new Date().toLocaleString()}
               </div>
             </CardContent>
           </Card>
+
+          {/* Receipt Display */}
+          {purchase.receiptUrl && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ReceiptIcon className="h-5 w-5" />
+                  Receipt / Invoice Document
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {purchase.receiptUrl.toLowerCase().endsWith('.pdf') ? (
+                    <div className="space-y-3">
+                      <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <div className="flex items-center gap-3">
+                          <FileText className="h-12 w-12 text-blue-600" />
+                          <div className="flex-1">
+                            <p className="font-medium text-gray-900">PDF Receipt</p>
+                            <p className="text-sm text-gray-500">Click to view the receipt document</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button 
+                          onClick={() => window.open(purchase.receiptUrl, '_blank')}
+                          className="flex-1"
+                        >
+                          <ExternalLink className="mr-2 h-4 w-4" />
+                          Open PDF
+                        </Button>
+                        <Button 
+                          variant="outline"
+                          onClick={handleDownloadReceipt}
+                        >
+                          <Download className="mr-2 h-4 w-4" />
+                          Download
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="border rounded-lg overflow-hidden bg-gray-50">
+                        <img
+                          src={getOptimizedImageUrl(purchase.receiptUrl, 800, undefined, 85)}
+                          alt="Purchase receipt"
+                          className="w-full h-auto"
+                          onClick={() => window.open(purchase.receiptUrl, '_blank')}
+                          style={{ cursor: 'pointer' }}
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="outline"
+                          onClick={() => window.open(purchase.receiptUrl, '_blank')}
+                          className="flex-1"
+                        >
+                          <ExternalLink className="mr-2 h-4 w-4" />
+                          View Full Size
+                        </Button>
+                        <Button 
+                          variant="outline"
+                          onClick={handleDownloadReceipt}
+                        >
+                          <Download className="mr-2 h-4 w-4" />
+                          Download
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Office and User Information */}
           <Card>

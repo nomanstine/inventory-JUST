@@ -1,0 +1,17 @@
+databaseChangeLog:
+  - changeSet:
+      id: 7-add-receipt-url-to-purchases
+      author: system
+      changes:
+        - addColumn:
+            tableName: purchases
+            columns:
+              - column:
+                  name: receipt_url
+                  type: VARCHAR(500)
+                  constraints:
+                    nullable: true
+      rollback:
+        - dropColumn:
+            tableName: purchases
+            columnName: receipt_url

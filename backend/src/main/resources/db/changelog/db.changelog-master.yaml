@@ -13,3 +13,5 @@ databaseChangeLog:
       file: db/changelog/005-seed-items.yaml
   - include:
       file: db/changelog/006-update-item-price.yaml
+  - include:
+      file: db/changelog/007-add-receipt-url-to-purchases.yaml

@@ -8,6 +8,7 @@ export interface Purchase {
   remarks?: string;
   quantity: number;
   unitPrice: number;
+  receiptUrl?: string;
   item: {
     id: number;
     name: string;
@@ -32,6 +33,7 @@ export interface PurchaseForm {
   unitPrice: number;
   supplier: string;
   remarks?: string;
+  receiptUrl?: string;
 }
 
 // Create a new purchase
