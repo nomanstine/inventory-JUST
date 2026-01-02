@@ -55,7 +55,7 @@ export default function DashboardPage() {
         header={<Header title="Dashboard" subtitle="" />}
         body={
           <div className="flex items-center justify-center h-[50vh]">
-            <Card className="w-96">
+            <Card className="w-full max-w-md">
               <CardHeader>
                 <CardTitle>Authentication Required</CardTitle>
                 <CardDescription>Please log in to view dashboard</CardDescription>
@@ -79,8 +79,6 @@ export default function DashboardPage() {
   const recentRequests = itemRequests.slice(0, 5);
   const recentTransactions = transactions.slice(0, 5);
 
-  const totalPurchaseValue = purchases.reduce((sum, p) => sum + (p.quantity * p.unitPrice), 0);
-
   return (
     <PageLayout
       header={
@@ -90,72 +88,72 @@ export default function DashboardPage() {
         />
       }
       body={
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Key Metrics Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Items</CardTitle>
-                <Package className="h-4 w-4 text-muted-foreground" />
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 sm:p-6">
+                <CardTitle className="text-xs sm:text-sm font-medium">Total Items</CardTitle>
+                <Package className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 sm:p-6 pt-0">
                 {isLoadingInventory ? (
                   <Skeleton className="h-8 w-16" />
                 ) : (
-                  <div className="text-2xl font-bold">{totalItems}</div>
+                  <div className="text-xl sm:text-2xl font-bold">{totalItems}</div>
                 )}
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground mt-1">
                   In inventory
                 </p>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Available Items</CardTitle>
-                <CheckCircle className="h-4 w-4 text-green-600" />
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 sm:p-6">
+                <CardTitle className="text-xs sm:text-sm font-medium">Available Items</CardTitle>
+                <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-green-600 flex-shrink-0" />
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 sm:p-6 pt-0">
                 {isLoadingInventory ? (
                   <Skeleton className="h-8 w-16" />
                 ) : (
-                  <div className="text-2xl font-bold text-green-600">{availableItems}</div>
+                  <div className="text-xl sm:text-2xl font-bold text-green-600">{availableItems}</div>
                 )}
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground mt-1">
                   Ready for use
                 </p>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">In Use</CardTitle>
-                <Clock className="h-4 w-4 text-blue-600" />
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 sm:p-6">
+                <CardTitle className="text-xs sm:text-sm font-medium">In Use</CardTitle>
+                <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600 flex-shrink-0" />
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 sm:p-6 pt-0">
                 {isLoadingInventory ? (
                   <Skeleton className="h-8 w-16" />
                 ) : (
-                  <div className="text-2xl font-bold text-blue-600">{inUseItems}</div>
+                  <div className="text-xl sm:text-2xl font-bold text-blue-600">{inUseItems}</div>
                 )}
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground mt-1">
                   Currently assigned
                 </p>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Pending Requests</CardTitle>
-                <AlertCircle className="h-4 w-4 text-orange-600" />
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 sm:p-6">
+                <CardTitle className="text-xs sm:text-sm font-medium">Pending Requests</CardTitle>
+                <AlertCircle className="h-3 w-3 sm:h-4 sm:w-4 text-orange-600 flex-shrink-0" />
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 sm:p-6 pt-0">
                 {isLoadingRequests ? (
                   <Skeleton className="h-8 w-16" />
                 ) : (
-                  <div className="text-2xl font-bold text-orange-600">{pendingRequests}</div>
+                  <div className="text-xl sm:text-2xl font-bold text-orange-600">{pendingRequests}</div>
                 )}
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground mt-1">
                   Awaiting approval
                 </p>
               </CardContent>
@@ -163,14 +161,14 @@ export default function DashboardPage() {
           </div>
 
           {/* Charts and Details */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             {/* Inventory Status Breakdown */}
             <Card>
-              <CardHeader>
-                <CardTitle>Inventory Status</CardTitle>
-                <CardDescription>Breakdown of items by status</CardDescription>
+              <CardHeader className="p-4 sm:p-6">
+                <CardTitle className="text-base sm:text-lg">Inventory Status</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">Breakdown of items by status</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 sm:p-6 pt-0">
                 {isLoadingInventory ? (
                   <div className="space-y-2">
                     <Skeleton className="h-4 w-full" />
@@ -178,27 +176,27 @@ export default function DashboardPage() {
                     <Skeleton className="h-4 w-1/2" />
                   </div>
                 ) : (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
+                  <div className="space-y-2 sm:space-y-3">
+                    <div className="flex items-center justify-between py-1">
                       <div className="flex items-center space-x-2">
-                        <CheckCircle className="h-4 w-4 text-green-600" />
-                        <span className="text-sm">Available</span>
+                        <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-green-600 flex-shrink-0" />
+                        <span className="text-xs sm:text-sm">Available</span>
                       </div>
-                      <Badge variant="secondary">{availableItems}</Badge>
+                      <Badge variant="secondary" className="text-xs">{availableItems}</Badge>
                     </div>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between py-1">
                       <div className="flex items-center space-x-2">
-                        <Clock className="h-4 w-4 text-blue-600" />
-                        <span className="text-sm">In Use</span>
+                        <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600 flex-shrink-0" />
+                        <span className="text-xs sm:text-sm">In Use</span>
                       </div>
-                      <Badge variant="secondary">{inUseItems}</Badge>
+                      <Badge variant="secondary" className="text-xs">{inUseItems}</Badge>
                     </div>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between py-1">
                       <div className="flex items-center space-x-2">
-                        <AlertCircle className="h-4 w-4 text-red-600" />
-                        <span className="text-sm">Damaged</span>
+                        <AlertCircle className="h-3 w-3 sm:h-4 sm:w-4 text-red-600 flex-shrink-0" />
+                        <span className="text-xs sm:text-sm">Damaged</span>
                       </div>
-                      <Badge variant="secondary">{damagedItems}</Badge>
+                      <Badge variant="secondary" className="text-xs">{damagedItems}</Badge>
                     </div>
                   </div>
                 )}
@@ -207,11 +205,11 @@ export default function DashboardPage() {
 
             {/* Recent Purchases */}
             <Card>
-              <CardHeader>
-                <CardTitle>Recent Purchases</CardTitle>
-                <CardDescription>Latest item acquisitions</CardDescription>
+              <CardHeader className="p-4 sm:p-6">
+                <CardTitle className="text-base sm:text-lg">Recent Purchases</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">Latest item acquisitions</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 sm:p-6 pt-0">
                 {isLoadingPurchases ? (
                   <div className="space-y-3">
                     <Skeleton className="h-4 w-full" />
@@ -219,61 +217,61 @@ export default function DashboardPage() {
                     <Skeleton className="h-4 w-1/2" />
                   </div>
                 ) : recentPurchases.length > 0 ? (
-                  <div className="space-y-3">
+                  <div className="space-y-2 sm:space-y-3">
                     {recentPurchases.map((purchase) => (
                       <div 
                         key={purchase.id} 
-                        className="flex items-center justify-between hover:bg-accent p-2 rounded-lg cursor-pointer transition-colors"
+                        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 sm:gap-2 hover:bg-accent p-2 rounded-lg cursor-pointer transition-colors"
                         onClick={() => router.push(`/purchases/${purchase.id}`)}
                       >
-                        <div>
-                          <p className="text-sm font-medium">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs sm:text-sm font-medium truncate">
                             {purchase.supplier} - {purchase.totalItems} item{purchase.totalItems !== 1 ? 's' : ''}
                           </p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs text-muted-foreground truncate">
                             {purchase.items.map(item => item.item.name).join(', ')}
                           </p>
                           <p className="text-xs text-muted-foreground">
                             Total: ৳{purchase.totalAmount.toFixed(2)}
                           </p>
                         </div>
-                        <Badge variant="outline">
+                        <Badge variant="outline" className="self-start sm:self-auto text-xs whitespace-nowrap">
                           {new Date(purchase.purchasedDate).toLocaleDateString()}
                         </Badge>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">No recent purchases</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground">No recent purchases</p>
                 )}
               </CardContent>
             </Card>
           </div>
 
           {/* Recent Activity */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             {/* Recent Item Requests */}
             <Card>
-              <CardHeader>
-                <CardTitle>Recent Requests</CardTitle>
-                <CardDescription>Latest item requests</CardDescription>
+              <CardHeader className="p-4 sm:p-6">
+                <CardTitle className="text-base sm:text-lg">Recent Requests</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">Latest item requests</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 sm:p-6 pt-0">
                 {isLoadingRequests ? (
                   <div className="space-y-3">
                     <Skeleton className="h-4 w-full" />
                     <Skeleton className="h-4 w-3/4" />
                   </div>
                 ) : recentRequests.length > 0 ? (
-                  <div className="space-y-3">
+                  <div className="space-y-2 sm:space-y-3">
                     {recentRequests.map((request) => (
                       <div 
                         key={request.id} 
-                        className="flex items-center justify-between hover:bg-accent p-2 rounded-lg cursor-pointer transition-colors"
+                        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 sm:gap-2 hover:bg-accent p-2 rounded-lg cursor-pointer transition-colors"
                         onClick={() => router.push('/requisitions')}
                       >
-                        <div>
-                          <p className="text-sm font-medium">{request.item.name}</p>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs sm:text-sm font-medium truncate">{request.item.name}</p>
                           <p className="text-xs text-muted-foreground">
                             {request.requestedQuantity} units • {request.status}
                           </p>
@@ -284,6 +282,7 @@ export default function DashboardPage() {
                             request.status === 'PENDING' ? 'secondary' :
                             request.status === 'REJECTED' ? 'destructive' : 'outline'
                           }
+                          className="self-start sm:self-auto text-xs"
                         >
                           {request.status}
                         </Badge>
@@ -291,25 +290,25 @@ export default function DashboardPage() {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">No recent requests</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground">No recent requests</p>
                 )}
               </CardContent>
             </Card>
 
             {/* Recent Transactions */}
             <Card>
-              <CardHeader>
-                <CardTitle>Recent Transactions</CardTitle>
-                <CardDescription>Latest item movements</CardDescription>
+              <CardHeader className="p-4 sm:p-6">
+                <CardTitle className="text-base sm:text-lg">Recent Transactions</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">Latest item movements</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 sm:p-6 pt-0">
                 {isLoadingTransactions ? (
                   <div className="space-y-3">
                     <Skeleton className="h-4 w-full" />
                     <Skeleton className="h-4 w-3/4" />
                   </div>
                 ) : recentTransactions.length > 0 ? (
-                  <div className="space-y-3">
+                  <div className="space-y-2 sm:space-y-3">
                     {recentTransactions.map((transaction) => {
                       const isOutgoing = transaction.fromOffice.id === summary?.officeId;
                       const otherOffice = isOutgoing ? transaction.toOffice.name : transaction.fromOffice.name;
@@ -318,16 +317,16 @@ export default function DashboardPage() {
                       return (
                         <div 
                           key={transaction.id} 
-                          className="flex items-center justify-between hover:bg-accent p-2 rounded-lg cursor-pointer transition-colors"
+                          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 sm:gap-2 hover:bg-accent p-2 rounded-lg cursor-pointer transition-colors"
                           onClick={() => router.push('/inventory')}
                         >
-                          <div>
-                            <p className="text-sm font-medium">{transaction.itemInstance.item.name}</p>
-                            <p className="text-xs text-muted-foreground">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs sm:text-sm font-medium truncate">{transaction.itemInstance.item.name}</p>
+                            <p className="text-xs text-muted-foreground truncate">
                               {transaction.transactionType} • {direction} {otherOffice}
                             </p>
                           </div>
-                          <Badge variant="outline">
+                          <Badge variant="outline" className="self-start sm:self-auto text-xs whitespace-nowrap">
                             {new Date(transaction.transactionDate).toLocaleDateString()}
                           </Badge>
                         </div>
@@ -335,7 +334,7 @@ export default function DashboardPage() {
                     })}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">No recent transactions</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground">No recent transactions</p>
                 )}
               </CardContent>
             </Card>
@@ -344,22 +343,22 @@ export default function DashboardPage() {
           {/* Top Items */}
           {summary?.items && summary.items.length > 0 && (
             <Card>
-              <CardHeader>
-                <CardTitle>Top Items</CardTitle>
-                <CardDescription>Most stocked items in your inventory</CardDescription>
+              <CardHeader className="p-4 sm:p-6">
+                <CardTitle className="text-base sm:text-lg">Top Items</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">Most stocked items in your inventory</CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
+              <CardContent className="p-4 sm:p-6 pt-0">
+                <div className="space-y-2 sm:space-y-3">
                   {summary.items.slice(0, 5).map((item) => (
-                    <div key={item.itemId} className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium">{item.itemName}</p>
+                    <div key={item.itemId} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 sm:gap-2 py-1">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs sm:text-sm font-medium truncate">{item.itemName}</p>
                         <p className="text-xs text-muted-foreground">
                           Available: {item.statusBreakdown.AVAILABLE || 0} •
                           In Use: {item.statusBreakdown.IN_USE || 0}
                         </p>
                       </div>
-                      <Badge variant="secondary">{item.quantity} total</Badge>
+                      <Badge variant="secondary" className="self-start sm:self-auto text-xs whitespace-nowrap">{item.quantity} total</Badge>
                     </div>
                   ))}
                 </div>
