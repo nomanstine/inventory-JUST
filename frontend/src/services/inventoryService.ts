@@ -1,5 +1,6 @@
 import api from "@/lib/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Purchase } from "./purchaseService";
 
 export interface ItemInstance {
   id: number;
@@ -50,39 +51,6 @@ export interface InventorySummary {
   totalValue: number;
   itemsByCategory: Record<string, number>;
   itemsByStatus: Record<string, number>;
-}
-
-export interface Purchase {
-  id: number;
-  item: {
-    id: number;
-    name: string;
-    description?: string;
-    category?: {
-      id: number;
-      name: string;
-    };
-    unit?: {
-      id: number;
-      name: string;
-    };
-    price?: number;
-  };
-  quantity: number;
-  purchasedBy: {
-    id: number;
-    fullName: string;
-    username: string;
-  };
-  office: {
-    id: number;
-    name: string;
-    code?: string;
-  };
-  unitPrice: number;
-  supplier?: string;
-  remarks?: string;
-  purchasedDate: string;
 }
 
 export interface ItemTransaction {

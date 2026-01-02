@@ -1,14 +1,13 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { Fragment } from "react";
 
 import {
   PageLayout,
   Header
 } from "@/components/page";
 
-import { FilterGroup as Filter } from "@/components/filters";
-import { SearchGroup as Search } from "@/components/search";
 import { PaginationGroup as Pagination } from "@/components/pagination";
 
 import {
@@ -20,25 +19,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Eye, Package, History } from "lucide-react";
-import { useTableActions } from "@/hooks/useTableActions";
+import { Eye, Package, History, ChevronDown, ChevronRight } from "lucide-react";
 import { 
   useMyOfficeInventory, 
   ItemInstance, 
   useMyOfficePurchases, 
-  Purchase, 
   useMyOfficeTransactionHistory, 
   ItemTransaction 
 } from "@/services/inventoryService";
+import { Purchase, PurchaseItem } from "@/services/purchaseService";
 import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-const searchConfig = {
-  placeholder: "Search inventory items...",
-  searchKeys: ["barcode"],
-};
 
 const paginationConfig = {
   itemsPerPage: 10,
@@ -67,8 +60,44 @@ const searchInInventory = (items: ItemInstance[], query: string): ItemInstance[]
   );
 };
 
-function Body({ data }: { data: ItemInstance[] }){
+type GroupedItem = {
+  itemId: number;
+  itemName: string;
+  category: any;
+  instances: ItemInstance[];
+};
+
+const groupItemsByName = (items: ItemInstance[]): GroupedItem[] => {
+  const grouped = items.reduce((acc, instance) => {
+    const key = `${instance.item.id}-${instance.item.name}`;
+    if (!acc[key]) {
+      acc[key] = {
+        itemId: instance.item.id,
+        itemName: instance.item.name,
+        category: instance.item.category,
+        instances: []
+      };
+    }
+    acc[key].instances.push(instance);
+    return acc;
+  }, {} as Record<string, GroupedItem>);
+  
+  return Object.values(grouped);
+};
+
+function Body({ data }: { data: GroupedItem[] }){
   const router = useRouter();
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+
+  const toggleGroup = (key: string) => {
+    const newExpanded = new Set(expandedGroups);
+    if (newExpanded.has(key)) {
+      newExpanded.delete(key);
+    } else {
+      newExpanded.add(key);
+    }
+    setExpandedGroups(newExpanded);
+  };
   
   const handleView = (item: ItemInstance) => {
     router.push(`/barcode?barcode=${item.barcode}`);
@@ -81,37 +110,73 @@ function Body({ data }: { data: ItemInstance[] }){
         <TableCaption>Inventory items belonging to your office.</TableCaption>
         <TableHeader>
           <TableRow>
-            <TableHead>Barcode</TableHead>
+            <TableHead className="w-10"></TableHead>
             <TableHead>Item Name</TableHead>
             <TableHead>Category</TableHead>
+            <TableHead>Quantity</TableHead>
+            <TableHead>Barcode</TableHead>
             <TableHead>Purchase Date</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {data.map((instance) => (
-          <TableRow key={instance.id}>
-            <TableCell className="font-mono font-medium">{instance.barcode}</TableCell>
-            <TableCell className="font-medium">{instance.item.name}</TableCell>
-            <TableCell>
-              {instance.item.category ? (
-                <Badge variant="outline">{instance.item.category.name}</Badge>
-              ) : (
-                <span className="text-gray-400">-</span>
-              )}
-            </TableCell>
-            <TableCell>
-              {instance.purchaseDate ? (
-                new Date(instance.purchaseDate).toLocaleDateString()
-              ) : (
-                <span className="text-gray-400">-</span>
-              )}
-            </TableCell>
-            <TableCell>
-              <RowActions item={instance} onView={handleView} />
-            </TableCell>
-          </TableRow>
-          ))}
+          {data.map((group) => {
+            const key = `${group.itemId}-${group.itemName}`;
+            const isExpanded = expandedGroups.has(key);
+            
+            return (
+              <Fragment key={key}>
+                {/* Group Header Row */}
+                <TableRow 
+                  className="bg-muted/50 hover:bg-muted cursor-pointer font-medium"
+                  onClick={() => toggleGroup(key)}
+                >
+                  <TableCell>
+                    {isExpanded ? (
+                      <ChevronDown className="w-4 h-4" />
+                    ) : (
+                      <ChevronRight className="w-4 h-4" />
+                    )}
+                  </TableCell>
+                  <TableCell className="font-semibold">{group.itemName}</TableCell>
+                  <TableCell>
+                    {group.category ? (
+                      <Badge variant="outline">{group.category.name}</Badge>
+                    ) : (
+                      <span className="text-gray-400">-</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="secondary">{group.instances.length} items</Badge>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">-</TableCell>
+                  <TableCell className="text-muted-foreground">-</TableCell>
+                  <TableCell></TableCell>
+                </TableRow>
+
+                {/* Individual Instance Rows */}
+                {isExpanded && group.instances.map((instance) => (
+                  <TableRow key={instance.id} className="bg-background/50 border-l-4 border-l-muted">
+                    <TableCell className="w-10"></TableCell>
+                    <TableCell className="pl-8 text-muted-foreground">↳</TableCell>
+                    <TableCell></TableCell>
+                    <TableCell></TableCell>
+                    <TableCell className="font-mono text-sm">{instance.barcode}</TableCell>
+                    <TableCell className="text-sm">
+                      {instance.purchaseDate ? (
+                        new Date(instance.purchaseDate).toLocaleDateString()
+                      ) : (
+                        <span className="text-gray-400">-</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <RowActions item={instance} onView={handleView} />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </Fragment>
+            );
+          })}
         </TableBody>
       </Table>
     </div>
@@ -119,18 +184,27 @@ function Body({ data }: { data: ItemInstance[] }){
   )
 }
 
+type HistoryItem = {
+  type: string;
+  itemName: string;
+  source: string;
+  quantity: number;
+  date: string;
+  reason: string;
+};
+
 function HistoryTable({ purchases, transactions }: { purchases: Purchase[], transactions: ItemTransaction[] }) {
   const { user } = useAuth();
   
   // Create combined history with + and - indicators
-  const historyItems = [
-    // Additions (+) - flatten purchase items
+  const allItems = [
+    // Additions (+) - from purchases (flatten items array)
     ...purchases.flatMap(purchase => 
-      purchase.items.map(item => ({
+      (purchase.items || []).map((item: PurchaseItem) => ({
         type: '+',
-        itemName: item.item.name,
+        itemName: item.item?.name || 'Unknown Item',
         source: purchase.supplier || 'Supplier',
-        quantity: item.quantity,
+        quantity: item.quantity || 1,
         date: purchase.purchasedDate,
         reason: 'Purchase'
       }))
@@ -152,7 +226,27 @@ function HistoryTable({ purchases, transactions }: { purchases: Purchase[], tran
       date: transaction.transactionDate,
       reason: 'Transfer Out'
     }))
-  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  ];
+
+  // Group items by date, type, reason, source, and item name
+  const groupedItems = allItems.reduce((acc, item) => {
+    const key = `${item.date}-${item.type}-${item.reason}-${item.source}-${item.itemName}`;
+    if (!acc[key]) {
+      acc[key] = {
+        type: item.type,
+        itemName: item.itemName,
+        source: item.source,
+        date: item.date,
+        reason: item.reason,
+        quantity: 0
+      };
+    }
+    acc[key].quantity += item.quantity;
+    return acc;
+  }, {} as Record<string, HistoryItem>);
+
+  const historyItems = Object.values(groupedItems)
+    .sort((a: HistoryItem, b: HistoryItem) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   return (
     <>
@@ -170,19 +264,27 @@ function HistoryTable({ purchases, transactions }: { purchases: Purchase[], tran
             </TableRow>
           </TableHeader>
           <TableBody>
-            {historyItems.map((item, index) => (
-              <TableRow key={`${item.type}-${index}`}>
-                <TableCell className="font-medium">{item.itemName}</TableCell>
-                <TableCell>{item.source}</TableCell>
-                <TableCell className={`font-medium ${item.type === '+' ? 'text-green-600' : 'text-red-600'}`}>
-                  {item.type === '+' ? '+' : '-'}{item.quantity}
-                </TableCell>
-                <TableCell>{item.reason}</TableCell>
-                <TableCell>
-                  {new Date(item.date).toLocaleDateString()}
+            {historyItems.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                  No transaction history available
                 </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              historyItems.map((item: HistoryItem, index: number) => (
+                <TableRow key={`${item.type}-${index}`}>
+                  <TableCell className="font-medium">{item.itemName}</TableCell>
+                  <TableCell>{item.source}</TableCell>
+                  <TableCell className={`font-medium ${item.type === '+' ? 'text-green-600' : 'text-red-600'}`}>
+                    {item.type === '+' ? '+' : '-'}{item.quantity}
+                  </TableCell>
+                  <TableCell>{item.reason}</TableCell>
+                  <TableCell>
+                    {new Date(item.date).toLocaleDateString()}
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
@@ -197,12 +299,20 @@ export default function InventoryPage() {
   const { data: transactions = [], isLoading: transactionsLoading, error: transactionsError } = useMyOfficeTransactionHistory();
   
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchedData, setSearchedData] = useState<ItemInstance[]>([]);
-  const [paginatedData, setPaginatedData] = useState<ItemInstance[]>([]);
+  const [groupedData, setGroupedData] = useState<GroupedItem[]>([]);
+  const [paginatedData, setPaginatedData] = useState<GroupedItem[]>([]);
+
+  // Calculate actual history count (all purchase items + incoming/outgoing non-pending transactions)
+  const historyCount = purchases.reduce((sum, purchase) => sum + (purchase.items?.length || 0), 0) + 
+    transactions.filter(t => 
+      t.status !== 'PENDING' && 
+      (t.toOffice.id === parseInt(user?.officeId || '0') || t.fromOffice.id === parseInt(user?.officeId || '0'))
+    ).length;
 
   useEffect(() => {
     const filtered = searchInInventory(items, searchQuery);
-    setSearchedData(filtered);
+    const grouped = groupItemsByName(filtered);
+    setGroupedData(grouped);
   }, [items, searchQuery]);
 
   if (!user) {
@@ -271,11 +381,11 @@ export default function InventoryPage() {
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="current" className="flex items-center gap-2">
                 <Package className="w-4 h-4" />
-                Current Items ({items.length})
+                Current Items ({groupedData.length} unique, {items.length} total)
               </TabsTrigger>
               <TabsTrigger value="history" className="flex items-center gap-2">
                 <History className="w-4 h-4" />
-                History ({purchases.length + transactions.filter(t => t.status !== 'PENDING').length})
+                History ({historyCount})
               </TabsTrigger>
             </TabsList>
 
@@ -291,7 +401,7 @@ export default function InventoryPage() {
                 />
               </div>
 
-              {searchedData.length === 0 ? (
+              {groupedData.length === 0 ? (
                 <div className="flex items-center justify-center h-[30vh]">
                   <div className="text-center">
                     <Package className="w-12 h-12 mx-auto mb-4 text-gray-400" />
@@ -306,7 +416,7 @@ export default function InventoryPage() {
                 <>
                   <Body data={paginatedData} />
                   <Pagination
-                    data={searchedData}
+                    data={groupedData}
                     config={paginationConfig}
                     onPaginatedData={setPaginatedData}
                   />
