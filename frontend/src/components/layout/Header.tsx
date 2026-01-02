@@ -49,15 +49,19 @@ export default function Header() {
   return (
     <header className="bg-white border-b border-gray-200 px-4 lg:px-6 h-16 flex items-center justify-between sticky top-0 z-20">
       <div className="flex items-center gap-4">
-        <Logo size="md" showText href="/dashboard" />
-        <div className="font-semibold text-xl text-gray-900">
+        {/* Logo - hidden on mobile since sidebar has it */}
+        <div className="hidden md:block">
+          <Logo size="md" showText href="/dashboard" />
+        </div>
+        {/* Title - add padding on mobile to account for sidebar button */}
+        <div className="font-semibold text-xl text-gray-900 md:ml-0 ml-14">
           {/* Dashboard */}
         </div>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 md:gap-4">
         {/* Barcode Scanner Search */}
-        <form onSubmit={handleBarcodeSearch} className="relative hidden sm:block">
+        <form onSubmit={handleBarcodeSearch} className="relative hidden lg:block">
           <ScanLine className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
           <Input
             type="text"
@@ -78,6 +82,18 @@ export default function Header() {
           </Button>
         </form>
 
+        {/* Quick Barcode Button on Mobile */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="lg:hidden"
+          asChild
+        >
+          <Link href="/barcode">
+            <ScanLine className="h-5 w-5" />
+          </Link>
+        </Button>
+
         {/* User Menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -89,7 +105,7 @@ export default function Header() {
                 </AvatarFallback>
               </Avatar>
               <span className="hidden sm:block">{user?.name || user?.username || 'User'}</span>
-              <ChevronDown className="h-4 w-4" />
+              <ChevronDown className="h-4 w-4 hidden sm:block" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
