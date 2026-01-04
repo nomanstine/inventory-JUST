@@ -39,6 +39,8 @@ public class PurchaseResponse {
         private Double quantity;
         private Double unitPrice;
         private Double totalPrice;
+        private List<Long> itemInstanceIds; // IDs of created item instances
+        private List<String> itemBarcodes;  // Barcodes of created item instances
     }
     
     @Data

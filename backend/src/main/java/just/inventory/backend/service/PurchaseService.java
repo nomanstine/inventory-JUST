@@ -62,6 +62,9 @@ public class PurchaseService {
             // Link to purchase
             purchaseItem.setPurchase(savedPurchase);
             
+            // Store created item instances
+            java.util.List<ItemInstance> createdInstances = new java.util.ArrayList<>();
+            
             // Create item instances for this purchase item
             for (int i = 0; i < purchaseItem.getQuantity(); i++) {
                 ItemInstance instance = new ItemInstance();
@@ -75,7 +78,8 @@ public class PurchaseService {
                 instance.setStatus(ItemInstance.ItemStatus.AVAILABLE);
                 instance.setPurchaseDate(savedPurchase.getPurchasedDate());
                 instance.setPurchasePrice(purchaseItem.getUnitPrice());
-                itemInstanceRepository.save(instance);
+                ItemInstance savedInstance = itemInstanceRepository.save(instance);
+                createdInstances.add(savedInstance);
             }
         }
         
@@ -93,5 +97,17 @@ public class PurchaseService {
 
     public List<Purchase> getPurchasesByOffice(Long officeId) {
         return purchaseRepository.findByOfficeId(officeId);
+    }
+    
+    /**
+     * Get item instances for a specific purchase item
+     * This queries instances by item, office and purchase date
+     */
+    public List<ItemInstance> getItemInstancesForPurchase(Long itemId, Long officeId, Purchase purchase) {
+        return itemInstanceRepository.findByItemIdAndOwnerOfficeId(itemId, officeId)
+                .stream()
+                .filter(instance -> instance.getPurchaseDate() != null && 
+                        instance.getPurchaseDate().equals(purchase.getPurchasedDate()))
+                .collect(java.util.stream.Collectors.toList());
     }
 }

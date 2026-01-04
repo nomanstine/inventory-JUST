@@ -23,6 +23,7 @@ import { useItems } from "@/services/itemService";
 import { CreatePurchaseDialog } from "./components/CreatePurchaseDialog";
 import { PurchasesTable } from "./components/PurchasesTable";
 import { usePurchaseForm } from "./hooks/usePurchaseForm";
+import { BarcodePrintDialog } from "@/components/BarcodePrintDialog";
 
 const searchConfig = {
   placeholder: "Search by supplier, invoice number...",
@@ -44,6 +45,8 @@ export default function PurchasesPage() {
   const { user } = useAuth();
   
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showBarcodeDialog, setShowBarcodeDialog] = useState(false);
+  const [barcodeItems, setBarcodeItems] = useState<{ itemInstanceId: number; barcode: string; itemName: string; }[]>([]);
 
   const { data: purchases = [], isLoading } = usePurchases();
   const { data: items = [] } = useItems();
@@ -100,10 +103,32 @@ export default function PurchasesPage() {
 
   const handleCreatePurchase = async () => {
     try {
-      await createPurchase();
+      const result = await createPurchase();
       const itemCount = purchaseItems.length;
       toast.success(`Successfully created purchase with ${itemCount} item${itemCount !== 1 ? 's' : ''}`);
       setShowCreateDialog(false);
+      
+      // Extract item instances from the created purchase for barcode printing
+      if (result && result.items) {
+        const allInstances: { itemInstanceId: number; barcode: string; itemName: string; }[] = [];
+        result.items.forEach((item: any) => {
+          if (item.itemInstanceIds && item.itemBarcodes) {
+            item.itemInstanceIds.forEach((id: number, index: number) => {
+              allInstances.push({
+                itemInstanceId: id,
+                barcode: item.itemBarcodes[index],
+                itemName: item.item.name
+              });
+            });
+          }
+        });
+        
+        // Show barcode print dialog if we have instances
+        if (allInstances.length > 0) {
+          setBarcodeItems(allInstances);
+          setShowBarcodeDialog(true);
+        }
+      }
     } catch (error) {
       console.error("Failed to create purchase:", error);
       const errorMessage = error instanceof Error ? error.message : "Failed to create purchase";
@@ -176,6 +201,13 @@ export default function PurchasesPage() {
         onRemoveItem={removeItem}
         onUpdateQuantity={updateItemQuantity}
         onUpdateUnitPrice={updateItemUnitPrice}
+      />
+
+      <BarcodePrintDialog
+        open={showBarcodeDialog}
+        onOpenChange={setShowBarcodeDialog}
+        items={barcodeItems}
+        title="Print Barcode Labels for New Purchase"
       />
     </>
   );

@@ -10,6 +10,8 @@ export interface PurchaseItem {
   quantity: number;
   unitPrice: number;
   totalPrice: number;
+  itemInstanceIds?: number[];  // IDs of created item instances
+  itemBarcodes?: string[];     // Barcodes of created item instances
 }
 
 export interface Purchase {

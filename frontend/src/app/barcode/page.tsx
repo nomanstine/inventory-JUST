@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useTrackByBarcode } from '@/services/trackingService';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -16,9 +16,15 @@ export default function BarcodePage() {
   const [barcode, setBarcode] = useState('');
   const [searchBarcode, setSearchBarcode] = useState('');
   const router = useRouter();
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const searchParams = useSearchParams();
   const barcodeParam = searchParams.get('barcode');
+
+  useEffect(() => {
+    // Auto-focus the input field when component mounts
+    inputRef.current?.focus();
+  }, []);
 
   useEffect(() => {
     if (barcodeParam && !barcode) {
@@ -68,6 +74,7 @@ export default function BarcodePage() {
         <CardContent>
           <div className="flex gap-2">
             <Input
+              ref={inputRef}
               type="text"
               placeholder="Enter barcode..."
               value={barcode}

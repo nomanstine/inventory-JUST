@@ -19,7 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Eye, Package, History, ChevronDown, ChevronRight } from "lucide-react";
+import { Eye, Package, History, ChevronDown, ChevronRight, QrCode } from "lucide-react";
 import { 
   useMyOfficeInventory, 
   ItemInstance, 
@@ -32,6 +32,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { BarcodePrintDialog } from "@/components/BarcodePrintDialog";
 
 const paginationConfig = {
   itemsPerPage: 10,
@@ -39,11 +41,16 @@ const paginationConfig = {
   maxVisiblePages: 5,
 };
 
-const RowActions = ({ item, onView }: { item: ItemInstance, onView: (item: any) => void }) => (
+const RowActions = ({ item, onView, onPrintBarcode }: { item: ItemInstance, onView: (item: any) => void, onPrintBarcode: (item: ItemInstance) => void }) => (
   <div className="flex gap-2">
     <Eye
       className="w-5 h-5 cursor-pointer hover:text-blue-600"
       onClick={() => onView(item)}
+    />
+    <QrCode
+      className="w-5 h-5 cursor-pointer hover:text-green-600"
+      onClick={() => onPrintBarcode(item)}
+      title="Print Barcode"
     />
   </div>
 );
@@ -85,7 +92,11 @@ const groupItemsByName = (items: ItemInstance[]): GroupedItem[] => {
   return Object.values(grouped);
 };
 
-function Body({ data }: { data: GroupedItem[] }){
+function Body({ data, onPrintBarcode, onPrintGroupBarcodes }: { 
+  data: GroupedItem[], 
+  onPrintBarcode: (item: ItemInstance) => void,
+  onPrintGroupBarcodes: (group: GroupedItem) => void
+}){
   const router = useRouter();
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
@@ -128,30 +139,46 @@ function Body({ data }: { data: GroupedItem[] }){
               <Fragment key={key}>
                 {/* Group Header Row */}
                 <TableRow 
-                  className="bg-muted/50 hover:bg-muted cursor-pointer font-medium"
-                  onClick={() => toggleGroup(key)}
+                  className="bg-muted/50 hover:bg-muted font-medium"
                 >
-                  <TableCell>
+                  <TableCell 
+                    className="cursor-pointer"
+                    onClick={() => toggleGroup(key)}
+                  >
                     {isExpanded ? (
                       <ChevronDown className="w-4 h-4" />
                     ) : (
                       <ChevronRight className="w-4 h-4" />
                     )}
                   </TableCell>
-                  <TableCell className="font-semibold">{group.itemName}</TableCell>
-                  <TableCell>
+                  <TableCell 
+                    className="font-semibold cursor-pointer"
+                    onClick={() => toggleGroup(key)}
+                  >
+                    {group.itemName}
+                  </TableCell>
+                  <TableCell onClick={() => toggleGroup(key)} className="cursor-pointer">
                     {group.category ? (
                       <Badge variant="outline">{group.category.name}</Badge>
                     ) : (
                       <span className="text-gray-400">-</span>
                     )}
                   </TableCell>
-                  <TableCell>
+                  <TableCell onClick={() => toggleGroup(key)} className="cursor-pointer">
                     <Badge variant="secondary">{group.instances.length} items</Badge>
                   </TableCell>
-                  <TableCell className="text-muted-foreground">-</TableCell>
-                  <TableCell className="text-muted-foreground">-</TableCell>
-                  <TableCell></TableCell>
+                  <TableCell className="text-muted-foreground" onClick={() => toggleGroup(key)}>-</TableCell>
+                  <TableCell className="text-muted-foreground" onClick={() => toggleGroup(key)}>-</TableCell>
+                  <TableCell>
+                    <QrCode
+                      className="w-5 h-5 cursor-pointer hover:text-green-600"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onPrintGroupBarcodes(group);
+                      }}
+                      title={`Print all barcodes for ${group.itemName}`}
+                    />
+                  </TableCell>
                 </TableRow>
 
                 {/* Individual Instance Rows */}
@@ -170,7 +197,7 @@ function Body({ data }: { data: GroupedItem[] }){
                       )}
                     </TableCell>
                     <TableCell>
-                      <RowActions item={instance} onView={handleView} />
+                      <RowActions item={instance} onView={handleView} onPrintBarcode={onPrintBarcode} />
                     </TableCell>
                   </TableRow>
                 ))}
@@ -301,6 +328,8 @@ export default function InventoryPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [groupedData, setGroupedData] = useState<GroupedItem[]>([]);
   const [paginatedData, setPaginatedData] = useState<GroupedItem[]>([]);
+  const [showBarcodeDialog, setShowBarcodeDialog] = useState(false);
+  const [barcodeItems, setBarcodeItems] = useState<{ itemInstanceId: number; barcode: string; itemName: string; }[]>([]);
 
   // Calculate actual history count (all purchase items + incoming/outgoing non-pending transactions)
   const historyCount = purchases.reduce((sum, purchase) => sum + (purchase.items?.length || 0), 0) + 
@@ -314,6 +343,35 @@ export default function InventoryPage() {
     const grouped = groupItemsByName(filtered);
     setGroupedData(grouped);
   }, [items, searchQuery]);
+
+  const handlePrintBarcode = (item: ItemInstance) => {
+    setBarcodeItems([{
+      itemInstanceId: item.id,
+      barcode: item.barcode,
+      itemName: item.item.name
+    }]);
+    setShowBarcodeDialog(true);
+  };
+
+  const handlePrintGroupBarcodes = (group: GroupedItem) => {
+    const groupBarcodes = group.instances.map(instance => ({
+      itemInstanceId: instance.id,
+      barcode: instance.barcode,
+      itemName: instance.item.name
+    }));
+    setBarcodeItems(groupBarcodes);
+    setShowBarcodeDialog(true);
+  };
+
+  const handlePrintAllBarcodes = () => {
+    const allBarcodes = items.map(item => ({
+      itemInstanceId: item.id,
+      barcode: item.barcode,
+      itemName: item.item.name
+    }));
+    setBarcodeItems(allBarcodes);
+    setShowBarcodeDialog(true);
+  };
 
   if (!user) {
     return (
@@ -368,53 +426,66 @@ export default function InventoryPage() {
   }
 
   return (
-    <PageLayout
-      header={
-        <Header 
-          title="My Office Inventory" 
-          subtitle="View current items and complete history"
-        />
-      }
-      body={
-        <div className="mx-auto my-4 max-w-7xl">
-          <Tabs defaultValue="current" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="current" className="flex items-center gap-2">
-                <Package className="w-4 h-4" />
-                Current Items ({groupedData.length} unique, {items.length} total)
-              </TabsTrigger>
-              <TabsTrigger value="history" className="flex items-center gap-2">
-                <History className="w-4 h-4" />
-                History ({historyCount})
-              </TabsTrigger>
-            </TabsList>
+    <>
+      <PageLayout
+        header={
+          <Header 
+            title="My Office Inventory" 
+            subtitle="View current items and complete history"
+            actions={
+              items.length > 0 ? (
+                <Button onClick={handlePrintAllBarcodes} variant="outline">
+                  <QrCode className="mr-2 h-4 w-4" />
+                  Print All Barcodes
+                </Button>
+              ) : null
+            }
+          />
+        }
+        body={
+          <div className="mx-auto my-4 max-w-7xl">
+            <Tabs defaultValue="current" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="current" className="flex items-center gap-2">
+                  <Package className="w-4 h-4" />
+                  Current Items ({groupedData.length} unique, {items.length} total)
+                </TabsTrigger>
+                <TabsTrigger value="history" className="flex items-center gap-2">
+                  <History className="w-4 h-4" />
+                  History ({historyCount})
+                </TabsTrigger>
+              </TabsList>
 
-            <TabsContent value="current" className="space-y-4">
+              <TabsContent value="current" className="space-y-4">
 
-              <div className="mb-4">
-                <input
-                  type="text"
-                  placeholder="Search inventory items..."
-                  className="border rounded px-3 py-2 w-64"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-
-              {groupedData.length === 0 ? (
-                <div className="flex items-center justify-center h-[30vh]">
-                  <div className="text-center">
-                    <Package className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                    <p className="text-gray-500">
-                      {items.length === 0 
-                        ? "No inventory items found in your office"
-                        : "No items match your search"}
-                    </p>
-                  </div>
+                <div className="mb-4">
+                  <input
+                    type="text"
+                    placeholder="Search inventory items..."
+                    className="border rounded px-3 py-2 w-64"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
                 </div>
-              ) : (
+
+                {groupedData.length === 0 ? (
+                  <div className="flex items-center justify-center h-[30vh]">
+                    <div className="text-center">
+                      <Package className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                      <p className="text-gray-500">
+                        {items.length === 0 
+                          ? "No inventory items found in your office"
+                          : "No items match your search"}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
                 <>
-                  <Body data={paginatedData} />
+                  <Body 
+                    data={paginatedData} 
+                    onPrintBarcode={handlePrintBarcode}
+                    onPrintGroupBarcodes={handlePrintGroupBarcodes}
+                  />
                   <Pagination
                     data={groupedData}
                     config={paginationConfig}
@@ -430,6 +501,14 @@ export default function InventoryPage() {
           </Tabs>
         </div>
       }
-    />
+      />
+
+      <BarcodePrintDialog
+        open={showBarcodeDialog}
+        onOpenChange={setShowBarcodeDialog}
+        items={barcodeItems}
+        title="Print Barcode Labels"
+      />
+    </>
   );
 }

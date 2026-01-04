@@ -1,16 +1,18 @@
 "use client";
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { PageLayout, Header } from "@/components/page";
 import { usePurchase } from "@/services/purchaseService";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Package, FileText, Calendar, User, Building, DollarSign, Download, Receipt as ReceiptIcon, ExternalLink, Hash } from "lucide-react";
+import { ArrowLeft, Package, FileText, Calendar, User, Building, DollarSign, Download, Receipt as ReceiptIcon, ExternalLink, Hash, QrCode } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import Link from "next/link";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { getOptimizedImageUrl, downloadFile } from "@/lib/cloudinary";
+import { BarcodePrintDialog } from "@/components/BarcodePrintDialog";
 
 export default function PurchaseDetailPage() {
   const { user } = useAuth();
@@ -19,6 +21,8 @@ export default function PurchaseDetailPage() {
   const purchaseId = parseInt(params.id as string);
   
   const { data: purchase, isLoading, error } = usePurchase(purchaseId);
+  const [showBarcodeDialog, setShowBarcodeDialog] = useState(false);
+  const [barcodeItems, setBarcodeItems] = useState<{ itemInstanceId: number; barcode: string; itemName: string; }[]>([]);
 
   if (!user) {
     return (
@@ -161,8 +165,9 @@ Generated on: ${new Date().toLocaleString()}
   }
 
   return (
-    <PageLayout
-      header={
+    <>
+      <PageLayout
+        header={
         <Header 
           title={`Purchase #${purchase.id}`}
           subtitle="Complete purchase details with all items"
@@ -237,13 +242,42 @@ Generated on: ${new Date().toLocaleString()}
           {/* Items Table */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Package className="h-5 w-5" />
-                Purchased Items
-              </CardTitle>
-              <CardDescription>
-                {purchase.totalItems} item{purchase.totalItems !== 1 ? 's' : ''} in this purchase
-              </CardDescription>
+              <div className="flex justify-between items-start">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Package className="h-5 w-5" />
+                    Purchased Items
+                  </CardTitle>
+                  <CardDescription>
+                    {purchase.totalItems} item{purchase.totalItems !== 1 ? 's' : ''} in this purchase
+                  </CardDescription>
+                </div>
+                {purchase.items.some(item => item.itemInstanceIds && item.itemInstanceIds.length > 0) && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      const allInstances: { itemInstanceId: number; barcode: string; itemName: string; }[] = [];
+                      purchase.items.forEach((item: any) => {
+                        if (item.itemInstanceIds && item.itemBarcodes) {
+                          item.itemInstanceIds.forEach((id: number, index: number) => {
+                            allInstances.push({
+                              itemInstanceId: id,
+                              barcode: item.itemBarcodes[index],
+                              itemName: item.item.name
+                            });
+                          });
+                        }
+                      });
+                      setBarcodeItems(allInstances);
+                      setShowBarcodeDialog(true);
+                    }}
+                  >
+                    <QrCode className="mr-2 h-4 w-4" />
+                    Print All Barcodes
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               <Table>
@@ -254,6 +288,7 @@ Generated on: ${new Date().toLocaleString()}
                     <TableHead className="text-right">Quantity</TableHead>
                     <TableHead className="text-right">Unit Price</TableHead>
                     <TableHead className="text-right">Total</TableHead>
+                    <TableHead className="text-center">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -264,10 +299,29 @@ Generated on: ${new Date().toLocaleString()}
                       <TableCell className="text-right">{item.quantity}</TableCell>
                       <TableCell className="text-right">৳{item.unitPrice.toFixed(2)}</TableCell>
                       <TableCell className="text-right font-medium">৳{item.totalPrice.toFixed(2)}</TableCell>
+                      <TableCell className="text-center">
+                        {item.itemInstanceIds && item.itemInstanceIds.length > 0 && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => {
+                              const instances = item.itemInstanceIds!.map((id, idx) => ({
+                                itemInstanceId: id,
+                                barcode: item.itemBarcodes![idx],
+                                itemName: item.item.name
+                              }));
+                              setBarcodeItems(instances);
+                              setShowBarcodeDialog(true);
+                            }}
+                          >
+                            <QrCode className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </TableCell>
                     </TableRow>
                   ))}
                   <TableRow className="bg-blue-50 dark:bg-blue-950 font-semibold">
-                    <TableCell colSpan={4} className="text-right">Grand Total</TableCell>
+                    <TableCell colSpan={5} className="text-right">Grand Total</TableCell>
                     <TableCell className="text-right text-lg text-blue-600">
                       ৳{purchase.totalAmount.toFixed(2)}
                     </TableCell>
@@ -373,6 +427,14 @@ Generated on: ${new Date().toLocaleString()}
           </Card>
         </div>
       }
-    />
+      />
+
+      <BarcodePrintDialog
+        open={showBarcodeDialog}
+        onOpenChange={setShowBarcodeDialog}
+        items={barcodeItems}
+        title="Print Barcode Labels"
+      />
+    </>
   );
 }

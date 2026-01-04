@@ -162,6 +162,24 @@ public class PurchaseController {
                     itemSummary.setName(item.getItem().getName());
                     itemResponse.setItem(itemSummary);
                     
+                    // Get item instances created for this purchase item
+                    List<just.inventory.backend.model.ItemInstance> instances = 
+                        purchaseService.getItemInstancesForPurchase(
+                            item.getItem().getId(), 
+                            purchase.getOffice().getId(), 
+                            purchase
+                        );
+                    itemResponse.setItemInstanceIds(
+                        instances.stream()
+                            .map(just.inventory.backend.model.ItemInstance::getId)
+                            .collect(Collectors.toList())
+                    );
+                    itemResponse.setItemBarcodes(
+                        instances.stream()
+                            .map(just.inventory.backend.model.ItemInstance::getBarcode)
+                            .collect(Collectors.toList())
+                    );
+                    
                     return itemResponse;
                 })
                 .collect(Collectors.toList());
