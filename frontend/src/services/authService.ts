@@ -32,7 +32,7 @@ export interface LoginResponse {
 
 
 export const ENDPOINTS = {
-    login: "/api/auth/login",
+    login: "/auth/login",
 }
 
 
