@@ -52,3 +52,6 @@ springdoc:
 jwt:
   secret: abcdefghij1234567890abcdefghij1234567890abcdefghij1234567890ab
   expiration: 86400000
+
+app:
+  frontend-url: http://localhost:3000
