@@ -4,10 +4,10 @@ spring:
   # profiles:
   #   active: test
   datasource:
-    url: jdbc:mysql://localhost:3306/inventory_test_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
-    username: inventory_user
-    password: inventory_pass
-    driverClassName: com.mysql.cj.jdbc.Driver
+    url: jdbc:postgresql://ep-winter-smoke-a1ulvvvo-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require
+    username: neondb_owner
+    password: npg_6tBSQNIJh3VZ
+    driverClassName: org.postgresql.Driver
     hikari:
       minimum-idle: 5
       maximum-pool-size: 20
@@ -20,7 +20,7 @@ spring:
     open-in-view: false
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQLDialect
+        dialect: org.hibernate.dialect.PostgreSQLDialect
   data:
     rest:
       detection-strategy: annotated
