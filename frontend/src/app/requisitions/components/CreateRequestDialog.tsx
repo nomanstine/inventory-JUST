@@ -26,7 +26,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle, Loader2, Plus, Trash2 } from "lucide-react";
 import { Item } from "@/services/itemService";
 import { Office } from "@/services/officeService";
 import { ItemRequestLine } from "../hooks/useRequisitionForm";
@@ -47,6 +48,9 @@ interface CreateRequestDialogProps {
   onAddItem: (itemId: number, itemName: string, quantity: number) => void;
   onRemoveItem: (index: number) => void;
   onUpdateQuantity: (index: number, quantity: number) => void;
+  onSuggest: () => Promise<void>;
+  isSuggesting: boolean;
+  aiUnavailableHint?: string;
 }
 
 export function CreateRequestDialog({
@@ -65,6 +69,9 @@ export function CreateRequestDialog({
   onAddItem,
   onRemoveItem,
   onUpdateQuantity,
+  onSuggest,
+  isSuggesting,
+  aiUnavailableHint,
 }: CreateRequestDialogProps) {
   const [selectedItemId, setSelectedItemId] = useState<number>(0);
   const [quantity, setQuantity] = useState<number>(0);
@@ -72,8 +79,6 @@ export function CreateRequestDialog({
   const availableOffices = offices.filter(
     office => office.id !== currentUserOfficeId
   );
-
-  const selectedItem = items.find(item => item.id === selectedItemId);
 
   const handleAddItem = () => {
     if (selectedItemId && quantity > 0) {
@@ -84,6 +89,10 @@ export function CreateRequestDialog({
         setQuantity(0);
       }
     }
+  };
+
+  const handleSuggest = async () => {
+    await onSuggest();
   };
 
   return (
@@ -172,7 +181,14 @@ export function CreateRequestDialog({
                 <TableBody>
                   {requestItems.map((item, index) => (
                     <TableRow key={index}>
-                      <TableCell>{item.itemName}</TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <div>{item.itemName}</div>
+                          {item.rationale && (
+                            <p className="text-xs text-muted-foreground">{item.rationale}</p>
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <Input
                           type="number"
@@ -211,6 +227,31 @@ export function CreateRequestDialog({
               rows={3}
             />
           </div>
+
+          <div className="flex justify-end">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleSuggest}
+              disabled={isSuggesting || !parentOfficeId}
+            >
+              {isSuggesting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Suggesting...
+                </>
+              ) : (
+                "Suggest with AI"
+              )}
+            </Button>
+          </div>
+
+          {aiUnavailableHint && (
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{aiUnavailableHint}</AlertDescription>
+            </Alert>
+          )}
         </div>
 
         <DialogFooter>

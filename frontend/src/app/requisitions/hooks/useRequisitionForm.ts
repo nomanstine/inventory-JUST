@@ -17,6 +17,7 @@ export interface ItemRequestLine {
   itemId: number;
   itemName?: string;
   quantity: number;
+  rationale?: string;
 }
 
 const initialFormData: ItemRequestLine[] = [];
@@ -65,6 +66,10 @@ export function useRequisitionForm() {
     setItems(prev => prev.map((item, i) => 
       i === index ? { ...item, quantity } : item
     ));
+  };
+
+  const replaceItems = (nextItems: ItemRequestLine[]) => {
+    setItems(nextItems);
   };
 
   const validateCreateForm = (): boolean => {
@@ -273,6 +278,7 @@ export function useRequisitionForm() {
     addItem,
     removeItem,
     updateItemQuantity,
+    replaceItems,
     approvalData,
     setApprovalData,
     rejectionData,

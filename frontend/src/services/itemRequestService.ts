@@ -73,6 +73,25 @@ export interface ConfirmationRequest {
   remarks?: string;
 }
 
+export interface RequisitionSuggestionRequest {
+  parentOfficeId: number;
+  reason?: string;
+}
+
+export interface RequisitionSuggestionLine {
+  itemId: number;
+  itemName: string;
+  quantity: number;
+  rationale?: string;
+}
+
+export interface RequisitionSuggestionResponse {
+  summary: string;
+  source: string;
+  warning?: string;
+  suggestions: RequisitionSuggestionLine[];
+}
+
 // Create a new item request
 export const createItemRequest = async (request: ItemRequestForm): Promise<ItemRequest> => {
   const response = await api.post("/item-requests", request);
@@ -118,6 +137,13 @@ export const rejectRequest = async (id: number, rejection: RejectionRequest): Pr
 // Confirm receipt of fulfilled request
 export const confirmReceipt = async (id: number, confirmation: ConfirmationRequest): Promise<ItemRequest> => {
   const response = await api.put(`/item-requests/${id}/confirm`, confirmation);
+  return response.data;
+};
+
+export const getRequisitionSuggestions = async (
+  payload: RequisitionSuggestionRequest,
+): Promise<RequisitionSuggestionResponse> => {
+  const response = await api.post("/item-requests/suggestions", payload);
   return response.data;
 };
 
@@ -261,5 +287,11 @@ export const useConfirmReceipt = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['itemRequests'] });
     },
+  });
+};
+
+export const useRequisitionSuggestions = () => {
+  return useMutation({
+    mutationFn: getRequisitionSuggestions,
   });
 };

@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -22,6 +21,7 @@ import {
   useApprovedRequests,
   useFulfilledRequests,
   useHistoryRequests,
+  useRequisitionSuggestions,
   ItemRequest,
 } from "@/services/itemRequestService";
 import { useItems } from "@/services/itemService";
@@ -57,7 +57,6 @@ const filterConfig = [
 ];
 
 export default function RequisitionsPage() {
-  const router = useRouter();
   const { user } = useAuth();
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState<'my-requests' | 'incoming' | 'approved' | 'fulfilled' | 'history'>('my-requests');
@@ -67,6 +66,7 @@ export default function RequisitionsPage() {
   const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [showFulfillDialog, setShowFulfillDialog] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [aiUnavailableHint, setAiUnavailableHint] = useState<string>("");
 
   const { data: myRequests = [], isLoading: loadingMyRequests } = useMyRequests();
   const { data: incomingRequests = [], isLoading: loadingIncoming } = useIncomingRequests();
@@ -85,6 +85,7 @@ export default function RequisitionsPage() {
     addItem,
     removeItem,
     updateItemQuantity,
+    replaceItems,
     approvalData,
     setApprovalData,
     rejectionData,
@@ -109,6 +110,7 @@ export default function RequisitionsPage() {
     isFulfilling,
     isConfirming,
   } = useRequisitionForm();
+  const suggestionMutation = useRequisitionSuggestions();
 
   const currentData = activeTab === 'my-requests' ? myRequests : 
                       activeTab === 'incoming' ? incomingRequests : 
@@ -227,6 +229,44 @@ export default function RequisitionsPage() {
       console.error("Failed to confirm receipt:", error);
       const errorMessage = error instanceof Error ? error.message : "Failed to confirm receipt";
       toast.error(errorMessage);
+    }
+  };
+
+  const handleSuggestRequest = async () => {
+    try {
+      if (!parentOfficeId) {
+        throw new Error("Please select an office first");
+      }
+
+      const result = await suggestionMutation.mutateAsync({
+        parentOfficeId,
+        reason,
+      });
+
+      if (!result.suggestions || result.suggestions.length === 0) {
+        throw new Error(result.warning || "AI returned no usable suggestions");
+      }
+
+      replaceItems(
+        result.suggestions.map((line) => ({
+          itemId: line.itemId,
+          itemName: line.itemName,
+          quantity: line.quantity,
+          rationale: line.rationale,
+        }))
+      );
+
+      if (result.summary) {
+        toast.success(result.summary);
+      }
+      setAiUnavailableHint("");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to fetch suggestions";
+      const normalized = message.toLowerCase();
+      if (normalized.includes("api key") || normalized.includes("disabled")) {
+        setAiUnavailableHint("AI suggestions are unavailable right now. Ask an admin to configure backend AI_REQUISITION_API_KEY.");
+      }
+      toast.error(message);
     }
   };
 
@@ -349,6 +389,9 @@ export default function RequisitionsPage() {
         onAddItem={addItem}
         onRemoveItem={removeItem}
         onUpdateQuantity={updateItemQuantity}
+        onSuggest={handleSuggestRequest}
+        isSuggesting={suggestionMutation.isPending}
+        aiUnavailableHint={aiUnavailableHint}
       />
       
       <ApproveRequestDialog
