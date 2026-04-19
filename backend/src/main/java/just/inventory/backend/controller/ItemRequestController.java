@@ -1,9 +1,14 @@
 package just.inventory.backend.controller;
 
+import just.inventory.backend.dto.RequisitionSuggestionRequest;
+import just.inventory.backend.dto.RequisitionSuggestionResponse;
 import just.inventory.backend.model.ItemRequest;
+import just.inventory.backend.model.Office;
 import just.inventory.backend.model.User;
+import just.inventory.backend.repository.OfficeRepository;
 import just.inventory.backend.repository.UserRepository;
 import just.inventory.backend.service.ItemRequestService;
+import just.inventory.backend.service.RequisitionSuggestionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +27,12 @@ public class ItemRequestController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private OfficeRepository officeRepository;
+
+    @Autowired
+    private RequisitionSuggestionService requisitionSuggestionService;
 
     @PostMapping
     public ResponseEntity<?> createItemRequest(@RequestBody ItemRequest itemRequest) {
@@ -270,6 +281,43 @@ public class ItemRequestController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(e.getMessage());
         }
+    }
+
+    @PostMapping("/suggestions")
+    public ResponseEntity<?> getRequisitionSuggestions(@RequestBody RequisitionSuggestionRequest request) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        User currentUser = userRepository.findByUsername(username)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (!"ADMIN".equals(currentUser.getRole().getName())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body("Only admins can request requisition suggestions");
+        }
+
+        if (request.getParentOfficeId() == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body("Parent office is required for suggestion");
+        }
+
+        if (request.getParentOfficeId().equals(currentUser.getOffice().getId())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body("Cannot request suggestions from your own office");
+        }
+
+        Office parentOffice = officeRepository.findById(request.getParentOfficeId())
+            .orElseThrow(() -> new RuntimeException("Parent office not found"));
+
+        RequisitionSuggestionResponse response = requisitionSuggestionService.suggest(
+            currentUser.getOffice().getName(),
+            parentOffice.getName(),
+            request.getReason(),
+            itemRequestService.getAvailableInstancesForOffice(parentOffice.getId()),
+            itemRequestService.getRecentRequestsBetweenOffices(currentUser.getOffice().getId(), parentOffice.getId(), 15),
+            itemRequestService.getCatalogItems()
+        );
+
+        return ResponseEntity.ok(response);
     }
 
     // DTOs

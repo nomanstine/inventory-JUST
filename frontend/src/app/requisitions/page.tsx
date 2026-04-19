@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { consumeRequisitionDraft } from "@/lib/requisitionDraft";
 
 import { 
   PageLayout, 
@@ -271,6 +272,30 @@ export default function RequisitionsPage() {
   };
 
   const isAdmin = user?.role?.toUpperCase() === 'ADMIN';
+
+  useEffect(() => {
+    if (!isAdmin) {
+      return;
+    }
+
+    const draft = consumeRequisitionDraft();
+    if (!draft) {
+      return;
+    }
+
+    setParentOfficeId(draft.parentOfficeId);
+    setReason(draft.reason || "");
+    replaceItems(
+      draft.items.map((item) => ({
+        itemId: item.itemId,
+        itemName: item.itemName,
+        quantity: item.quantity,
+        rationale: item.rationale,
+      }))
+    );
+    setShowCreateDialog(true);
+    toast.success("Dashboard suggestions loaded into requisition draft");
+  }, [isAdmin, replaceItems, setParentOfficeId, setReason]);
 
   return (
     <>

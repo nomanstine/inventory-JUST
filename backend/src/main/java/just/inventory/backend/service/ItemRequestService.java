@@ -229,4 +229,20 @@ public class ItemRequestService {
         
         return allHistory;
     }
+
+    public List<ItemRequest> getRecentRequestsBetweenOffices(Long requestingOfficeId, Long parentOfficeId, int limit) {
+        return itemRequestRepository.findByRequestingOfficeId(requestingOfficeId).stream()
+                .filter(r -> r.getParentOffice() != null && parentOfficeId.equals(r.getParentOffice().getId()))
+                .sorted((a, b) -> b.getRequestedDate().compareTo(a.getRequestedDate()))
+                .limit(Math.max(1, limit))
+                .collect(Collectors.toList());
+    }
+
+    public List<ItemInstance> getAvailableInstancesForOffice(Long officeId) {
+        return itemInstanceRepository.findByOwnerOfficeIdAndStatus(officeId, ItemInstance.ItemStatus.AVAILABLE);
+    }
+
+    public List<Item> getCatalogItems() {
+        return itemRepository.findAll();
+    }
 }

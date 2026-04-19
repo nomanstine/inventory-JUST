@@ -55,3 +55,10 @@ jwt:
 
 app:
   frontend-url: http://localhost:3000
+
+ai:
+  requisition:
+    enabled: ${AI_REQUISITION_ENABLED:true}
+    api-url: ${AI_REQUISITION_API_URL:https://api.deepseek.com/chat/completions}
+    api-key: ${AI_REQUISITION_API_KEY:}
+    model: ${AI_REQUISITION_MODEL:deepseek-chat}
