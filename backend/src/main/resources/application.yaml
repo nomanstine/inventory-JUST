@@ -54,7 +54,8 @@ jwt:
   expiration: 86400000
 
 app:
-  frontend-url: http://localhost:3000
+  frontend-url: ${FRONTEND_URL:http://localhost:3000}
+  frontend-urls: ${FRONTEND_URLS:http://localhost:3000,https://inventory-just.vercel.app}
 
 ai:
   requisition:

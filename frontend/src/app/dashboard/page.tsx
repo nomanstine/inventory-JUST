@@ -1,8 +1,7 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
 
 import {
   PageLayout,
@@ -12,31 +11,17 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Package,
   AlertCircle,
   CheckCircle,
   Clock,
-  Loader2,
-  Sparkles,
 } from "lucide-react";
 
 import { useMyOfficeInventorySummary } from "@/services/inventoryService";
 import { usePurchases } from "@/services/purchaseService";
-import { useItemRequests, useRequisitionSuggestions } from "@/services/itemRequestService";
+import { useItemRequests } from "@/services/itemRequestService";
 import { useMyOfficeTransactionHistory } from "@/services/inventoryService";
-import { useOffices } from "@/services/officeService";
 
 interface InventorySummary {
   officeId: number;
@@ -58,19 +43,6 @@ export default function DashboardPage() {
   const { data: purchases = [], isLoading: isLoadingPurchases } = usePurchases();
   const { data: itemRequests = [], isLoading: isLoadingRequests } = useItemRequests();
   const { data: transactions = [], isLoading: isLoadingTransactions } = useMyOfficeTransactionHistory();
-  const { data: offices = [] } = useOffices();
-  const suggestionMutation = useRequisitionSuggestions();
-
-  const [dashboardParentOfficeId, setDashboardParentOfficeId] = useState<number>(0);
-  const [dashboardReason, setDashboardReason] = useState("");
-  const [dashboardSuggestionSummary, setDashboardSuggestionSummary] = useState("");
-  const [dashboardAiUnavailableHint, setDashboardAiUnavailableHint] = useState("");
-  const [dashboardSuggestions, setDashboardSuggestions] = useState<Array<{
-    itemId: number;
-    itemName: string;
-    quantity: number;
-    rationale?: string;
-  }>>([]);
 
   if (!user) {
     return (
@@ -101,39 +73,6 @@ export default function DashboardPage() {
   const recentPurchases = purchases.slice(0, 5);
   const recentRequests = itemRequests.slice(0, 5);
   const recentTransactions = transactions.slice(0, 5);
-  const isAdmin = user?.role?.toUpperCase() === "ADMIN";
-
-  const availableOffices = offices.filter((office) => office.id !== (user?.officeId ? parseInt(user.officeId) : 0));
-
-  const handleDashboardSuggest = async () => {
-    try {
-      const officeId = user?.officeId ? parseInt(user.officeId, 10) : 0;
-      
-      if (!officeId) {
-        throw new Error("User office not found");
-      }
-
-      const response = await suggestionMutation.mutateAsync({
-        parentOfficeId: officeId,
-        reason: dashboardReason,
-      });
-
-      if (!response.suggestions || response.suggestions.length === 0) {
-        throw new Error(response.warning || "AI returned no usable suggestions");
-      }
-
-      setDashboardSuggestions(response.suggestions);
-      setDashboardSuggestionSummary(response.summary || "AI suggestions generated");
-      setDashboardAiUnavailableHint("");
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to fetch suggestions";
-      const normalized = message.toLowerCase();
-      if (normalized.includes("api key") || normalized.includes("disabled")) {
-        setDashboardAiUnavailableHint("AI suggestions are unavailable right now. Ask an admin to configure backend AI_REQUISITION_API_KEY.");
-      }
-      toast.error(message);
-    }
-  };
 
   return (
     <PageLayout
@@ -303,176 +242,6 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
           </div>
-
-          {isAdmin && (
-            <Card>
-              <CardHeader className="p-4 sm:p-6">
-                <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-amber-500" />
-                  AI Requisition Suggestions
-                </CardTitle>
-                <CardDescription className="text-xs sm:text-sm">
-                  Generate suggested requisition lines from another office based on your note and request history.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-4 sm:p-6 pt-0 space-y-4">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  <div>
-                    <Label>Source Office</Label>
-                    <Select
-                      value={dashboardParentOfficeId ? dashboardParentOfficeId.toString() : ""}
-                      onValueChange={(value) => setDashboardParentOfficeId(parseInt(value, 10))}
-                    >
-                      <SelectTrigger className="w-full mt-1">
-                        <SelectValue placeholder="Select office" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableOffices.map((office) => (
-                          <SelectItem key={office.id} value={office.id.toString()}>
-                            {office.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label>Need / Context</Label>
-                    <Textarea
-                      value={dashboardReason}
-                      onChange={(e) => setDashboardReason(e.target.value)}
-                      placeholder="Optional note to guide AI suggestions"
-                      rows={3}
-                      className="mt-1"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    type="button"
-                    onClick={handleDashboardSuggest}
-                    disabled={!dashboardParentOfficeId || suggestionMutation.isPending}
-                  >
-                    {suggestionMutation.isPending ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Suggesting...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="mr-2 h-4 w-4" />
-                        Suggest Requisition
-                      </>
-                    )}
-                  </Button>
-                  <Button type="button" variant="outline" onClick={() => router.push("/requisitions")}>Open Requisitions</Button>
-                </div>
-
-                {dashboardAiUnavailableHint && (
-                  <Alert>
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>{dashboardAiUnavailableHint}</AlertDescription>
-                  </Alert>
-                )}
-
-                {dashboardSuggestionSummary && (
-                  <p className="text-sm text-muted-foreground">{dashboardSuggestionSummary}</p>
-                )}
-
-                {dashboardSuggestions.length > 0 && (
-                  <div className="border rounded-lg divide-y">
-                    {dashboardSuggestions.map((suggestion) => (
-                      <div key={suggestion.itemId} className="p-3">
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="text-sm font-medium">{suggestion.itemName}</p>
-                          <Badge variant="secondary">Qty {suggestion.quantity}</Badge>
-                        </div>
-                        {suggestion.rationale && (
-                          <p className="text-xs text-muted-foreground mt-1">{suggestion.rationale}</p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* AI Requisition Recommendations for Current Office */}
-          {user && (
-            <Card>
-              <CardHeader className="p-4 sm:p-6">
-                <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-amber-500" />
-                  AI Requisition Recommendations
-                </CardTitle>
-                <CardDescription className="text-xs sm:text-sm">
-                  Smart recommendations based on your office's inventory and request history
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-4 sm:p-6 pt-0 space-y-4">
-                <div>
-                  <Label>Need / Context (Optional)</Label>
-                  <Textarea
-                    value={dashboardReason}
-                    onChange={(e) => setDashboardReason(e.target.value)}
-                    placeholder="Add context to guide AI recommendations (e.g., preparing for upcoming projects, seasonal needs)"
-                    rows={3}
-                    className="mt-1"
-                  />
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    type="button"
-                    onClick={handleDashboardSuggest}
-                    disabled={suggestionMutation.isPending}
-                  >
-                    {suggestionMutation.isPending ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Analyzing...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="mr-2 h-4 w-4" />
-                        Get Recommendations
-                      </>
-                    )}
-                  </Button>
-                  <Button type="button" variant="outline" onClick={() => router.push("/requisitions")}>View Requisitions</Button>
-                </div>
-
-                {dashboardAiUnavailableHint && (
-                  <Alert>
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>{dashboardAiUnavailableHint}</AlertDescription>
-                  </Alert>
-                )}
-
-                {dashboardSuggestionSummary && (
-                  <p className="text-sm text-muted-foreground">{dashboardSuggestionSummary}</p>
-                )}
-
-                {dashboardSuggestions.length > 0 && (
-                  <div className="border rounded-lg divide-y">
-                    {dashboardSuggestions.map((suggestion) => (
-                      <div key={suggestion.itemId} className="p-3">
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="text-sm font-medium">{suggestion.itemName}</p>
-                          <Badge variant="secondary">Qty {suggestion.quantity}</Badge>
-                        </div>
-                        {suggestion.rationale && (
-                          <p className="text-xs text-muted-foreground mt-1">{suggestion.rationale}</p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
 
           {/* Recent Activity */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">

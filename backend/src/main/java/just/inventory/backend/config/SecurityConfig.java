@@ -22,16 +22,23 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
-    @Value("${app.frontend-url}")
+    @Value("${app.frontend-url:http://localhost:3000}")
     private String frontendUrl;
+
+    @Value("${app.frontend-urls:}")
+    private String frontendUrls;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
@@ -92,12 +99,36 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(Arrays.asList(frontendUrl, "http://localhost:3000")); // Allow frontend origin from application.yaml
+        configuration.setAllowedOriginPatterns(resolveAllowedOrigins());
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
+    }
+
+    private List<String> resolveAllowedOrigins() {
+        Set<String> origins = new LinkedHashSet<>();
+
+        addOrigins(origins, frontendUrl);
+        addOrigins(origins, frontendUrls);
+        addOrigins(origins, "http://localhost:3000");
+        addOrigins(origins, "https://inventory-just.vercel.app");
+
+        return new ArrayList<>(origins);
+    }
+
+    private void addOrigins(Set<String> origins, String rawOrigins) {
+        if (rawOrigins == null || rawOrigins.isBlank()) {
+            return;
+        }
+
+        for (String origin : rawOrigins.split(",")) {
+            String normalized = origin.trim();
+            if (!normalized.isEmpty()) {
+                origins.add(normalized);
+            }
+        }
     }
 }
