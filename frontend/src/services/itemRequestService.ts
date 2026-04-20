@@ -143,8 +143,18 @@ export const confirmReceipt = async (id: number, confirmation: ConfirmationReque
 export const getRequisitionSuggestions = async (
   payload: RequisitionSuggestionRequest,
 ): Promise<RequisitionSuggestionResponse> => {
-  const response = await api.post("/item-requests/suggestions", payload);
-  return response.data;
+  try {
+    const response = await api.post("/item-requests/suggestions", payload);
+    return response.data;
+  } catch (error: any) {
+    const responseData = error?.response?.data;
+    const message =
+      (typeof responseData === "string" && responseData.trim()) ||
+      responseData?.message ||
+      error?.message ||
+      "Failed to fetch requisition suggestions";
+    throw new Error(message);
+  }
 };
 
 // Get incoming requests (requests TO current user's office)

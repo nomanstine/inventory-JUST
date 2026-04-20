@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -68,6 +68,7 @@ export default function RequisitionsPage() {
   const [showFulfillDialog, setShowFulfillDialog] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [aiUnavailableHint, setAiUnavailableHint] = useState<string>("");
+  const autoSuggestKeyRef = useRef<string>("");
 
   const { data: myRequests = [], isLoading: loadingMyRequests } = useMyRequests();
   const { data: incomingRequests = [], isLoading: loadingIncoming } = useIncomingRequests();
@@ -233,7 +234,7 @@ export default function RequisitionsPage() {
     }
   };
 
-  const handleSuggestRequest = async () => {
+  const handleSuggestRequest = useCallback(async () => {
     try {
       if (!parentOfficeId) {
         throw new Error("Please select an office first");
@@ -269,9 +270,66 @@ export default function RequisitionsPage() {
       }
       toast.error(message);
     }
-  };
+  }, [parentOfficeId, reason, replaceItems, suggestionMutation]);
 
   const isAdmin = user?.role?.toUpperCase() === 'ADMIN';
+  const currentUserOfficeId = user?.officeId ? parseInt(user.officeId) : 0;
+
+  const currentOffice = useMemo(
+    () => offices.find((office) => office.id === currentUserOfficeId),
+    [offices, currentUserOfficeId]
+  );
+
+  const officeOptionsForRequisition = useMemo(() => {
+    const parentOfficeId = currentOffice?.parent?.id;
+    if (parentOfficeId) {
+      const parentOffice = offices.find((office) => office.id === parentOfficeId);
+      return parentOffice ? [parentOffice] : [];
+    }
+    return offices.filter((office) => office.id !== currentUserOfficeId);
+  }, [offices, currentOffice, currentUserOfficeId]);
+
+  const isOfficeSelectionLocked = officeOptionsForRequisition.length === 1;
+
+  useEffect(() => {
+    if (!showCreateDialog || officeOptionsForRequisition.length !== 1) {
+      return;
+    }
+    const onlyOfficeId = officeOptionsForRequisition[0].id;
+    if (parentOfficeId !== onlyOfficeId) {
+      setParentOfficeId(onlyOfficeId);
+    }
+  }, [showCreateDialog, officeOptionsForRequisition, parentOfficeId, setParentOfficeId]);
+
+  useEffect(() => {
+    if (!showCreateDialog || !isAdmin || !parentOfficeId) {
+      return;
+    }
+    if (suggestionMutation.isPending || requestItems.length > 0) {
+      return;
+    }
+
+    const key = `${parentOfficeId}`;
+    if (autoSuggestKeyRef.current === key) {
+      return;
+    }
+    autoSuggestKeyRef.current = key;
+
+    void handleSuggestRequest();
+  }, [
+    showCreateDialog,
+    isAdmin,
+    parentOfficeId,
+    requestItems.length,
+    suggestionMutation.isPending,
+    handleSuggestRequest,
+  ]);
+
+  useEffect(() => {
+    if (!showCreateDialog) {
+      autoSuggestKeyRef.current = "";
+    }
+  }, [showCreateDialog]);
 
   useEffect(() => {
     if (!isAdmin) {
@@ -402,8 +460,8 @@ export default function RequisitionsPage() {
         open={showCreateDialog}
         onOpenChange={setShowCreateDialog}
         items={items}
-        offices={offices}
-        currentUserOfficeId={user?.officeId ? parseInt(user.officeId) : undefined}
+        offices={officeOptionsForRequisition}
+        currentUserOfficeId={currentUserOfficeId || undefined}
         onSubmit={handleCreateRequest}
         isSubmitting={isCreating}
         requestItems={requestItems}
@@ -417,6 +475,7 @@ export default function RequisitionsPage() {
         onSuggest={handleSuggestRequest}
         isSuggesting={suggestionMutation.isPending}
         aiUnavailableHint={aiUnavailableHint}
+        lockOfficeSelection={isOfficeSelectionLocked}
       />
       
       <ApproveRequestDialog

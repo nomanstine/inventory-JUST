@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -285,39 +286,44 @@ public class ItemRequestController {
 
     @PostMapping("/suggestions")
     public ResponseEntity<?> getRequisitionSuggestions(@RequestBody RequisitionSuggestionRequest request) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
-        User currentUser = userRepository.findByUsername(username)
-            .orElseThrow(() -> new RuntimeException("User not found"));
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String username = authentication.getName();
+            User currentUser = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
-        if (!"ADMIN".equals(currentUser.getRole().getName())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body("Only admins can request requisition suggestions");
+            if (!"ADMIN".equals(currentUser.getRole().getName())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("Only admins can request requisition suggestions");
+            }
+
+            if (request.getParentOfficeId() == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Parent office is required for suggestion");
+            }
+
+            if (request.getParentOfficeId().equals(currentUser.getOffice().getId())) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Cannot request suggestions from your own office");
+            }
+
+            Office parentOffice = officeRepository.findById(request.getParentOfficeId())
+                .orElseThrow(() -> new RuntimeException("Parent office not found"));
+
+            RequisitionSuggestionResponse response = requisitionSuggestionService.suggest(
+                currentUser.getOffice().getName(),
+                parentOffice.getName(),
+                request.getReason(),
+                itemRequestService.getAvailableInstancesForOffice(parentOffice.getId()),
+                itemRequestService.getRecentRequestsBetweenOffices(currentUser.getOffice().getId(), parentOffice.getId(), 15),
+                itemRequestService.getCatalogItems()
+            );
+
+            return ResponseEntity.ok(response);
+        } catch (ResponseStatusException e) {
+            String reason = e.getReason() == null ? "Failed to fetch requisition suggestions" : e.getReason();
+            return ResponseEntity.status(e.getStatusCode()).body(reason);
         }
-
-        if (request.getParentOfficeId() == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body("Parent office is required for suggestion");
-        }
-
-        if (request.getParentOfficeId().equals(currentUser.getOffice().getId())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body("Cannot request suggestions from your own office");
-        }
-
-        Office parentOffice = officeRepository.findById(request.getParentOfficeId())
-            .orElseThrow(() -> new RuntimeException("Parent office not found"));
-
-        RequisitionSuggestionResponse response = requisitionSuggestionService.suggest(
-            currentUser.getOffice().getName(),
-            parentOffice.getName(),
-            request.getReason(),
-            itemRequestService.getAvailableInstancesForOffice(parentOffice.getId()),
-            itemRequestService.getRecentRequestsBetweenOffices(currentUser.getOffice().getId(), parentOffice.getId(), 15),
-            itemRequestService.getCatalogItems()
-        );
-
-        return ResponseEntity.ok(response);
     }
 
     // DTOs

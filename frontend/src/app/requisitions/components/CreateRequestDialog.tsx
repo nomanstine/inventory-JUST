@@ -51,6 +51,7 @@ interface CreateRequestDialogProps {
   onSuggest: () => Promise<void>;
   isSuggesting: boolean;
   aiUnavailableHint?: string;
+  lockOfficeSelection?: boolean;
 }
 
 export function CreateRequestDialog({
@@ -72,6 +73,7 @@ export function CreateRequestDialog({
   onSuggest,
   isSuggesting,
   aiUnavailableHint,
+  lockOfficeSelection = false,
 }: CreateRequestDialogProps) {
   const [selectedItemId, setSelectedItemId] = useState<number>(0);
   const [quantity, setQuantity] = useState<number>(0);
@@ -111,6 +113,7 @@ export function CreateRequestDialog({
             <Select
               value={parentOfficeId.toString()}
               onValueChange={(value) => onParentOfficeChange(parseInt(value))}
+              disabled={lockOfficeSelection}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select office" />
@@ -123,6 +126,11 @@ export function CreateRequestDialog({
                 ))}
               </SelectContent>
             </Select>
+            {lockOfficeSelection && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Source office is pre-selected for your logged-in office.
+              </p>
+            )}
           </div>
 
           <div className="border rounded-lg p-4 space-y-3">
@@ -241,7 +249,7 @@ export function CreateRequestDialog({
                   Suggesting...
                 </>
               ) : (
-                "Suggest with AI"
+                "Refresh AI Suggestions"
               )}
             </Button>
           </div>
