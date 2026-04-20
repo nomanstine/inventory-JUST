@@ -175,8 +175,26 @@ public class RequisitionSuggestionService {
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() >= 400) {
-                throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
-                        "AI API error: " + response.statusCode());
+                String providerMessage = extractProviderErrorMessage(response.body());
+                String reason = "AI provider error " + response.statusCode();
+                if (!providerMessage.isBlank()) {
+                    reason += ": " + providerMessage;
+                }
+
+                if (response.statusCode() == 402) {
+                    reason = "AI provider billing or quota issue (402). "
+                            + "Check AI_REQUISITION_API_KEY credits/plan.";
+                    if (!providerMessage.isBlank()) {
+                        reason += " Provider message: " + providerMessage;
+                    }
+                    throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, reason);
+                }
+
+                if (response.statusCode() == 429) {
+                    throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, reason);
+                }
+
+                throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, reason);
             }
 
             JsonNode root = objectMapper.readTree(response.body());
@@ -193,6 +211,30 @@ public class RequisitionSuggestionService {
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
                     "Failed to fetch AI suggestions", e);
         }
+    }
+
+    private String extractProviderErrorMessage(String responseBody) {
+        if (responseBody == null || responseBody.isBlank()) {
+            return "";
+        }
+
+        try {
+            JsonNode root = objectMapper.readTree(responseBody);
+            String message = root.path("error").path("message").asText("").trim();
+            if (!message.isBlank()) {
+                return message;
+            }
+
+            message = root.path("message").asText("").trim();
+            if (!message.isBlank()) {
+                return message;
+            }
+        } catch (Exception ignored) {
+            // If provider body is not JSON, fall through to raw text snippet.
+        }
+
+        String compact = responseBody.replaceAll("\\s+", " ").trim();
+        return compact.length() > 200 ? compact.substring(0, 200) + "..." : compact;
     }
 
     private RequisitionSuggestionResponse normalizeSuggestions(String modelContent, List<Item> catalogItems) {
