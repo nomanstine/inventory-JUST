@@ -16,7 +16,8 @@ import {
   Ruler,
   User,
   Warehouse,
-  FileCheck
+  FileCheck,
+  Sparkles
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -71,6 +72,7 @@ function SidebarContent({ isCollapsed = false, onNavigate }: SidebarContentProps
       items: [
         { icon: BarChart3, label: 'Reports', href: '/reports' },
         { icon: QrCode, label: 'Barcode Scan', href: '/barcode' },
+        { icon: Sparkles, label: 'AI Recommendations', href: '/ai-recommendations' },
       ]
     },
     {

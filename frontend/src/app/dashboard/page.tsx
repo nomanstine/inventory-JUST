@@ -107,12 +107,14 @@ export default function DashboardPage() {
 
   const handleDashboardSuggest = async () => {
     try {
-      if (!dashboardParentOfficeId) {
-        throw new Error("Select a source office first");
+      const officeId = user?.officeId ? parseInt(user.officeId, 10) : 0;
+      
+      if (!officeId) {
+        throw new Error("User office not found");
       }
 
       const response = await suggestionMutation.mutateAsync({
-        parentOfficeId: dashboardParentOfficeId,
+        parentOfficeId: officeId,
         reason: dashboardReason,
       });
 
@@ -365,6 +367,81 @@ export default function DashboardPage() {
                     )}
                   </Button>
                   <Button type="button" variant="outline" onClick={() => router.push("/requisitions")}>Open Requisitions</Button>
+                </div>
+
+                {dashboardAiUnavailableHint && (
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>{dashboardAiUnavailableHint}</AlertDescription>
+                  </Alert>
+                )}
+
+                {dashboardSuggestionSummary && (
+                  <p className="text-sm text-muted-foreground">{dashboardSuggestionSummary}</p>
+                )}
+
+                {dashboardSuggestions.length > 0 && (
+                  <div className="border rounded-lg divide-y">
+                    {dashboardSuggestions.map((suggestion) => (
+                      <div key={suggestion.itemId} className="p-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-sm font-medium">{suggestion.itemName}</p>
+                          <Badge variant="secondary">Qty {suggestion.quantity}</Badge>
+                        </div>
+                        {suggestion.rationale && (
+                          <p className="text-xs text-muted-foreground mt-1">{suggestion.rationale}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* AI Requisition Recommendations for Current Office */}
+          {user && (
+            <Card>
+              <CardHeader className="p-4 sm:p-6">
+                <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-amber-500" />
+                  AI Requisition Recommendations
+                </CardTitle>
+                <CardDescription className="text-xs sm:text-sm">
+                  Smart recommendations based on your office's inventory and request history
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-4 sm:p-6 pt-0 space-y-4">
+                <div>
+                  <Label>Need / Context (Optional)</Label>
+                  <Textarea
+                    value={dashboardReason}
+                    onChange={(e) => setDashboardReason(e.target.value)}
+                    placeholder="Add context to guide AI recommendations (e.g., preparing for upcoming projects, seasonal needs)"
+                    rows={3}
+                    className="mt-1"
+                  />
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    onClick={handleDashboardSuggest}
+                    disabled={suggestionMutation.isPending}
+                  >
+                    {suggestionMutation.isPending ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Analyzing...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="mr-2 h-4 w-4" />
+                        Get Recommendations
+                      </>
+                    )}
+                  </Button>
+                  <Button type="button" variant="outline" onClick={() => router.push("/requisitions")}>View Requisitions</Button>
                 </div>
 
                 {dashboardAiUnavailableHint && (

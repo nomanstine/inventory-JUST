@@ -292,30 +292,31 @@ public class ItemRequestController {
             User currentUser = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-            if (!"ADMIN".equals(currentUser.getRole().getName())) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body("Only admins can request requisition suggestions");
-            }
-
             if (request.getParentOfficeId() == null) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body("Parent office is required for suggestion");
             }
 
-            if (request.getParentOfficeId().equals(currentUser.getOffice().getId())) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Cannot request suggestions from your own office");
+            Long parentOfficeId = request.getParentOfficeId();
+            Long userOfficeId = currentUser.getOffice().getId();
+            boolean isSameOffice = parentOfficeId.equals(userOfficeId);
+
+            // Allow regular users to get recommendations for their own office
+            // Only admins can get suggestions from other offices
+            if (!isSameOffice && !"ADMIN".equals(currentUser.getRole().getName())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("Only admins can request suggestions from other offices");
             }
 
-            Office parentOffice = officeRepository.findById(request.getParentOfficeId())
+            Office parentOffice = officeRepository.findById(parentOfficeId)
                 .orElseThrow(() -> new RuntimeException("Parent office not found"));
 
             RequisitionSuggestionResponse response = requisitionSuggestionService.suggest(
                 currentUser.getOffice().getName(),
                 parentOffice.getName(),
                 request.getReason(),
-                itemRequestService.getAvailableInstancesForOffice(parentOffice.getId()),
-                itemRequestService.getRecentRequestsBetweenOffices(currentUser.getOffice().getId(), parentOffice.getId(), 15),
+                itemRequestService.getAvailableInstancesForOffice(parentOfficeId),
+                itemRequestService.getRecentRequestsBetweenOffices(userOfficeId, parentOfficeId, 15),
                 itemRequestService.getCatalogItems()
             );
 
