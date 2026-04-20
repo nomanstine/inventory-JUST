@@ -4,9 +4,9 @@ spring:
   # profiles:
   #   active: test
   datasource:
-    url: jdbc:postgresql://ep-winter-smoke-a1ulvvvo-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require
-    username: neondb_owner
-    password: npg_6tBSQNIJh3VZ
+    url: ${DATABASE_URL:${SPRING_DATASOURCE_URL:}}
+    username: ${DATABASE_USERNAME:${SPRING_DATASOURCE_USERNAME:}}
+    password: ${DATABASE_PASSWORD:${SPRING_DATASOURCE_PASSWORD:}}
     driverClassName: org.postgresql.Driver
     hikari:
       minimum-idle: 5
@@ -50,7 +50,7 @@ springdoc:
     enabled: true
 
 jwt:
-  secret: abcdefghij1234567890abcdefghij1234567890abcdefghij1234567890ab
+  secret: ${JWT_SECRET}
   expiration: 86400000
 
 app:
