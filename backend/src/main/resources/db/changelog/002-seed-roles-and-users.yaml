@@ -2,6 +2,8 @@ databaseChangeLog:
   - changeSet:
       id: 2-seed-roles
       author: system
+            validCheckSum:
+                - 9:bbce33a6358e7511f45baa14be41a0ae
       changes:
         - insert:
             tableName: roles
@@ -66,6 +68,8 @@ databaseChangeLog:
   - changeSet:
       id: 4-seed-users
       author: system
+            validCheckSum:
+                - 9:3fccfbedc5b8e6d5e31fffa3f1ac00ff
       changes:
         # FET Admin
         - insert:
