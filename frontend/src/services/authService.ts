@@ -1,10 +1,11 @@
 import api from "@/lib/api";
 import { KEY } from "@/lib/api";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 
 
 export enum UserRole {
   ADMIN = 'ADMIN',
+  SUPER_ADMIN = 'SUPER_ADMIN',
   USER = 'USER',
 }
 

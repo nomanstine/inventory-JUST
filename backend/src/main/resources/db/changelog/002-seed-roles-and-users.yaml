@@ -23,6 +23,18 @@ databaseChangeLog:
                   value: 2
               - column:
                   name: name
+                  value: SUPER_ADMIN
+              - column:
+                  name: description
+                  value: Super administrator with user management access
+        - insert:
+            tableName: roles
+            columns:
+              - column:
+                  name: id
+                  value: 3
+              - column:
+                  name: name
                   value: USER
               - column:
                   name: description
@@ -96,10 +108,33 @@ databaseChangeLog:
                   value: user.fet@university.edu
               - column:
                   name: role_id
-                  value: 2
+                  value: 3
               - column:
                   name: office_id
                   value: 5
+
+        # Super Admin
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: full_name
+                  value: JUST Super Admin
+              - column:
+                  name: username
+                  value: super.admin
+              - column:
+                  name: password
+                  value: $2a$10$hTtpS2P0OwNYkFqyLxVkDucNZ9SU7XhDiIUrevkJ6pa3awzf0P/Di
+              - column:
+                  name: email
+                  value: super.admin@university.edu
+              - column:
+                  name: role_id
+                  value: 2
+              - column:
+                  name: office_id
+                  value: 2
 
         # CSE Admin
         - insert:
@@ -142,7 +177,7 @@ databaseChangeLog:
                   value: user.cse@university.edu
               - column:
                   name: role_id
-                  value: 2
+                  value: 3
               - column:
                   name: office_id
                   value: 14

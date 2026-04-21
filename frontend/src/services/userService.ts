@@ -1,5 +1,5 @@
 import api from "@/lib/api";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export interface User {
   id: string;
@@ -15,9 +15,37 @@ export interface User {
   };
 }
 
+export interface OfficeAdminSummary {
+  id: string;
+  username: string;
+  email: string;
+  name: string;
+  role: string;
+  officeId: string;
+  officeName: string;
+}
+
+export interface CreateOfficeAdminPayload {
+  username: string;
+  password: string;
+  email: string;
+  fullName: string;
+  officeId: number;
+}
+
 // Get user by ID
 export const getUserById = async (id: string): Promise<User> => {
   const response = await api.get(`/users/${id}`);
+  return response.data;
+};
+
+export const getOfficeAdmins = async (): Promise<OfficeAdminSummary[]> => {
+  const response = await api.get(`/users/admins`);
+  return response.data;
+};
+
+export const createOfficeAdmin = async (payload: CreateOfficeAdminPayload): Promise<OfficeAdminSummary> => {
+  const response = await api.post(`/users/admins`, payload);
   return response.data;
 };
 
@@ -27,5 +55,23 @@ export const useUser = (id: string) => {
     queryKey: ["user", id],
     queryFn: () => getUserById(id),
     enabled: !!id,
+  });
+};
+
+export const useOfficeAdmins = () => {
+  return useQuery({
+    queryKey: ["office-admins"],
+    queryFn: getOfficeAdmins,
+  });
+};
+
+export const useCreateOfficeAdmin = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: createOfficeAdmin,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["office-admins"] });
+    },
   });
 };

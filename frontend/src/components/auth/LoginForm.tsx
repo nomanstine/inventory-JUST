@@ -42,10 +42,11 @@ export function LoginForm({
     }
 
     try {
-      await loginMutation.mutateAsync(credentials);
+      const response = await loginMutation.mutateAsync(credentials);
       refreshUser(); // Refresh the auth context with new user data
       onLoginSuccess?.();
-      router.push(redirectTo);
+      const nextRoute = response.user.role === "SUPER_ADMIN" ? "/super-admin" : redirectTo;
+      router.push(nextRoute);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
     }

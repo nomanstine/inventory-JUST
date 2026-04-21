@@ -82,31 +82,8 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest registerRequest) {
-        if (userRepository.findByUsername(registerRequest.getUsername()).isPresent()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Username already exists");
-        }
-
-        User user = new User();
-        user.setUsername(registerRequest.getUsername());
-        user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
-        user.setEmail(registerRequest.getEmail());
-        user.setFullName(registerRequest.getFullName());
-        
-        // Set role - default to roleId from request or default to User role (id: 2)
-        Long roleId = registerRequest.getRoleId() != null ? registerRequest.getRoleId() : 2L;
-        user.setRole(roleRepository.findById(roleId)
-            .orElseThrow(() -> new RuntimeException("Role not found")));
-        
-        // Set office - required field
-        if (registerRequest.getOfficeId() == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Office ID is required");
-        }
-        user.setOffice(officeRepository.findById(registerRequest.getOfficeId())
-            .orElseThrow(() -> new RuntimeException("Office not found")));
-        
-        userRepository.save(user);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body("User registered successfully");
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            .body("Public registration is disabled. A super admin must create office admin accounts.");
     }
 
     public static class LoginRequest {

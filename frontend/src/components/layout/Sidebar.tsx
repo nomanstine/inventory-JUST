@@ -42,8 +42,17 @@ interface SidebarContentProps {
 function SidebarContent({ isCollapsed = false, onNavigate }: SidebarContentProps) {
   const pathname = usePathname();
   const { role } = useAuth();
+  const isSuperAdmin = role === 'SUPER_ADMIN';
 
   const sidebarSections = [
+    ...(isSuperAdmin
+      ? [{
+          title: 'Administration',
+          items: [
+            { icon: Sparkles, label: 'Super Admin Dashboard', href: '/super-admin' },
+          ],
+        }]
+      : []),
     {
       title: 'Main',
       items: [
