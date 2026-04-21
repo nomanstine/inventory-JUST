@@ -161,7 +161,8 @@
 				<artifactId>liquibase-maven-plugin</artifactId>
 				<version>4.31.1</version>
 				<configuration>
-					<changeLogFile>src/main/resources/db/changelog/db.changelog-master.yaml</changeLogFile>
+					<changeLogFile>db/changelog/db.changelog-master.yaml</changeLogFile>
+					<searchPath>${project.basedir}/src/main/resources</searchPath>
 					<url>${env.DATABASE_URL}</url>
 					<username>${env.DATABASE_USERNAME}</username>
 					<password>${env.DATABASE_PASSWORD}</password>

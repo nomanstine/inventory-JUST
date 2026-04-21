@@ -15,3 +15,5 @@ databaseChangeLog:
       file: db/changelog/006-restructure-purchases.yaml
   - include:
       file: db/changelog/007-add-user-avatar-url.yaml
+  - include:
+      file: db/changelog/008-ensure-super-admin-user.yaml
