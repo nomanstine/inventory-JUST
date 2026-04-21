@@ -55,9 +55,17 @@ export default function SuggestiveRequisitionPage() {
     }
   }, [officeOptions]);
 
+  const myOfficePurchases = useMemo(() => {
+    if (!currentUserOfficeId) {
+      return [];
+    }
+
+    return purchases.filter((purchase) => purchase.office?.id === currentUserOfficeId);
+  }, [purchases, currentUserOfficeId]);
+
   const suggestions = useMemo<SuggestedRequisitionItem[]>(() => {
-    return buildSuggestiveRequisition(purchases, items, 6);
-  }, [purchases, items]);
+    return buildSuggestiveRequisition(myOfficePurchases, items, 6);
+  }, [myOfficePurchases, items]);
 
   if (!user) {
     return (

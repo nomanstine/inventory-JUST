@@ -16,6 +16,12 @@ export interface DemoCredential {
 
 export const DEMO_CREDENTIALS: DemoCredential[] = [
   {
+    label: "Super Admin",
+    username: "super.admin",
+    password: "password123",
+    role: "SUPER_ADMIN",
+  },
+  {
     label: "FET Admin",
     username: "admin.fet",
     password: "password123",
