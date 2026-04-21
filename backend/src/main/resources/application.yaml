@@ -63,7 +63,7 @@ app:
 
 ai:
   requisition:
-    enabled: ${AI_REQUISITION_ENABLED:true}
-    api-url: ${AI_REQUISITION_API_URL:https://api.deepseek.com/chat/completions}
+    enabled: ${AI_REQUISITION_ENABLED:}
+    api-url: ${AI_REQUISITION_API_URL:}
     api-key: ${AI_REQUISITION_API_KEY:}
-    model: ${AI_REQUISITION_MODEL:deepseek-chat}
+    model: ${AI_REQUISITION_MODEL:}
