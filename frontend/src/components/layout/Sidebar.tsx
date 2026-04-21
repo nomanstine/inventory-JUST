@@ -17,6 +17,7 @@ import {
   User,
   Warehouse,
   FileCheck,
+  Lightbulb,
   Sparkles
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -74,6 +75,7 @@ function SidebarContent({ isCollapsed = false, onNavigate }: SidebarContentProps
       items: [
         { icon: ShoppingCart, label: 'Purchases', href: '/purchases' },
         { icon: FileCheck, label: 'Requisitions', href: '/requisitions' },
+        { icon: Lightbulb, label: 'Suggestive Requisition', href: '/requisitions/suggestive' },
       ]
     },
     {
