@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - changeSet:
+      id: 007-add-user-avatar-url
+      author: copilot
+      changes:
+        - addColumn:
+            tableName: users
+            columns:
+              - column:
+                  name: avatar_url
+                  type: VARCHAR(1024)
+                  constraints:
+                    nullable: true

@@ -12,6 +12,7 @@ import { EditProfileDialog } from "./components/EditProfileDialog";
 import { ChangePasswordDialog } from "./components/ChangePasswordDialog";
 import { useUser } from "@/services/userService";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { ProfilePhotoDialog } from "./components/ProfilePhotoDialog";
 
 function ProfilePageContent() {
   const { user: currentUser } = useAuth();
@@ -70,10 +71,12 @@ function ProfilePageContent() {
             <CardHeader className="space-y-4">
               <div className={`flex ${isMobile ? 'flex-col space-y-4' : 'items-center justify-between'}`}>
                 <div className="flex items-center space-x-4">
-                  <div className={`${isMobile ? 'h-14 w-14 text-xl' : 'h-16 w-16 text-2xl'} rounded-full bg-indigo-600 flex items-center justify-center text-white font-semibold`}>
-                    {user?.name?.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) || 
-                     user?.username?.slice(0, 2).toUpperCase()}
-                  </div>
+                  <ProfilePhotoDialog
+                    src={(user as any)?.avatarUrl || currentUser?.avatarUrl || null}
+                    name={user?.name || currentUser?.name}
+                    username={user?.username || currentUser?.username}
+                    className={isMobile ? 'h-14 w-14' : 'h-16 w-16'}
+                  />
                   <div>
                     <CardTitle className={isMobile ? 'text-xl' : 'text-2xl'}>{user?.name || user?.username}</CardTitle>
                     <CardDescription className={isMobile ? 'text-xs' : ''}>@{user?.username}</CardDescription>

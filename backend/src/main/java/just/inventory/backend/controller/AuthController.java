@@ -11,12 +11,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -71,9 +73,12 @@ public class AuthController {
         userInfo.put("email", user.getEmail());
         userInfo.put("name", user.getFullName());
         userInfo.put("role", user.getRole().getName());
-        userInfo.put("permissions", userDetails.getAuthorities());
+        userInfo.put("permissions", userDetails.getAuthorities().stream()
+            .map(GrantedAuthority::getAuthority)
+            .toList());
         userInfo.put("officeId", user.getOffice().getId().toString());
         userInfo.put("officeName", user.getOffice().getName());
+        userInfo.put("avatarUrl", user.getAvatarUrl());
         
         response.put("user", userInfo);
 

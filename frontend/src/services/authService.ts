@@ -14,6 +14,7 @@ export interface User {
   username: string;
   email?: string;
   name?: string;
+  avatarUrl?: string | null;
   role: string;
   permissions: string[];
   officeId?: string;

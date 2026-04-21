@@ -11,6 +11,7 @@ import { User, Mail, Building2, Shield, Edit, Key } from "lucide-react";
 import { EditProfileDialog } from "../components/EditProfileDialog";
 import { ChangePasswordDialog } from "../components/ChangePasswordDialog";
 import { useUser } from "@/services/userService";
+import { ProfilePhotoDialog } from "../components/ProfilePhotoDialog";
 
 interface ProfilePageProps {
   params: Promise<{
@@ -73,10 +74,12 @@ export default function UserProfilePage({ params }: ProfilePageProps) {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
-                  <div className="h-16 w-16 rounded-full bg-indigo-600 flex items-center justify-center text-white text-2xl font-semibold">
-                    {(user.fullName || user.name)?.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) || 
-                     user.username?.slice(0, 2).toUpperCase()}
-                  </div>
+                  <ProfilePhotoDialog
+                    src={user.avatarUrl || null}
+                    name={user.fullName || user.name}
+                    username={user.username}
+                    className="h-16 w-16"
+                  />
                   <div>
                     <CardTitle className="text-2xl">{user.fullName || user.name || user.username}</CardTitle>
                     <CardDescription>@{user.username}</CardDescription>

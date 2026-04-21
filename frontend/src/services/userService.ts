@@ -7,12 +7,21 @@ export interface User {
   email?: string;
   name?: string;
   fullName?: string;
+  avatarUrl?: string | null;
   role: string | { id: string; name: string; description: string };
-  permissions: string[];
-  office: {
+  permissions?: string[];
+  office?: {
     id: string;
     name: string;
   };
+  officeId?: string;
+  officeName?: string;
+}
+
+export interface UpdateProfilePayload {
+  fullName: string;
+  email: string;
+  avatarUrl?: string | null;
 }
 
 export interface OfficeAdminSummary {
@@ -46,6 +55,11 @@ export const getOfficeAdmins = async (): Promise<OfficeAdminSummary[]> => {
 
 export const createOfficeAdmin = async (payload: CreateOfficeAdminPayload): Promise<OfficeAdminSummary> => {
   const response = await api.post(`/users/admins`, payload);
+  return response.data;
+};
+
+export const updateMyProfile = async (payload: UpdateProfilePayload): Promise<User> => {
+  const response = await api.put(`/users/me/profile`, payload);
   return response.data;
 };
 

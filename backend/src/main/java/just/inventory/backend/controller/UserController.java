@@ -7,12 +7,15 @@ import just.inventory.backend.repository.UserRepository;
 import just.inventory.backend.repository.RoleRepository;
 import just.inventory.backend.repository.OfficeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/users")
@@ -35,6 +38,35 @@ public class UserController {
         return userRepository.findById(id)
                 .map(user -> ResponseEntity.ok(user))
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/me/profile")
+    public ResponseEntity<?> updateMyProfile(@RequestBody UpdateProfileRequest request, Authentication authentication) {
+        User user = userRepository.findByUsername(authentication.getName())
+            .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
+
+        if (request.getFullName() == null || request.getFullName().isBlank()) {
+            return ResponseEntity.badRequest().body("Full name is required");
+        }
+
+        if (request.getEmail() == null || request.getEmail().isBlank()) {
+            return ResponseEntity.badRequest().body("Email is required");
+        }
+
+        boolean emailAlreadyExists = userRepository.findByEmail(request.getEmail().trim())
+            .filter(existing -> !existing.getId().equals(user.getId()))
+            .isPresent();
+
+        if (emailAlreadyExists) {
+            return ResponseEntity.badRequest().body("Email already exists");
+        }
+
+        user.setFullName(request.getFullName().trim());
+        user.setEmail(request.getEmail().trim());
+        user.setAvatarUrl(request.getAvatarUrl() == null || request.getAvatarUrl().isBlank() ? null : request.getAvatarUrl().trim());
+
+        User savedUser = userRepository.save(user);
+        return ResponseEntity.ok(UserProfileResponse.fromUser(savedUser, authentication));
     }
 
     @GetMapping("/admins")
@@ -141,6 +173,63 @@ public class UserController {
 
         public void setOfficeId(Long officeId) {
             this.officeId = officeId;
+        }
+    }
+
+    public static class UpdateProfileRequest {
+        private String fullName;
+        private String email;
+        private String avatarUrl;
+
+        public String getFullName() {
+            return fullName;
+        }
+
+        public void setFullName(String fullName) {
+            this.fullName = fullName;
+        }
+
+        public String getEmail() {
+            return email;
+        }
+
+        public void setEmail(String email) {
+            this.email = email;
+        }
+
+        public String getAvatarUrl() {
+            return avatarUrl;
+        }
+
+        public void setAvatarUrl(String avatarUrl) {
+            this.avatarUrl = avatarUrl;
+        }
+    }
+
+    public record UserProfileResponse(
+        Long id,
+        String username,
+        String email,
+        String name,
+        String role,
+        List<String> permissions,
+        String officeId,
+        String officeName,
+        String avatarUrl
+    ) {
+        public static UserProfileResponse fromUser(User user, Authentication authentication) {
+            Office office = user.getOffice();
+            return new UserProfileResponse(
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getFullName(),
+                user.getRole() != null ? user.getRole().getName() : null,
+                authentication.getAuthorities().stream().map(authority -> authority.getAuthority()).toList(),
+                office != null ? office.getId().toString() : null,
+                office != null ? office.getName() : null,
+                user.getAvatarUrl()
+            );
         }
     }
 

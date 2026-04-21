@@ -13,3 +13,5 @@ databaseChangeLog:
       file: db/changelog/005-seed-items.yaml
   - include:
       file: db/changelog/006-restructure-purchases.yaml
+  - include:
+      file: db/changelog/007-add-user-avatar-url.yaml
