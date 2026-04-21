@@ -32,6 +32,9 @@ spring:
     ansi:
       enabled: always
 
+server:
+  port: ${PORT:8080}
+
 logging:
   level:
     ROOT: Error
