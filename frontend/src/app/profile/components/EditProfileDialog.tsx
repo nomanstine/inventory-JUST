@@ -86,8 +86,11 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
       }
 
       if (user?.id) {
+        queryClient.setQueryData(["user", user.id], updatedUser);
         queryClient.invalidateQueries({ queryKey: ["user", user.id] });
       }
+
+      queryClient.setQueryData(["userProfile"], updatedUser);
 
       toast.success("Profile updated successfully");
       refreshUser();

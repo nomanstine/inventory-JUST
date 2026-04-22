@@ -101,6 +101,11 @@ databaseChangeLog:
                     nullable: false
                     unique: true
               - column:
+                  name: avatar_url
+                  type: VARCHAR(1024)
+                  constraints:
+                    nullable: true
+              - column:
                   name: role_id
                   type: BIGINT
                   constraints:
@@ -473,18 +478,6 @@ databaseChangeLog:
                     primaryKey: true
                     nullable: false
               - column:
-                  name: item_id
-                  type: BIGINT
-                  constraints:
-                    nullable: false
-                    foreignKeyName: fk_purchase_item
-                    references: items(id)
-              - column:
-                  name: quantity
-                  type: DOUBLE
-                  constraints:
-                    nullable: false
-              - column:
                   name: purchased_by_user_id
                   type: BIGINT
                   constraints:
@@ -499,12 +492,10 @@ databaseChangeLog:
                     foreignKeyName: fk_purchase_office
                     references: offices(id)
               - column:
-                  name: unit_price
-                  type: DOUBLE
-                  constraints:
-                    nullable: false
-              - column:
                   name: supplier
+                  type: VARCHAR(255)
+              - column:
+                  name: invoice_number
                   type: VARCHAR(255)
               - column:
                   name: remarks
@@ -517,6 +508,43 @@ databaseChangeLog:
               - column:
                   name: purchased_date
                   type: TIMESTAMP
+                  constraints:
+                    nullable: false
+
+        # Create purchase_items table (line items)
+        - createTable:
+            tableName: purchase_items
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: purchase_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_purchase_item_purchase
+                    references: purchases(id)
+                    deleteCascade: true
+              - column:
+                  name: item_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_purchase_item_item
+                    references: items(id)
+              - column:
+                  name: quantity
+                  type: DOUBLE
+                  constraints:
+                    nullable: false
+              - column:
+                  name: unit_price
+                  type: DOUBLE
                   constraints:
                     nullable: false
 
