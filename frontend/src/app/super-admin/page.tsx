@@ -14,13 +14,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Loader2, ShieldCheck, UserPlus, Users } from "lucide-react";
 import { useOffices } from "@/services/officeService";
-import { useCreateOfficeAdmin, useOfficeAdmins } from "@/services/userService";
+import { useCreateOfficeAdmin, useCreateOfficeUser, useOfficeAdmins } from "@/services/userService";
 
 export default function SuperAdminPage() {
   const { user, role } = useAuth();
   const { data: offices = [], isLoading: isLoadingOffices } = useOffices();
   const { data: admins = [], isLoading: isLoadingAdmins } = useOfficeAdmins();
   const createAdminMutation = useCreateOfficeAdmin();
+  const createOfficeUserMutation = useCreateOfficeUser();
 
   const [form, setForm] = useState({
     fullName: "",
@@ -32,6 +33,21 @@ export default function SuperAdminPage() {
   const [statusMessage, setStatusMessage] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
   const isSuperAdmin = role === "SUPER_ADMIN";
+  const isAdmin = role === "ADMIN";
+  const canManageUsers = isSuperAdmin || isAdmin;
+  const currentUserOfficeId = user?.officeId ? Number(user.officeId) : null;
+
+  const availableOffices = useMemo(() => {
+    if (isSuperAdmin) {
+      return offices;
+    }
+
+    if (!currentUserOfficeId) {
+      return [];
+    }
+
+    return offices.filter((office) => office.id === currentUserOfficeId);
+  }, [currentUserOfficeId, isSuperAdmin, offices]);
 
   const stats = useMemo(() => ([
     { label: "Managed Offices", value: offices.length },
@@ -57,16 +73,16 @@ export default function SuperAdminPage() {
     );
   }
 
-  if (!isSuperAdmin) {
+  if (!canManageUsers) {
     return (
       <PageLayout
-        header={<Header title="Super Admin Console" subtitle="Restricted access" />}
+        header={<Header title="User Management" subtitle="Restricted access" />}
         body={
           <div className="flex items-center justify-center h-[50vh]">
             <Card className="w-full max-w-md border-amber-200 bg-amber-50/80">
               <CardHeader>
                 <CardTitle>Access denied</CardTitle>
-                <CardDescription>Only super admins can manage office administrator accounts.</CardDescription>
+                <CardDescription>Only admins and super admins can manage office administrator accounts.</CardDescription>
               </CardHeader>
               <CardContent>
                 <Button asChild className="w-full">
@@ -89,28 +105,42 @@ export default function SuperAdminPage() {
     event.preventDefault();
     setStatusMessage(null);
 
-    if (!form.officeId) {
+    const selectedOfficeId = isSuperAdmin ? form.officeId : (currentUserOfficeId ? currentUserOfficeId.toString() : "");
+
+    if (!selectedOfficeId) {
       setStatusMessage({ type: "error", message: "Please select an office for the new admin." });
       return;
     }
 
     try {
-      await createAdminMutation.mutateAsync({
-        fullName: form.fullName.trim(),
-        username: form.username.trim(),
-        email: form.email.trim(),
-        password: form.password,
-        officeId: Number(form.officeId),
-      });
+      if (isSuperAdmin) {
+        await createAdminMutation.mutateAsync({
+          fullName: form.fullName.trim(),
+          username: form.username.trim(),
+          email: form.email.trim(),
+          password: form.password,
+          officeId: Number(selectedOfficeId),
+        });
+      } else {
+        await createOfficeUserMutation.mutateAsync({
+          fullName: form.fullName.trim(),
+          username: form.username.trim(),
+          email: form.email.trim(),
+          password: form.password,
+        });
+      }
 
       setForm({
         fullName: "",
         username: "",
         email: "",
         password: "",
-        officeId: "",
+        officeId: isSuperAdmin ? "" : (currentUserOfficeId ? currentUserOfficeId.toString() : ""),
       });
-      setStatusMessage({ type: "success", message: "Office admin created successfully." });
+      setStatusMessage({
+        type: "success",
+        message: isSuperAdmin ? "Office admin created successfully." : "Office user created successfully.",
+      });
     } catch (error) {
       setStatusMessage({
         type: "error",
@@ -119,14 +149,16 @@ export default function SuperAdminPage() {
     }
   };
 
-  const isSubmitting = createAdminMutation.isPending;
+  const isSubmitting = createAdminMutation.isPending || createOfficeUserMutation.isPending;
 
   return (
     <PageLayout
       header={
         <Header
-          title="Super Admin Console"
-          subtitle="Create and oversee office admins without exposing public registration"
+          title={isSuperAdmin ? "Super Admin Console" : "Office User Management"}
+          subtitle={isSuperAdmin
+            ? "Create and oversee office admins without exposing public registration"
+            : "Create office admins for your own office"}
         />
       }
       body={
@@ -137,11 +169,13 @@ export default function SuperAdminPage() {
               <div>
                 <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs uppercase tracking-[0.28em] text-slate-200">
                   <ShieldCheck className="h-3.5 w-3.5" />
-                  Super admin only
+                  {isSuperAdmin ? "Super admin only" : "Admin access"}
                 </div>
                 <h2 className="text-2xl font-semibold sm:text-3xl">Manage office admin onboarding from one place.</h2>
                 <p className="mt-2 max-w-2xl text-sm text-slate-300 sm:text-base">
-                  Public registration is disabled. Use this console to create office admins, assign them to the correct office, and keep administrative access controlled.
+                  {isSuperAdmin
+                    ? "Public registration is disabled. Use this console to create office admins, assign them to the correct office, and keep administrative access controlled."
+                    : "Public registration is disabled. Use this console to create office admins only for your office and keep access controlled."}
                 </p>
               </div>
               <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
@@ -160,9 +194,13 @@ export default function SuperAdminPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-xl">
                   <UserPlus className="h-5 w-5 text-sky-700" />
-                  Create Office Admin
+                  {isSuperAdmin ? "Create Office Admin" : "Create Office User"}
                 </CardTitle>
-                <CardDescription>Provide account details and assign the admin to a single office.</CardDescription>
+                <CardDescription>
+                  {isSuperAdmin
+                    ? "Provide account details and assign the admin to a single office."
+                    : "Provide account details to create a user account for your office."}
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 {statusMessage && (
@@ -220,21 +258,26 @@ export default function SuperAdminPage() {
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label>Office</Label>
-                    <Select value={form.officeId} onValueChange={(value) => handleChange("officeId", value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder={isLoadingOffices ? "Loading offices..." : "Choose an office"} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {offices.map((office) => (
-                          <SelectItem key={office.id} value={office.id.toString()}>
-                            {office.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  {isSuperAdmin && (
+                    <div className="space-y-2">
+                      <Label>Office</Label>
+                      <Select
+                        value={form.officeId}
+                        onValueChange={(value) => handleChange("officeId", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder={isLoadingOffices ? "Loading offices..." : "Choose an office"} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availableOffices.map((office) => (
+                            <SelectItem key={office.id} value={office.id.toString()}>
+                              {office.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
 
                   <div className="flex items-center justify-end gap-3 pt-2">
                     <Button type="submit" disabled={isSubmitting || isLoadingOffices} className="min-w-40">
@@ -244,7 +287,7 @@ export default function SuperAdminPage() {
                           Creating...
                         </>
                       ) : (
-                        "Create Admin"
+                        (isSuperAdmin ? "Create Admin" : "Create User")
                       )}
                     </Button>
                   </div>

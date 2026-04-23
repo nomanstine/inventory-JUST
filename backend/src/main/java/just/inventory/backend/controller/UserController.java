@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/users")
@@ -70,10 +71,17 @@ public class UserController {
     }
 
     @GetMapping("/admins")
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
-    public ResponseEntity<List<UserSummaryResponse>> getOfficeAdmins() {
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public ResponseEntity<List<UserSummaryResponse>> getOfficeAdmins(Authentication authentication) {
+        User currentUser = userRepository.findByUsername(authentication.getName())
+            .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
+
+        boolean isSuperAdmin = hasRole(currentUser, "SUPER_ADMIN");
+        Long currentOfficeId = currentUser.getOffice() != null ? currentUser.getOffice().getId() : null;
+
         List<UserSummaryResponse> admins = userRepository.findAll().stream()
             .filter(user -> user.getRole() != null && "ADMIN".equals(user.getRole().getName()))
+            .filter(user -> isSuperAdmin || (user.getOffice() != null && currentOfficeId != null && currentOfficeId.equals(user.getOffice().getId())))
             .map(UserSummaryResponse::fromUser)
             .toList();
 
@@ -111,10 +119,11 @@ public class UserController {
             return ResponseEntity.badRequest().body("Email already exists");
         }
 
-        Role adminRole = roleRepository.findByName("ADMIN")
-            .orElseThrow(() -> new RuntimeException("Admin role not found"));
         Office office = officeRepository.findById(request.getOfficeId())
             .orElseThrow(() -> new RuntimeException("Office not found"));
+
+        Role adminRole = roleRepository.findByName("ADMIN")
+            .orElseThrow(() -> new RuntimeException("Admin role not found"));
 
         User user = new User();
         user.setUsername(request.getUsername().trim());
@@ -126,6 +135,61 @@ public class UserController {
 
         User savedUser = userRepository.save(user);
         return ResponseEntity.status(201).body(UserSummaryResponse.fromUser(savedUser));
+    }
+
+    @PostMapping("/office-users")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> createOfficeUser(@RequestBody CreateOfficeUserRequest request, Authentication authentication) {
+        if (request.getUsername() == null || request.getUsername().isBlank()) {
+            return ResponseEntity.badRequest().body("Username is required");
+        }
+
+        if (request.getPassword() == null || request.getPassword().isBlank()) {
+            return ResponseEntity.badRequest().body("Password is required");
+        }
+
+        if (request.getEmail() == null || request.getEmail().isBlank()) {
+            return ResponseEntity.badRequest().body("Email is required");
+        }
+
+        if (request.getFullName() == null || request.getFullName().isBlank()) {
+            return ResponseEntity.badRequest().body("Full name is required");
+        }
+
+        if (userRepository.findByUsername(request.getUsername()).isPresent()) {
+            return ResponseEntity.badRequest().body("Username already exists");
+        }
+
+        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+            return ResponseEntity.badRequest().body("Email already exists");
+        }
+
+        User currentUser = userRepository.findByUsername(authentication.getName())
+            .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
+
+        Office office = Optional.ofNullable(currentUser.getOffice())
+            .orElseThrow(() -> new RuntimeException("Admin office not found"));
+
+        Role userRole = roleRepository.findByName("USER")
+            .orElseThrow(() -> new RuntimeException("User role not found"));
+
+        User user = new User();
+        user.setUsername(request.getUsername().trim());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setEmail(request.getEmail().trim());
+        user.setFullName(request.getFullName().trim());
+        user.setRole(userRole);
+        user.setOffice(office);
+
+        User savedUser = userRepository.save(user);
+        return ResponseEntity.status(201).body(UserSummaryResponse.fromUser(savedUser));
+    }
+
+    private boolean hasRole(User user, String roleName) {
+        return Optional.ofNullable(user.getRole())
+            .map(Role::getName)
+            .map(roleName::equals)
+            .orElse(false);
     }
 
     public static class CreateOfficeAdminRequest {
@@ -173,6 +237,45 @@ public class UserController {
 
         public void setOfficeId(Long officeId) {
             this.officeId = officeId;
+        }
+    }
+
+    public static class CreateOfficeUserRequest {
+        private String username;
+        private String password;
+        private String email;
+        private String fullName;
+
+        public String getUsername() {
+            return username;
+        }
+
+        public void setUsername(String username) {
+            this.username = username;
+        }
+
+        public String getPassword() {
+            return password;
+        }
+
+        public void setPassword(String password) {
+            this.password = password;
+        }
+
+        public String getEmail() {
+            return email;
+        }
+
+        public void setEmail(String email) {
+            this.email = email;
+        }
+
+        public String getFullName() {
+            return fullName;
+        }
+
+        public void setFullName(String fullName) {
+            this.fullName = fullName;
         }
     }
 

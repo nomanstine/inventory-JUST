@@ -42,6 +42,13 @@ export interface CreateOfficeAdminPayload {
   officeId: number;
 }
 
+export interface CreateOfficeUserPayload {
+  username: string;
+  password: string;
+  email: string;
+  fullName: string;
+}
+
 // Get user by ID
 export const getUserById = async (id: string): Promise<User> => {
   const response = await api.get(`/users/${id}`);
@@ -55,6 +62,11 @@ export const getOfficeAdmins = async (): Promise<OfficeAdminSummary[]> => {
 
 export const createOfficeAdmin = async (payload: CreateOfficeAdminPayload): Promise<OfficeAdminSummary> => {
   const response = await api.post(`/users/admins`, payload);
+  return response.data;
+};
+
+export const createOfficeUser = async (payload: CreateOfficeUserPayload): Promise<OfficeAdminSummary> => {
+  const response = await api.post(`/users/office-users`, payload);
   return response.data;
 };
 
@@ -84,6 +96,17 @@ export const useCreateOfficeAdmin = () => {
 
   return useMutation({
     mutationFn: createOfficeAdmin,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["office-admins"] });
+    },
+  });
+};
+
+export const useCreateOfficeUser = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: createOfficeUser,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["office-admins"] });
     },

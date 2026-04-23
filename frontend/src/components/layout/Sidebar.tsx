@@ -44,13 +44,14 @@ function SidebarContent({ isCollapsed = false, onNavigate }: SidebarContentProps
   const pathname = usePathname();
   const { role } = useAuth();
   const isSuperAdmin = role === 'SUPER_ADMIN';
+  const canManageUsers = role === 'SUPER_ADMIN' || role === 'ADMIN';
 
   const sidebarSections = [
-    ...(isSuperAdmin
+    ...(canManageUsers
       ? [{
           title: 'Administration',
           items: [
-            { icon: Sparkles, label: 'Super Admin Dashboard', href: '/super-admin' },
+            { icon: Sparkles, label: isSuperAdmin ? 'Super Admin Dashboard' : 'Office User Management', href: '/super-admin' },
           ],
         }]
       : []),
