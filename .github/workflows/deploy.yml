@@ -20,7 +20,7 @@ jobs:
 
       - name: Build and push Docker image
         run: |
-          docker build -t nomanstine/inventory-backend:latest .
+          docker build -t nomanstine/inventory-backend:latest ./backend
           docker push nomanstine/inventory-backend:latest
 
       - name: Deploy to Droplet via SSH
