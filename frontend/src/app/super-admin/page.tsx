@@ -155,34 +155,34 @@ export default function SuperAdminPage() {
     <PageLayout
       header={
         <Header
-          title={isSuperAdmin ? "Super Admin Console" : "Office User Management"}
+          title={isSuperAdmin ? "Super Admin Console" : "Office Admin Console"}
           subtitle={isSuperAdmin
             ? "Create and oversee office admins without exposing public registration"
-            : "Create office admins for your own office"}
+            : "Create office users for your own office"}
         />
       }
       body={
         <div className="space-y-6">
-          <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-slate-950 via-slate-900 to-sky-900 p-6 text-white shadow-xl">
-            <div className="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_top_right,_rgba(56,189,248,0.35),_transparent_35%),radial-gradient(circle_at_bottom_left,_rgba(148,163,184,0.18),_transparent_25%)]" />
+          <div className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-primary/10 via-background to-muted/70 p-6 shadow-sm">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(59,130,246,0.12),_transparent_30%),radial-gradient(circle_at_bottom_left,_rgba(2,132,199,0.10),_transparent_28%)] dark:bg-[radial-gradient(circle_at_top_right,_rgba(96,165,250,0.18),_transparent_30%),radial-gradient(circle_at_bottom_left,_rgba(14,165,233,0.12),_transparent_28%)]" />
             <div className="relative grid gap-4 lg:grid-cols-[1.4fr_1fr] lg:items-end">
               <div>
-                <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs uppercase tracking-[0.28em] text-slate-200">
+                <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-border bg-background/80 px-3 py-1 text-xs uppercase tracking-[0.28em] text-muted-foreground backdrop-blur">
                   <ShieldCheck className="h-3.5 w-3.5" />
                   {isSuperAdmin ? "Super admin only" : "Admin access"}
                 </div>
-                <h2 className="text-2xl font-semibold sm:text-3xl">Manage office admin onboarding from one place.</h2>
-                <p className="mt-2 max-w-2xl text-sm text-slate-300 sm:text-base">
+                <h2 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">Manage office onboarding from one place.</h2>
+                <p className="mt-2 max-w-2xl text-sm text-muted-foreground sm:text-base">
                   {isSuperAdmin
                     ? "Public registration is disabled. Use this console to create office admins, assign them to the correct office, and keep administrative access controlled."
-                    : "Public registration is disabled. Use this console to create office admins only for your office and keep access controlled."}
+                    : "Public registration is disabled. Use this console to create users only for your office and keep access controlled."}
                 </p>
               </div>
               <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
                 {stats.map((stat) => (
-                  <div key={stat.label} className="rounded-2xl border border-white/10 bg-white/10 p-4 backdrop-blur">
-                    <div className="text-xs uppercase tracking-[0.2em] text-slate-300">{stat.label}</div>
-                    <div className="mt-2 text-2xl font-semibold">{typeof stat.value === "number" ? stat.value : stat.value}</div>
+                  <div key={stat.label} className="rounded-2xl border border-border bg-background/80 p-4 shadow-sm backdrop-blur">
+                    <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">{stat.label}</div>
+                    <div className="mt-2 text-2xl font-semibold text-foreground">{typeof stat.value === "number" ? stat.value : stat.value}</div>
                   </div>
                 ))}
               </div>
@@ -190,10 +190,10 @@ export default function SuperAdminPage() {
           </div>
 
           <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
-            <Card className="border-slate-200 shadow-sm">
+            <Card className="border-border shadow-sm">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-xl">
-                  <UserPlus className="h-5 w-5 text-sky-700" />
+                  <UserPlus className="h-5 w-5 text-primary" />
                   {isSuperAdmin ? "Create Office Admin" : "Create Office User"}
                 </CardTitle>
                 <CardDescription>
@@ -204,7 +204,7 @@ export default function SuperAdminPage() {
               </CardHeader>
               <CardContent>
                 {statusMessage && (
-                  <Alert className={statusMessage.type === "error" ? "border-red-200 bg-red-50 text-red-800" : "border-emerald-200 bg-emerald-50 text-emerald-800"}>
+                  <Alert className={statusMessage.type === "error" ? "border-destructive/30 bg-destructive/10 text-destructive" : "border-emerald-200 bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200"}>
                     <AlertDescription>{statusMessage.message}</AlertDescription>
                   </Alert>
                 )}
@@ -265,7 +265,7 @@ export default function SuperAdminPage() {
                         value={form.officeId}
                         onValueChange={(value) => handleChange("officeId", value)}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="w-full">
                           <SelectValue placeholder={isLoadingOffices ? "Loading offices..." : "Choose an office"} />
                         </SelectTrigger>
                         <SelectContent>
@@ -295,10 +295,10 @@ export default function SuperAdminPage() {
               </CardContent>
             </Card>
 
-            <Card className="border-slate-200 shadow-sm">
+            <Card className="border-border shadow-sm">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-xl">
-                  <Users className="h-5 w-5 text-sky-700" />
+                  <Users className="h-5 w-5 text-primary" />
                   Office Admins
                 </CardTitle>
                 <CardDescription>Current office admin accounts in the system.</CardDescription>
@@ -312,22 +312,22 @@ export default function SuperAdminPage() {
                   </div>
                 ) : admins.length > 0 ? (
                   admins.map((admin) => (
-                    <div key={admin.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <div key={admin.id} className="rounded-2xl border border-border bg-muted/40 p-4">
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <div className="font-semibold text-slate-900">{admin.name}</div>
-                          <div className="text-sm text-slate-500">@{admin.username}</div>
+                          <div className="font-semibold text-foreground">{admin.name}</div>
+                          <div className="text-sm text-muted-foreground">@{admin.username}</div>
                         </div>
                         <Badge variant="secondary">{admin.role}</Badge>
                       </div>
-                      <div className="mt-3 grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
+                      <div className="mt-3 grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
                         <div>Email: {admin.email}</div>
                         <div>Office: {admin.officeName}</div>
                       </div>
                     </div>
                   ))
                 ) : (
-                  <div className="rounded-2xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">
+                  <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
                     No office admins have been created yet.
                   </div>
                 )}

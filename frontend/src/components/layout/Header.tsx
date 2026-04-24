@@ -47,14 +47,14 @@ export default function Header() {
   };
 
   return (
-    <header className="bg-white border-b border-gray-200 px-4 lg:px-6 h-16 flex items-center justify-between sticky top-0 z-20">
+    <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-border bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/80 lg:px-6">
       <div className="flex items-center gap-4">
         {/* Logo - hidden on mobile since sidebar has it */}
         <div className="hidden md:block">
           <Logo size="md" showText href="/dashboard" />
         </div>
         {/* Title - add padding on mobile to account for sidebar button */}
-        <div className="font-semibold text-xl text-gray-900 md:ml-0 ml-14">
+        <div className="ml-14 text-xl font-semibold text-foreground md:ml-0">
           {/* Dashboard */}
         </div>
       </div>
@@ -62,7 +62,7 @@ export default function Header() {
       <div className="flex items-center gap-2 md:gap-4">
         {/* Barcode Scanner Search */}
         <form onSubmit={handleBarcodeSearch} className="relative hidden lg:block">
-          <ScanLine className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <ScanLine className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="text"
             placeholder="Scan barcode or enter item code..."
@@ -100,7 +100,7 @@ export default function Header() {
             <Button variant="ghost" className="flex items-center gap-2">
               <Avatar className="w-8 h-8">
                 <AvatarImage src={user?.avatarUrl || ""} alt={user?.name || user?.username} />
-                <AvatarFallback className="bg-blue-500 text-white text-sm">
+                <AvatarFallback className="bg-primary text-primary-foreground text-sm">
                   {getInitials(user?.name, user?.username)}
                 </AvatarFallback>
               </Avatar>

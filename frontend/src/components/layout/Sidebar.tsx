@@ -101,12 +101,12 @@ function SidebarContent({ isCollapsed = false, onNavigate }: SidebarContentProps
     return pathname.startsWith(href);
   };
 
-  return (
-    <nav className="flex-1 p-4 space-y-6 overflow-y-auto">
+    return (
+    <nav className="flex-1 space-y-6 overflow-y-auto p-4">
       {sidebarSections.map((section, sectionIndex) => (
         <div key={sectionIndex}>
           {!isCollapsed && (
-            <h3 className="px-3 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            <h3 className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               {section.title}
             </h3>
           )}
@@ -122,13 +122,13 @@ function SidebarContent({ isCollapsed = false, onNavigate }: SidebarContentProps
                     flex items-center w-full gap-3 px-3 py-2 text-sm rounded-lg transition-colors
                     ${isCollapsed ? 'justify-center' : ''} 
                     ${active 
-                      ? 'bg-blue-50 text-blue-700 font-medium' 
-                      : 'text-gray-700 hover:bg-gray-100'
+                      ? 'bg-primary/10 text-primary font-medium' 
+                      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                     }
                   `}
                   title={isCollapsed ? item.label : ''}
                 >
-                  <item.icon className={`h-5 w-5 flex-shrink-0 ${active ? 'text-blue-600' : ''}`} />
+                  <item.icon className={`h-5 w-5 flex-shrink-0 ${active ? 'text-primary' : ''}`} />
                   {!isCollapsed && <span>{item.label}</span>}
                 </Link>
               );
@@ -162,13 +162,13 @@ export default function Sidebar() {
             <Menu className="h-5 w-5" />
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="w-[280px] p-0">
+        <SheetContent side="left" className="w-[280px] border-border p-0">
           <VisuallyHidden>
             <SheetTitle>Navigation Menu</SheetTitle>
           </VisuallyHidden>
           <div className="flex flex-col h-full">
             {/* Header */}
-            <div className="flex items-center p-4 border-b border-gray-200">
+            <div className="flex items-center border-b border-border p-4">
               <Logo size="md" showText href="/dashboard" />
             </div>
             {/* Navigation */}
@@ -183,13 +183,13 @@ export default function Sidebar() {
   return (
     <aside
       className={`
-        relative h-full bg-white border-r border-gray-200 transition-all duration-300 ease-in-out
+        relative h-full border-r border-border bg-background transition-all duration-300 ease-in-out
         ${isCollapsed ? 'w-16' : 'w-64'}
       `}
     >
       <div className="flex flex-col h-full">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 min-h-[73px]">
+        <div className="flex min-h-[73px] items-center justify-between border-b border-border p-4">
           {!isCollapsed && (
             <Logo size="md" showText href="/dashboard" />
           )}

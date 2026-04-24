@@ -138,7 +138,7 @@ public class UserController {
     }
 
     @PostMapping("/office-users")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<?> createOfficeUser(@RequestBody CreateOfficeUserRequest request, Authentication authentication) {
         if (request.getUsername() == null || request.getUsername().isBlank()) {
             return ResponseEntity.badRequest().body("Username is required");
@@ -167,8 +167,22 @@ public class UserController {
         User currentUser = userRepository.findByUsername(authentication.getName())
             .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
 
-        Office office = Optional.ofNullable(currentUser.getOffice())
-            .orElseThrow(() -> new RuntimeException("Admin office not found"));
+        boolean isSuperAdmin = hasRole(currentUser, "SUPER_ADMIN");
+        Long currentOfficeId = Optional.ofNullable(currentUser.getOffice())
+            .map(Office::getId)
+            .orElse(null);
+        Long targetOfficeId = request.getOfficeId() != null ? request.getOfficeId() : currentOfficeId;
+
+        if (targetOfficeId == null) {
+            return ResponseEntity.badRequest().body("Office ID is required");
+        }
+
+        if (!isSuperAdmin && request.getOfficeId() != null && !request.getOfficeId().equals(currentOfficeId)) {
+            return ResponseEntity.badRequest().body("Admins can only create users for their own office");
+        }
+
+        Office office = officeRepository.findById(targetOfficeId)
+            .orElseThrow(() -> new RuntimeException("Office not found"));
 
         Role userRole = roleRepository.findByName("USER")
             .orElseThrow(() -> new RuntimeException("User role not found"));
@@ -245,6 +259,7 @@ public class UserController {
         private String password;
         private String email;
         private String fullName;
+        private Long officeId;
 
         public String getUsername() {
             return username;
@@ -276,6 +291,14 @@ public class UserController {
 
         public void setFullName(String fullName) {
             this.fullName = fullName;
+        }
+
+        public Long getOfficeId() {
+            return officeId;
+        }
+
+        public void setOfficeId(Long officeId) {
+            this.officeId = officeId;
         }
     }
 
