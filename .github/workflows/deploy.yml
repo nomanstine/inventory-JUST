@@ -1,8 +1,9 @@
-name: Deploy to DigitalOcean
+name: Build, Push and Deploy
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
 
 jobs:
   build-and-deploy:
@@ -12,16 +13,21 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and push Docker image
-        run: |
-          docker build -t nomanstine/inventory-backend:latest ./backend
-          docker push nomanstine/inventory-backend:latest
+      - name: Build and Push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          push: true
+          tags: nomanstine/inventory-backend:latest
 
       - name: Deploy to Droplet via SSH
         uses: appleboy/ssh-action@v1.0.3
