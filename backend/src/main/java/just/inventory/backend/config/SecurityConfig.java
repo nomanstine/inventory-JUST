@@ -89,7 +89,7 @@ public class SecurityConfig {
                 .username(user.getUsername())
                 .password(user.getPassword())
                 .authorities(Collections.singletonList(
-                    new SimpleGrantedAuthority("ROLE_" + user.getRole().getName())
+                    new SimpleGrantedAuthority("ROLE_" + normalizeRoleName(user.getRole().getName()))
                 ))
                 .build();
         };
@@ -104,7 +104,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOriginPatterns(resolveAllowedOrigins());
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
@@ -134,5 +134,12 @@ public class SecurityConfig {
                 origins.add(normalized);
             }
         }
+    }
+
+    private String normalizeRoleName(String roleName) {
+        if (roleName == null || roleName.isBlank()) {
+            return "";
+        }
+        return roleName.replaceFirst("^ROLE_", "").trim().toUpperCase();
     }
 }

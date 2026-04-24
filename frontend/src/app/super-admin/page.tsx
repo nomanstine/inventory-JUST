@@ -19,8 +19,8 @@ import { toast } from "sonner";
 export default function SuperAdminPage() {
   const { user, role } = useAuth();
   const { data: offices = [], isLoading: isLoadingOffices } = useOffices();
-  const { data: admins = [], isLoading: isLoadingAdmins } = useOfficeAdmins();
-  const { data: officeUsers = [], isLoading: isLoadingOfficeUsers } = useOfficeUsers();
+  const { data: admins = [], isLoading: isLoadingAdmins, isError: isAdminsError, error: adminsError } = useOfficeAdmins();
+  const { data: officeUsers = [], isLoading: isLoadingOfficeUsers, isError: isOfficeUsersError, error: officeUsersError } = useOfficeUsers();
   const createAdminMutation = useCreateOfficeAdmin();
   const createOfficeUserMutation = useCreateOfficeUser();
   const deactivateUserMutation = useDeactivateUser();
@@ -60,6 +60,8 @@ export default function SuperAdminPage() {
 
   const listedUsers = isSuperAdmin ? admins : officeUsers;
   const isListLoading = isSuperAdmin ? isLoadingAdmins : isLoadingOfficeUsers;
+  const isListError = isSuperAdmin ? isAdminsError : isOfficeUsersError;
+  const listError = isSuperAdmin ? adminsError : officeUsersError;
 
   if (!user) {
     return (
@@ -342,6 +344,10 @@ export default function SuperAdminPage() {
                     <Skeleton className="h-16 w-full" />
                     <Skeleton className="h-16 w-full" />
                     <Skeleton className="h-16 w-full" />
+                  </div>
+                ) : isListError ? (
+                  <div className="rounded-2xl border border-rose-200 bg-rose-50/80 p-4 text-sm text-rose-700">
+                    {listError instanceof Error ? listError.message : "Failed to load users. Please try again."}
                   </div>
                 ) : listedUsers.length > 0 ? (
                   listedUsers.map((listedUser) => (

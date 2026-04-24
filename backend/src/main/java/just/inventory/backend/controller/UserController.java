@@ -81,7 +81,7 @@ public class UserController {
         Long currentOfficeId = currentUser.getOffice() != null ? currentUser.getOffice().getId() : null;
 
         List<UserSummaryResponse> admins = userRepository.findAll().stream()
-            .filter(user -> user.getRole() != null && "ADMIN".equals(user.getRole().getName()))
+            .filter(user -> user.getRole() != null && "ADMIN".equals(normalizeRoleName(user.getRole().getName())))
             .filter(user -> isSuperAdmin || (user.getOffice() != null && currentOfficeId != null && currentOfficeId.equals(user.getOffice().getId())))
             .map(UserSummaryResponse::fromUser)
             .toList();
@@ -99,7 +99,7 @@ public class UserController {
         Long currentOfficeId = currentUser.getOffice() != null ? currentUser.getOffice().getId() : null;
 
         List<UserSummaryResponse> officeUsers = userRepository.findAll().stream()
-            .filter(user -> user.getRole() != null && "USER".equals(user.getRole().getName()))
+            .filter(user -> user.getRole() != null && "USER".equals(normalizeRoleName(user.getRole().getName())))
             .filter(user -> isSuperAdmin || (user.getOffice() != null && currentOfficeId != null && currentOfficeId.equals(user.getOffice().getId())))
             .map(UserSummaryResponse::fromUser)
             .toList();
@@ -284,6 +284,7 @@ public class UserController {
     private boolean hasRole(User user, String roleName) {
         return Optional.ofNullable(user.getRole())
             .map(Role::getName)
+            .map(this::normalizeRoleName)
             .map(roleName::equals)
             .orElse(false);
     }
@@ -295,6 +296,7 @@ public class UserController {
 
         String targetRole = Optional.ofNullable(targetUser.getRole())
             .map(Role::getName)
+            .map(this::normalizeRoleName)
             .orElse("");
 
         if (hasRole(currentUser, "SUPER_ADMIN")) {
@@ -310,6 +312,14 @@ public class UserController {
         }
 
         return false;
+    }
+
+    private String normalizeRoleName(String roleName) {
+        if (roleName == null || roleName.isBlank()) {
+            return "";
+        }
+
+        return roleName.replaceFirst("^ROLE_", "").trim().toUpperCase();
     }
 
     public static class CreateOfficeAdminRequest {

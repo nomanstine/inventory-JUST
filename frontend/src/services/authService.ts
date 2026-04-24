@@ -37,6 +37,8 @@ export const ENDPOINTS = {
     login: "/auth/login",
 }
 
+const normalizeRole = (role: string) => role.replace(/^ROLE_/, "");
+
 
 export const login = async (credentials: LoginCredentials): Promise<LoginResponse> => {
   try {
@@ -49,6 +51,8 @@ export const login = async (credentials: LoginCredentials): Promise<LoginRespons
     if (!data.token || !data.user) {
       throw new Error('Invalid response from server');
     }
+
+    data.user.role = normalizeRole(data.user.role);
 
     // Store token and user info in localStorage
     localStorage.setItem(KEY.auth_token, data.token);
