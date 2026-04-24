@@ -11,6 +11,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -88,6 +89,88 @@ public class UserController {
         return ResponseEntity.ok(admins);
     }
 
+    @GetMapping("/office-users")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public ResponseEntity<List<UserSummaryResponse>> getOfficeUsers(Authentication authentication) {
+        User currentUser = userRepository.findByUsername(authentication.getName())
+            .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
+
+        boolean isSuperAdmin = hasRole(currentUser, "SUPER_ADMIN");
+        Long currentOfficeId = currentUser.getOffice() != null ? currentUser.getOffice().getId() : null;
+
+        List<UserSummaryResponse> officeUsers = userRepository.findAll().stream()
+            .filter(user -> user.getRole() != null && "USER".equals(user.getRole().getName()))
+            .filter(user -> isSuperAdmin || (user.getOffice() != null && currentOfficeId != null && currentOfficeId.equals(user.getOffice().getId())))
+            .map(UserSummaryResponse::fromUser)
+            .toList();
+
+        return ResponseEntity.ok(officeUsers);
+    }
+
+    @PatchMapping("/{id}/deactivate")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public ResponseEntity<?> deactivateUser(@PathVariable Long id, Authentication authentication) {
+        User currentUser = userRepository.findByUsername(authentication.getName())
+            .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
+
+        User targetUser = userRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Target user not found"));
+
+        if (!canManageAccount(currentUser, targetUser)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body("You do not have permission to deactivate this account");
+        }
+
+        if (!Boolean.TRUE.equals(targetUser.getActive())) {
+            return ResponseEntity.badRequest().body("User is already deactivated");
+        }
+
+        targetUser.setActive(false);
+        User savedUser = userRepository.save(targetUser);
+        return ResponseEntity.ok(UserSummaryResponse.fromUser(savedUser));
+    }
+
+    @PatchMapping("/{id}/activate")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public ResponseEntity<?> activateUser(@PathVariable Long id, Authentication authentication) {
+        User currentUser = userRepository.findByUsername(authentication.getName())
+            .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
+
+        User targetUser = userRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Target user not found"));
+
+        if (!canManageAccount(currentUser, targetUser)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body("You do not have permission to activate this account");
+        }
+
+        if (Boolean.TRUE.equals(targetUser.getActive())) {
+            return ResponseEntity.badRequest().body("User is already active");
+        }
+
+        targetUser.setActive(true);
+        User savedUser = userRepository.save(targetUser);
+        return ResponseEntity.ok(UserSummaryResponse.fromUser(savedUser));
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public ResponseEntity<?> deleteUser(@PathVariable Long id, Authentication authentication) {
+        User currentUser = userRepository.findByUsername(authentication.getName())
+            .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
+
+        User targetUser = userRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Target user not found"));
+
+        if (!canManageAccount(currentUser, targetUser)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body("You do not have permission to delete this account");
+        }
+
+        userRepository.delete(targetUser);
+        return ResponseEntity.ok().body("User account deleted successfully");
+    }
+
     @PostMapping("/admins")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<?> createOfficeAdmin(@RequestBody CreateOfficeAdminRequest request) {
@@ -138,7 +221,7 @@ public class UserController {
     }
 
     @PostMapping("/office-users")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> createOfficeUser(@RequestBody CreateOfficeUserRequest request, Authentication authentication) {
         if (request.getUsername() == null || request.getUsername().isBlank()) {
             return ResponseEntity.badRequest().body("Username is required");
@@ -167,7 +250,6 @@ public class UserController {
         User currentUser = userRepository.findByUsername(authentication.getName())
             .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
 
-        boolean isSuperAdmin = hasRole(currentUser, "SUPER_ADMIN");
         Long currentOfficeId = Optional.ofNullable(currentUser.getOffice())
             .map(Office::getId)
             .orElse(null);
@@ -177,7 +259,7 @@ public class UserController {
             return ResponseEntity.badRequest().body("Office ID is required");
         }
 
-        if (!isSuperAdmin && request.getOfficeId() != null && !request.getOfficeId().equals(currentOfficeId)) {
+        if (request.getOfficeId() != null && !request.getOfficeId().equals(currentOfficeId)) {
             return ResponseEntity.badRequest().body("Admins can only create users for their own office");
         }
 
@@ -204,6 +286,30 @@ public class UserController {
             .map(Role::getName)
             .map(roleName::equals)
             .orElse(false);
+    }
+
+    private boolean canManageAccount(User currentUser, User targetUser) {
+        if (currentUser.getId().equals(targetUser.getId())) {
+            return false;
+        }
+
+        String targetRole = Optional.ofNullable(targetUser.getRole())
+            .map(Role::getName)
+            .orElse("");
+
+        if (hasRole(currentUser, "SUPER_ADMIN")) {
+            return "ADMIN".equals(targetRole);
+        }
+
+        if (hasRole(currentUser, "ADMIN")) {
+            Long currentOfficeId = Optional.ofNullable(currentUser.getOffice()).map(Office::getId).orElse(null);
+            Long targetOfficeId = Optional.ofNullable(targetUser.getOffice()).map(Office::getId).orElse(null);
+            return "USER".equals(targetRole)
+                && currentOfficeId != null
+                && currentOfficeId.equals(targetOfficeId);
+        }
+
+        return false;
     }
 
     public static class CreateOfficeAdminRequest {
@@ -366,7 +472,8 @@ public class UserController {
         String name,
         String role,
         Long officeId,
-        String officeName
+        String officeName,
+        Boolean active
     ) {
         public static UserSummaryResponse fromUser(User user) {
             Office office = user.getOffice();
@@ -377,7 +484,8 @@ public class UserController {
                 user.getFullName(),
                 user.getRole() != null ? user.getRole().getName() : null,
                 office != null ? office.getId() : null,
-                office != null ? office.getName() : null
+                office != null ? office.getName() : null,
+                Boolean.TRUE.equals(user.getActive())
             );
         }
     }

@@ -7,9 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 interface LoginFormProps {
   onLoginSuccess?: () => void;
@@ -26,7 +26,6 @@ export function LoginForm({
     rememberMe: false,
   });
 
-  const [error, setError] = useState<string>("");
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const router = useRouter();
   const loginMutation = useLoginMutation();
@@ -34,10 +33,9 @@ export function LoginForm({
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
 
     if (!credentials.username.trim() || !credentials.password.trim()) {
-      setError("Username and password are required");
+      toast.error("Username and password are required.");
       return;
     }
 
@@ -46,9 +44,10 @@ export function LoginForm({
       refreshUser(); // Refresh the auth context with new user data
       onLoginSuccess?.();
       const nextRoute = response.user.role === "SUPER_ADMIN" ? "/super-admin" : redirectTo;
+      toast.success(`Welcome back, ${response.user.name || response.user.username}.`);
       router.push(nextRoute);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed");
+      toast.error(err instanceof Error ? err.message : "Login failed. Please try again.");
     }
   }, [credentials, loginMutation, onLoginSuccess, redirectTo, router, refreshUser]);
 
@@ -58,7 +57,6 @@ export function LoginForm({
       username: demoCredential.username,
       password: demoCredential.password,
     }));
-    setError(""); // Clear any previous errors
   }, []);
 
   const handleInputChange = useCallback((
@@ -135,12 +133,6 @@ export function LoginForm({
           </Label>
         </div>
       </div>
-
-      {error && (
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
 
       <Button
         type="submit"

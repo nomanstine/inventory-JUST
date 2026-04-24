@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -48,6 +49,11 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
+        Optional<User> existingUser = userRepository.findByUsername(loginRequest.getUsername());
+        if (existingUser.isPresent() && !Boolean.TRUE.equals(existingUser.get().getActive())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Your account is deactivated. Please contact your administrator.");
+        }
+
         try {
             authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword())
@@ -79,6 +85,7 @@ public class AuthController {
         userInfo.put("officeId", user.getOffice().getId().toString());
         userInfo.put("officeName", user.getOffice().getName());
         userInfo.put("avatarUrl", user.getAvatarUrl());
+        userInfo.put("isActive", Boolean.TRUE.equals(user.getActive()));
         
         response.put("user", userInfo);
 

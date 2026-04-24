@@ -13,7 +13,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -32,7 +31,6 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(user?.avatarUrl || null);
   const [formData, setFormData] = useState({
@@ -64,7 +62,6 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
     setLoading(true);
 
     try {
@@ -96,8 +93,7 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
       refreshUser();
       onOpenChange(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to update profile");
-      toast.error("Failed to update profile");
+      toast.error(err instanceof Error ? err.message : "Failed to update profile.");
     } finally {
       setLoading(false);
     }
@@ -198,12 +194,6 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
               <p className="text-xs text-gray-500">Role is assigned by administrators</p>
             </div>
           </div>
-
-          {error && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
 
           <DialogFooter className={isMobile ? 'flex-col gap-2' : ''}>
             <Button

@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: 6-add-user-active-flag
+      author: system
+      changes:
+        - addColumn:
+            tableName: users
+            columns:
+              - column:
+                  name: is_active
+                  type: BOOLEAN
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+        - update:
+            tableName: users
+            columns:
+              - column:
+                  name: is_active
+                  valueBoolean: true
+            where: is_active IS NULL

@@ -11,7 +11,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -24,7 +23,6 @@ interface ChangePasswordDialogProps {
 export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialogProps) {
   const isMobile = useIsMobile();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const [showPasswords, setShowPasswords] = useState({
     current: false,
     new: false,
@@ -38,26 +36,25 @@ export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialo
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
 
     // Validation
     if (!formData.currentPassword || !formData.newPassword || !formData.confirmPassword) {
-      setError("All fields are required");
+      toast.error("Please fill in all password fields.");
       return;
     }
 
     if (formData.newPassword !== formData.confirmPassword) {
-      setError("New passwords do not match");
+      toast.error("New password and confirmation do not match.");
       return;
     }
 
     if (formData.newPassword.length < 8) {
-      setError("New password must be at least 8 characters long");
+      toast.error("New password must be at least 8 characters long.");
       return;
     }
 
     if (formData.currentPassword === formData.newPassword) {
-      setError("New password must be different from current password");
+      toast.error("New password must be different from current password.");
       return;
     }
 
@@ -81,8 +78,7 @@ export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialo
       });
       onOpenChange(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to change password");
-      toast.error("Failed to change password");
+      toast.error(err instanceof Error ? err.message : "Failed to change password.");
     } finally {
       setLoading(false);
     }
@@ -193,12 +189,6 @@ export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialo
               </div>
             </div>
           </div>
-
-          {error && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
 
           <DialogFooter className={isMobile ? 'flex-col gap-2' : ''}>
             <Button

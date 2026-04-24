@@ -9,19 +9,23 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Loader2, ShieldCheck, UserPlus, Users } from "lucide-react";
+import { Loader2, ShieldCheck, UserCheck, UserPlus, UserX, Users, Trash2 } from "lucide-react";
 import { useOffices } from "@/services/officeService";
-import { useCreateOfficeAdmin, useCreateOfficeUser, useOfficeAdmins } from "@/services/userService";
+import { useActivateUser, useCreateOfficeAdmin, useCreateOfficeUser, useDeactivateUser, useDeleteUser, useOfficeAdmins, useOfficeUsers } from "@/services/userService";
+import { toast } from "sonner";
 
 export default function SuperAdminPage() {
   const { user, role } = useAuth();
   const { data: offices = [], isLoading: isLoadingOffices } = useOffices();
   const { data: admins = [], isLoading: isLoadingAdmins } = useOfficeAdmins();
+  const { data: officeUsers = [], isLoading: isLoadingOfficeUsers } = useOfficeUsers();
   const createAdminMutation = useCreateOfficeAdmin();
   const createOfficeUserMutation = useCreateOfficeUser();
+  const deactivateUserMutation = useDeactivateUser();
+  const activateUserMutation = useActivateUser();
+  const deleteUserMutation = useDeleteUser();
 
   const [form, setForm] = useState({
     fullName: "",
@@ -30,7 +34,6 @@ export default function SuperAdminPage() {
     password: "",
     officeId: "",
   });
-  const [statusMessage, setStatusMessage] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
   const isSuperAdmin = role === "SUPER_ADMIN";
   const isAdmin = role === "ADMIN";
@@ -50,10 +53,13 @@ export default function SuperAdminPage() {
   }, [currentUserOfficeId, isSuperAdmin, offices]);
 
   const stats = useMemo(() => ([
-    { label: "Managed Offices", value: offices.length },
-    { label: "Office Admins", value: admins.length },
+    { label: "Managed Offices", value: isSuperAdmin ? offices.length : availableOffices.length },
+    { label: isSuperAdmin ? "Office Admins" : "Office Users", value: isSuperAdmin ? admins.length : officeUsers.length },
     { label: "Active Context", value: user?.officeName || "N/A" },
-  ]), [admins.length, offices.length, user?.officeName]);
+  ]), [admins.length, availableOffices.length, isSuperAdmin, officeUsers.length, offices.length, user?.officeName]);
+
+  const listedUsers = isSuperAdmin ? admins : officeUsers;
+  const isListLoading = isSuperAdmin ? isLoadingAdmins : isLoadingOfficeUsers;
 
   if (!user) {
     return (
@@ -98,17 +104,15 @@ export default function SuperAdminPage() {
 
   const handleChange = (field: keyof typeof form, value: string) => {
     setForm((previous) => ({ ...previous, [field]: value }));
-    setStatusMessage(null);
   };
 
   const handleCreateAdmin = async (event: React.FormEvent) => {
     event.preventDefault();
-    setStatusMessage(null);
 
     const selectedOfficeId = isSuperAdmin ? form.officeId : (currentUserOfficeId ? currentUserOfficeId.toString() : "");
 
     if (!selectedOfficeId) {
-      setStatusMessage({ type: "error", message: "Please select an office for the new admin." });
+      toast.error("Please select an office before creating the account.");
       return;
     }
 
@@ -137,19 +141,52 @@ export default function SuperAdminPage() {
         password: "",
         officeId: isSuperAdmin ? "" : (currentUserOfficeId ? currentUserOfficeId.toString() : ""),
       });
-      setStatusMessage({
-        type: "success",
-        message: isSuperAdmin ? "Office admin created successfully." : "Office user created successfully.",
-      });
+      toast.success(isSuperAdmin ? "Office admin created successfully." : "Office user created successfully.");
     } catch (error) {
-      setStatusMessage({
-        type: "error",
-        message: error instanceof Error ? error.message : "Failed to create office admin.",
-      });
+      toast.error(error instanceof Error ? error.message : "Failed to create account. Please try again.");
     }
   };
 
   const isSubmitting = createAdminMutation.isPending || createOfficeUserMutation.isPending;
+  const isAccountActionPending = deactivateUserMutation.isPending || activateUserMutation.isPending || deleteUserMutation.isPending;
+
+  const handleDeactivateAccount = async (id: string, username: string) => {
+    const confirmed = window.confirm(`Deactivate @${username}? They will not be able to sign in until reactivated.`);
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await deactivateUserMutation.mutateAsync(id);
+      toast.success(`@${username} was deactivated.`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to deactivate account.");
+    }
+  };
+
+  const handleActivateAccount = async (id: string, username: string) => {
+    try {
+      await activateUserMutation.mutateAsync(id);
+      toast.success(`@${username} was reactivated.`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to activate account.");
+    }
+  };
+
+  const handleDeleteAccount = async (id: string, username: string) => {
+    const accountLabel = isSuperAdmin ? "admin" : "user";
+    const confirmed = window.confirm(`Delete ${accountLabel} @${username}? This action cannot be undone.`);
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await deleteUserMutation.mutateAsync(id);
+      toast.success(`@${username} was deleted.`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to delete account.");
+    }
+  };
 
   return (
     <PageLayout
@@ -178,7 +215,7 @@ export default function SuperAdminPage() {
                     : "Public registration is disabled. Use this console to create users only for your office and keep access controlled."}
                 </p>
               </div>
-              <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 {stats.map((stat) => (
                   <div key={stat.label} className="rounded-2xl border border-border bg-background/80 p-4 shadow-sm backdrop-blur">
                     <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">{stat.label}</div>
@@ -189,7 +226,7 @@ export default function SuperAdminPage() {
             </div>
           </div>
 
-          <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+          <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
             <Card className="border-border shadow-sm">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-xl">
@@ -203,14 +240,8 @@ export default function SuperAdminPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {statusMessage && (
-                  <Alert className={statusMessage.type === "error" ? "border-destructive/30 bg-destructive/10 text-destructive" : "border-emerald-200 bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200"}>
-                    <AlertDescription>{statusMessage.message}</AlertDescription>
-                  </Alert>
-                )}
-
                 <form className="mt-4 space-y-4" onSubmit={handleCreateAdmin}>
-                  <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
                       <Label htmlFor="fullName">Full name</Label>
                       <Input
@@ -233,7 +264,7 @@ export default function SuperAdminPage() {
                     </div>
                   </div>
 
-                  <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
                       <Label htmlFor="email">Email</Label>
                       <Input
@@ -280,7 +311,7 @@ export default function SuperAdminPage() {
                   )}
 
                   <div className="flex items-center justify-end gap-3 pt-2">
-                    <Button type="submit" disabled={isSubmitting || isLoadingOffices} className="min-w-40">
+                    <Button type="submit" disabled={isSubmitting || isLoadingOffices} className="w-full sm:w-auto sm:min-w-40">
                       {isSubmitting ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -299,36 +330,78 @@ export default function SuperAdminPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-xl">
                   <Users className="h-5 w-5 text-primary" />
-                  Office Admins
+                  {isSuperAdmin ? "Office Admins" : "Office Users"}
                 </CardTitle>
-                <CardDescription>Current office admin accounts in the system.</CardDescription>
+                <CardDescription>
+                  {isSuperAdmin ? "Current office admin accounts in the system." : "Current user accounts in your office."}
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
-                {isLoadingAdmins ? (
+                {isListLoading ? (
                   <div className="space-y-3">
                     <Skeleton className="h-16 w-full" />
                     <Skeleton className="h-16 w-full" />
                     <Skeleton className="h-16 w-full" />
                   </div>
-                ) : admins.length > 0 ? (
-                  admins.map((admin) => (
-                    <div key={admin.id} className="rounded-2xl border border-border bg-muted/40 p-4">
+                ) : listedUsers.length > 0 ? (
+                  listedUsers.map((listedUser) => (
+                    <div key={listedUser.id} className="rounded-2xl border border-border bg-muted/40 p-4">
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <div className="font-semibold text-foreground">{admin.name}</div>
-                          <div className="text-sm text-muted-foreground">@{admin.username}</div>
+                          <div className="font-semibold text-foreground">{listedUser.name}</div>
+                          <div className="text-sm text-muted-foreground">@{listedUser.username}</div>
                         </div>
-                        <Badge variant="secondary">{admin.role}</Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={listedUser.active ? "default" : "outline"}>
+                            {listedUser.active ? "Active" : "Deactivated"}
+                          </Badge>
+                          <Badge variant="secondary">{listedUser.role}</Badge>
+                        </div>
                       </div>
-                      <div className="mt-3 grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
-                        <div>Email: {admin.email}</div>
-                        <div>Office: {admin.officeName}</div>
+                      <div className="mt-3 grid gap-2 break-all text-sm text-muted-foreground sm:grid-cols-2">
+                        <div>Email: {listedUser.email}</div>
+                        <div>Office: {listedUser.officeName}</div>
+                      </div>
+                      <div className="mt-4 flex flex-wrap items-center gap-2">
+                        {listedUser.active ? (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            disabled={isAccountActionPending}
+                            onClick={() => handleDeactivateAccount(listedUser.id, listedUser.username)}
+                          >
+                            <UserX className="mr-2 h-4 w-4" />
+                            Deactivate
+                          </Button>
+                        ) : (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            disabled={isAccountActionPending}
+                            onClick={() => handleActivateAccount(listedUser.id, listedUser.username)}
+                          >
+                            <UserCheck className="mr-2 h-4 w-4" />
+                            Activate
+                          </Button>
+                        )}
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="destructive"
+                          disabled={isAccountActionPending}
+                          onClick={() => handleDeleteAccount(listedUser.id, listedUser.username)}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete
+                        </Button>
                       </div>
                     </div>
                   ))
                 ) : (
                   <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-                    No office admins have been created yet.
+                    {isSuperAdmin ? "No office admins have been created yet." : "No office users have been created yet."}
                   </div>
                 )}
               </CardContent>

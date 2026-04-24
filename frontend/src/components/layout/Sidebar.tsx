@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -28,12 +28,6 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { usePathname } from 'next/navigation';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
-
-const SidebarItems = {
-    ALL_OFFICES : "All Offices",
-    DEPARTMENTS: "Departments",
-    SETTINGS: "Settings",
-};
 
 interface SidebarContentProps {
   isCollapsed?: boolean;

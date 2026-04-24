@@ -32,6 +32,7 @@ export interface OfficeAdminSummary {
   role: string;
   officeId: string;
   officeName: string;
+  active: boolean;
 }
 
 export interface CreateOfficeAdminPayload {
@@ -60,6 +61,11 @@ export const getOfficeAdmins = async (): Promise<OfficeAdminSummary[]> => {
   return response.data;
 };
 
+export const getOfficeUsers = async (): Promise<OfficeAdminSummary[]> => {
+  const response = await api.get(`/users/office-users`);
+  return response.data;
+};
+
 export const createOfficeAdmin = async (payload: CreateOfficeAdminPayload): Promise<OfficeAdminSummary> => {
   const response = await api.post(`/users/admins`, payload);
   return response.data;
@@ -75,6 +81,20 @@ export const updateMyProfile = async (payload: UpdateProfilePayload): Promise<Us
   return response.data;
 };
 
+export const deactivateUser = async (id: string): Promise<OfficeAdminSummary> => {
+  const response = await api.patch(`/users/${id}/deactivate`);
+  return response.data;
+};
+
+export const activateUser = async (id: string): Promise<OfficeAdminSummary> => {
+  const response = await api.patch(`/users/${id}/activate`);
+  return response.data;
+};
+
+export const deleteUser = async (id: string): Promise<void> => {
+  await api.delete(`/users/${id}`);
+};
+
 // Hook to get user by ID
 export const useUser = (id: string) => {
   return useQuery({
@@ -88,6 +108,13 @@ export const useOfficeAdmins = () => {
   return useQuery({
     queryKey: ["office-admins"],
     queryFn: getOfficeAdmins,
+  });
+};
+
+export const useOfficeUsers = () => {
+  return useQuery({
+    queryKey: ["office-users"],
+    queryFn: getOfficeUsers,
   });
 };
 
@@ -108,7 +135,43 @@ export const useCreateOfficeUser = () => {
   return useMutation({
     mutationFn: createOfficeUser,
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["office-users"] });
+    },
+  });
+};
+
+export const useDeactivateUser = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: deactivateUser,
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["office-admins"] });
+      queryClient.invalidateQueries({ queryKey: ["office-users"] });
+    },
+  });
+};
+
+export const useActivateUser = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: activateUser,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["office-admins"] });
+      queryClient.invalidateQueries({ queryKey: ["office-users"] });
+    },
+  });
+};
+
+export const useDeleteUser = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: deleteUser,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["office-admins"] });
+      queryClient.invalidateQueries({ queryKey: ["office-users"] });
     },
   });
 };

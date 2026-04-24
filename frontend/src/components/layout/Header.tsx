@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Bell, ScanLine, User, ChevronDown, LogOut, Settings as SettingsIcon, Search } from 'lucide-react';
+import { ScanLine, User, ChevronDown, LogOut, Settings as SettingsIcon, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -47,14 +47,14 @@ export default function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-border bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/80 lg:px-6">
-      <div className="flex items-center gap-4">
+    <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-border bg-background/95 px-3 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:px-4 lg:px-6">
+      <div className="flex items-center gap-2 sm:gap-4">
         {/* Logo - hidden on mobile since sidebar has it */}
         <div className="hidden md:block">
           <Logo size="md" showText href="/dashboard" />
         </div>
         {/* Title - add padding on mobile to account for sidebar button */}
-        <div className="ml-14 text-xl font-semibold text-foreground md:ml-0">
+        <div className="ml-12 text-lg font-semibold text-foreground md:ml-0 md:text-xl">
           {/* Dashboard */}
         </div>
       </div>

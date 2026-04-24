@@ -31,6 +31,9 @@ public class User {
     @Column(name = "avatar_url")
     private String avatarUrl;
 
+    @Column(name = "is_active", nullable = false)
+    private Boolean active = true;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id", nullable = false)
     @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"users"})

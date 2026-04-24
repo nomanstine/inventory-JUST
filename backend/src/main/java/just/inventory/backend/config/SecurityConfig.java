@@ -80,6 +80,10 @@ public class SecurityConfig {
         return username -> {
             just.inventory.backend.model.User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+
+            if (!Boolean.TRUE.equals(user.getActive())) {
+                throw new UsernameNotFoundException("User account is deactivated: " + username);
+            }
             
             return User.builder()
                 .username(user.getUsername())
