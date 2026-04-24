@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -15,6 +15,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   AlertCircle,
   Loader2,
@@ -22,14 +23,30 @@ import {
 } from "lucide-react";
 
 import { useRequisitionSuggestions } from "@/services/itemRequestService";
+import { Office, useOffices } from "@/services/officeService";
+import { saveRequisitionDraft } from "@/lib/requisitionDraft";
+
+const getOfficeOptions = (offices: Office[], currentUserOfficeId: number) => {
+  const currentOffice = offices.find((office) => office.id === currentUserOfficeId);
+  const parentOfficeId = currentOffice?.parent?.id;
+
+  if (parentOfficeId) {
+    const parentOffice = offices.find((office) => office.id === parentOfficeId);
+    return parentOffice ? [parentOffice] : [];
+  }
+
+  return offices.filter((office) => office.id !== currentUserOfficeId);
+};
 
 export default function AIRecommendationsPage() {
   const router = useRouter();
   const { user } = useAuth();
+  const { data: offices = [] } = useOffices();
 
   const suggestionMutation = useRequisitionSuggestions();
 
   const [reason, setReason] = useState("");
+  const [parentOfficeId, setParentOfficeId] = useState<number>(0);
   const [suggestionSummary, setSuggestionSummary] = useState("");
   const [aiUnavailableHint, setAiUnavailableHint] = useState("");
   const [suggestions, setSuggestions] = useState<Array<{
@@ -38,6 +55,24 @@ export default function AIRecommendationsPage() {
     quantity: number;
     rationale?: string;
   }>>([]);
+
+  const currentUserOfficeId = user?.officeId ? parseInt(user.officeId, 10) : 0;
+
+  const officeOptions = useMemo(
+    () => getOfficeOptions(offices, currentUserOfficeId),
+    [offices, currentUserOfficeId]
+  );
+
+  useEffect(() => {
+    if (officeOptions.length === 1) {
+      setParentOfficeId(officeOptions[0].id);
+      return;
+    }
+
+    if (!officeOptions.some((office) => office.id === parentOfficeId)) {
+      setParentOfficeId(0);
+    }
+  }, [officeOptions, parentOfficeId]);
 
   if (!user) {
     return (
@@ -59,14 +94,12 @@ export default function AIRecommendationsPage() {
 
   const handleSuggest = async () => {
     try {
-      const officeId = user?.officeId ? parseInt(user.officeId, 10) : 0;
-      
-      if (!officeId) {
-        throw new Error("User office not found");
+      if (!parentOfficeId) {
+        throw new Error("Please select a source office");
       }
 
       const response = await suggestionMutation.mutateAsync({
-        parentOfficeId: officeId,
+        parentOfficeId,
         reason: reason,
       });
 
@@ -76,7 +109,7 @@ export default function AIRecommendationsPage() {
 
       setSuggestions(response.suggestions);
       setSuggestionSummary(response.summary || "AI suggestions generated");
-      setAiUnavailableHint("");
+      setAiUnavailableHint(response.warning || "");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to fetch suggestions";
       const normalized = message.toLowerCase();
@@ -85,6 +118,32 @@ export default function AIRecommendationsPage() {
       }
       toast.error(message);
     }
+  };
+
+  const handleCreateFromRecommendations = () => {
+    if (!parentOfficeId) {
+      toast.error("Please select a source office first.");
+      return;
+    }
+
+    if (suggestions.length === 0) {
+      toast.error("Generate recommendations before creating a requisition draft.");
+      return;
+    }
+
+    saveRequisitionDraft({
+      parentOfficeId,
+      reason: reason || "Prepared from AI recommendations",
+      items: suggestions.map((item) => ({
+        itemId: item.itemId,
+        itemName: item.itemName,
+        quantity: item.quantity,
+        rationale: item.rationale,
+      })),
+    });
+
+    toast.success("Recommendations loaded into requisition draft");
+    router.push("/requisitions");
   };
 
   return (
@@ -110,6 +169,26 @@ export default function AIRecommendationsPage() {
             </CardHeader>
             <CardContent className="p-4 sm:p-6 pt-0 space-y-4">
               <div>
+                <Label htmlFor="source-office">Request From Office</Label>
+                <Select
+                  value={parentOfficeId ? parentOfficeId.toString() : ""}
+                  onValueChange={(value) => setParentOfficeId(parseInt(value, 10))}
+                  disabled={officeOptions.length <= 1}
+                >
+                  <SelectTrigger id="source-office" className="mt-2">
+                    <SelectValue placeholder="Select source office" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {officeOptions.map((office) => (
+                      <SelectItem key={office.id} value={office.id.toString()}>
+                        {office.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
                 <Label htmlFor="context">Need / Context (Optional)</Label>
                 <Textarea
                   id="context"
@@ -129,7 +208,7 @@ export default function AIRecommendationsPage() {
                 <Button
                   size="lg"
                   onClick={handleSuggest}
-                  disabled={suggestionMutation.isPending}
+                  disabled={suggestionMutation.isPending || !parentOfficeId}
                 >
                   {suggestionMutation.isPending ? (
                     <>
@@ -196,7 +275,7 @@ export default function AIRecommendationsPage() {
                 <div className="mt-6 flex gap-2">
                   <Button 
                     size="sm"
-                    onClick={() => router.push("/requisitions/new")}
+                    onClick={handleCreateFromRecommendations}
                   >
                     Create from Recommendations
                   </Button>

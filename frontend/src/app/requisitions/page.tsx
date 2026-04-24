@@ -57,6 +57,8 @@ const filterConfig = [
   },
 ];
 
+const normalizeRole = (role?: string) => (role || "").replace(/^ROLE_/, "").toUpperCase();
+
 export default function RequisitionsPage() {
   const { user } = useAuth();
   const isMobile = useIsMobile();
@@ -272,7 +274,7 @@ export default function RequisitionsPage() {
     }
   }, [parentOfficeId, reason, replaceItems, suggestionMutation]);
 
-  const isAdmin = user?.role?.toUpperCase() === 'ADMIN';
+  const isAdmin = normalizeRole(user?.role) === 'ADMIN';
   const currentUserOfficeId = user?.officeId ? parseInt(user.officeId) : 0;
 
   const currentOffice = useMemo(

@@ -18,6 +18,7 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/item-requests")
@@ -43,7 +44,7 @@ public class ItemRequestController {
                 .orElseThrow(() -> new RuntimeException("User not found"));
         
         // Check if user is admin
-        if (!"ADMIN".equals(currentUser.getRole().getName())) {
+        if (!hasRole(currentUser, "ADMIN")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body("Only admins can create item requests");
         }
@@ -112,7 +113,7 @@ public class ItemRequestController {
                 .orElseThrow(() -> new RuntimeException("User not found"));
         
         // Check if user is admin
-        if (!"ADMIN".equals(currentUser.getRole().getName())) {
+        if (!hasRole(currentUser, "ADMIN")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body("Only admins can approve requests");
         }
@@ -140,7 +141,7 @@ public class ItemRequestController {
                 .orElseThrow(() -> new RuntimeException("User not found"));
         
         // Check if user is admin
-        if (!"ADMIN".equals(currentUser.getRole().getName())) {
+        if (!hasRole(currentUser, "ADMIN")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body("Only admins can fulfill requests");
         }
@@ -173,7 +174,7 @@ public class ItemRequestController {
                 .orElseThrow(() -> new RuntimeException("User not found"));
         
         // Check if user is admin
-        if (!"ADMIN".equals(currentUser.getRole().getName())) {
+        if (!hasRole(currentUser, "ADMIN")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body("Only admins can reject requests");
         }
@@ -261,7 +262,7 @@ public class ItemRequestController {
                 .orElseThrow(() -> new RuntimeException("User not found"));
         
         // Check if user is admin
-        if (!"ADMIN".equals(currentUser.getRole().getName())) {
+        if (!hasRole(currentUser, "ADMIN")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body("Only admins can confirm receipt");
         }
@@ -303,7 +304,7 @@ public class ItemRequestController {
 
             // Allow regular users to get recommendations for their own office
             // Only admins can get suggestions from other offices
-            if (!isSameOffice && !"ADMIN".equals(currentUser.getRole().getName())) {
+            if (!isSameOffice && !hasRole(currentUser, "ADMIN")) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body("Only admins can request suggestions from other offices");
             }
@@ -324,7 +325,25 @@ public class ItemRequestController {
         } catch (ResponseStatusException e) {
             String reason = e.getReason() == null ? "Failed to fetch requisition suggestions" : e.getReason();
             return ResponseEntity.status(e.getStatusCode()).body(reason);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(e.getMessage() == null ? "Failed to fetch requisition suggestions" : e.getMessage());
         }
+    }
+
+    private boolean hasRole(User user, String roleName) {
+        return Optional.ofNullable(user.getRole())
+            .map(role -> role.getName())
+            .map(this::normalizeRoleName)
+            .map(roleName::equals)
+            .orElse(false);
+    }
+
+    private String normalizeRoleName(String roleName) {
+        if (roleName == null || roleName.isBlank()) {
+            return "";
+        }
+        return roleName.replaceFirst("^ROLE_", "").trim().toUpperCase();
     }
 
     // DTOs

@@ -54,19 +54,110 @@ public class RequisitionSuggestionService {
             List<ItemRequest> recentRequests,
             List<Item> catalogItems
     ) {
-        if (!aiEnabled) {
-            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
-                    "AI suggestion is currently disabled");
-        }
-        if (aiApiKey == null || aiApiKey.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
-                    "AI API key is not configured. Set ai.requisition.api-key or AI_REQUISITION_API_KEY");
+        if (!aiEnabled || aiApiKey == null || aiApiKey.isBlank()) {
+            return buildFallbackSuggestions(availableInstances, recentRequests, catalogItems,
+                "AI unavailable; returned deterministic recommendations from request and stock history.");
         }
 
         String prompt = buildPrompt(requestingOfficeName, parentOfficeName, reason, availableInstances, recentRequests);
-        String modelContent = callChatCompletion(prompt);
-        return normalizeSuggestions(modelContent, catalogItems);
+        try {
+            String modelContent = callChatCompletion(prompt);
+            RequisitionSuggestionResponse aiResponse = normalizeSuggestions(modelContent, catalogItems);
+            if (aiResponse.getSuggestions() == null || aiResponse.getSuggestions().isEmpty()) {
+            return buildFallbackSuggestions(availableInstances, recentRequests, catalogItems,
+                "AI returned no catalog matches; using deterministic fallback recommendations.");
+            }
+            return aiResponse;
+        } catch (ResponseStatusException e) {
+            if (e.getStatusCode() == HttpStatus.TOO_MANY_REQUESTS || e.getStatusCode() == HttpStatus.BAD_GATEWAY
+                || e.getStatusCode() == HttpStatus.SERVICE_UNAVAILABLE) {
+            return buildFallbackSuggestions(availableInstances, recentRequests, catalogItems,
+                "AI service unavailable; using deterministic fallback recommendations.");
+            }
+            throw e;
+        }
     }
+
+        private RequisitionSuggestionResponse buildFallbackSuggestions(
+            List<ItemInstance> availableInstances,
+            List<ItemRequest> recentRequests,
+            List<Item> catalogItems,
+            String warning
+        ) {
+        Map<Long, Long> availableCountByItemId = availableInstances.stream()
+            .filter(instance -> instance.getItem() != null)
+            .filter(instance -> instance.getStatus() == ItemInstance.ItemStatus.AVAILABLE)
+            .collect(Collectors.groupingBy(instance -> instance.getItem().getId(), Collectors.counting()));
+
+        Map<Long, Double> requestedQuantityByItemId = recentRequests.stream()
+            .filter(request -> request.getItem() != null)
+            .collect(Collectors.groupingBy(
+                request -> request.getItem().getId(),
+                Collectors.summingDouble(ItemRequest::getRequestedQuantity)
+            ));
+
+        Map<Long, Long> requestCountByItemId = recentRequests.stream()
+            .filter(request -> request.getItem() != null)
+            .collect(Collectors.groupingBy(
+                request -> request.getItem().getId(),
+                Collectors.counting()
+            ));
+
+        Map<Long, Item> catalogById = catalogItems.stream()
+            .collect(Collectors.toMap(Item::getId, item -> item, (a, b) -> a));
+
+        List<RequisitionSuggestionResponse.SuggestionLine> suggestions = requestedQuantityByItemId.entrySet().stream()
+            .filter(entry -> availableCountByItemId.getOrDefault(entry.getKey(), 0L) > 0)
+            .map(entry -> {
+                Long itemId = entry.getKey();
+                Item item = catalogById.get(itemId);
+                if (item == null) {
+                return null;
+                }
+
+                long requestCount = requestCountByItemId.getOrDefault(itemId, 0L);
+                double totalRequested = entry.getValue();
+                int quantity = (int) Math.max(1, Math.round(totalRequested / Math.max(1L, requestCount)));
+
+                RequisitionSuggestionResponse.SuggestionLine line = new RequisitionSuggestionResponse.SuggestionLine();
+                line.setItemId(itemId);
+                line.setItemName(item.getName());
+                line.setQuantity(quantity);
+                line.setRationale("Requested " + requestCount + " times recently; suggested from average demand and available stock.");
+                return line;
+            })
+            .filter(line -> line != null)
+            .sorted(Comparator.comparingInt(RequisitionSuggestionResponse.SuggestionLine::getQuantity).reversed())
+            .limit(5)
+            .toList();
+
+        if (suggestions.isEmpty()) {
+            suggestions = availableCountByItemId.entrySet().stream()
+                .map(entry -> {
+                Item item = catalogById.get(entry.getKey());
+                if (item == null) {
+                    return null;
+                }
+
+                RequisitionSuggestionResponse.SuggestionLine line = new RequisitionSuggestionResponse.SuggestionLine();
+                line.setItemId(entry.getKey());
+                line.setItemName(item.getName());
+                line.setQuantity(1);
+                line.setRationale("Suggested from currently available stock.");
+                return line;
+                })
+                .filter(line -> line != null)
+                .limit(5)
+                .toList();
+        }
+
+        RequisitionSuggestionResponse response = new RequisitionSuggestionResponse();
+        response.setSummary("Recommendations generated from recent demand and available stock.");
+        response.setSource("fallback");
+        response.setWarning(warning);
+        response.setSuggestions(suggestions);
+        return response;
+        }
 
     private String buildPrompt(
             String requestingOfficeName,
