@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Building2, ArrowLeft, Loader2 } from "lucide-react";
 import { useCreateOffice, useOffices, type OfficeForm } from "@/services/officeService";
+import { canCreateByRole } from "@/lib/permissions";
 import { toast } from "sonner";
 
 export default function CreateOfficePage() {
@@ -19,6 +20,7 @@ export default function CreateOfficePage() {
   const router = useRouter();
   const createOffice = useCreateOffice();
   const { data: offices } = useOffices();
+  const canCreate = canCreateByRole(user?.role);
 
   const [formData, setFormData] = useState<OfficeForm>({
     name: "",
@@ -62,6 +64,26 @@ export default function CreateOfficePage() {
               <CardHeader>
                 <CardTitle>Authentication Required</CardTitle>
               </CardHeader>
+            </Card>
+          </div>
+        }
+      />
+    );
+  }
+
+  if (!canCreate) {
+    return (
+      <PageLayout
+        header={<Header title="Create Office" subtitle="" />}
+        body={
+          <div className="flex items-center justify-center h-[50vh]">
+            <Card className="w-full max-w-md">
+              <CardHeader>
+                <CardTitle>Access Denied</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Button className="w-full" onClick={() => router.push("/offices")}>Back to Offices</Button>
+              </CardContent>
             </Card>
           </div>
         }

@@ -10,12 +10,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tag, ArrowLeft, Loader2 } from "lucide-react";
 import { useCreateCategory, type CategoryForm } from "@/services/categoryService";
+import { canCreateByRole } from "@/lib/permissions";
 import { toast } from "sonner";
 
 export default function CreateCategoryPage() {
   const { user } = useAuth();
   const router = useRouter();
   const createCategory = useCreateCategory();
+  const canCreate = canCreateByRole(user?.role);
 
   const [formData, setFormData] = useState<CategoryForm>({
     name: "",
@@ -53,6 +55,26 @@ export default function CreateCategoryPage() {
               <CardHeader>
                 <CardTitle>Authentication Required</CardTitle>
               </CardHeader>
+            </Card>
+          </div>
+        }
+      />
+    );
+  }
+
+  if (!canCreate) {
+    return (
+      <PageLayout
+        header={<Header title="Create Category" subtitle="" />}
+        body={
+          <div className="flex items-center justify-center h-[50vh]">
+            <Card className="w-full max-w-md">
+              <CardHeader>
+                <CardTitle>Access Denied</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Button className="w-full" onClick={() => router.push("/categories")}>Back to Categories</Button>
+              </CardContent>
             </Card>
           </div>
         }

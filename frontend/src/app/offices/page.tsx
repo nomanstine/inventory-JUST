@@ -27,6 +27,7 @@ import { useTableActions } from "@/hooks/useTableActions";
 import { useChildOffices } from "@/services/officeService";
 import { Office } from "@/services/officeService";
 import { useAuth } from "@/contexts/AuthContext";
+import { canCreateByRole } from "@/lib/permissions";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
@@ -150,6 +151,7 @@ export default function OfficesPage() {
   // Get child offices of current user's office
   const userOfficeId = user?.officeId ? parseInt(user.officeId) : 0;
   const { data: offices = [], isLoading, error } = useChildOffices(userOfficeId);
+  const canCreate = canCreateByRole(user?.role);
 
   if (!user) {
     return (
@@ -207,7 +209,7 @@ export default function OfficesPage() {
                   onFilteredData={setFilteredData}
                 />
               }
-              actions={<Actions />}
+              actions={canCreate ? <Actions /> : null}
             />
           }
           body={<Body data={paginatedData} />}

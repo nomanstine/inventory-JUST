@@ -13,6 +13,7 @@ import { Package, ArrowLeft, Loader2 } from "lucide-react";
 import { useCreateItem, type ItemForm } from "@/services/itemService";
 import { useCategories } from "@/services/categoryService";
 import { useUnits } from "@/services/unitService";
+import { canCreateByRole } from "@/lib/permissions";
 import { toast } from "sonner";
 
 export default function CreateItemPage() {
@@ -21,6 +22,7 @@ export default function CreateItemPage() {
   const createItem = useCreateItem();
   const { data: categories } = useCategories();
   const { data: units } = useUnits();
+  const canCreate = canCreateByRole(user?.role);
 
   const [formData, setFormData] = useState<ItemForm>({
     name: "",
@@ -61,6 +63,26 @@ export default function CreateItemPage() {
               <CardHeader>
                 <CardTitle>Authentication Required</CardTitle>
               </CardHeader>
+            </Card>
+          </div>
+        }
+      />
+    );
+  }
+
+  if (!canCreate) {
+    return (
+      <PageLayout
+        header={<Header title="Create Item" subtitle="" />}
+        body={
+          <div className="flex items-center justify-center h-[50vh]">
+            <Card className="w-full max-w-md">
+              <CardHeader>
+                <CardTitle>Access Denied</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Button className="w-full" onClick={() => router.push("/items")}>Back to Items</Button>
+              </CardContent>
             </Card>
           </div>
         }

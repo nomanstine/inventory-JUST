@@ -27,6 +27,7 @@ import { useTableActions } from "@/hooks/useTableActions";
 import { useItems, Item } from "@/services/itemService";
 import { useCategories } from "@/services/categoryService";
 import { useAuth } from "@/contexts/AuthContext";
+import { canCreateByRole } from "@/lib/permissions";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
@@ -137,6 +138,7 @@ export default function ItemsPage() {
 
   const { data: items = [], isLoading, error } = useItems();
   const { data: categories = [] } = useCategories();
+  const canCreate = canCreateByRole(user?.role);
 
   useEffect(() => {
     setFilteredData(items);
@@ -212,7 +214,7 @@ export default function ItemsPage() {
               onFilteredData={setFilteredData}
             />
           }
-          actions={<Actions />}
+          actions={canCreate ? <Actions /> : null}
         />
       }
       body={<Body data={paginatedData} />}

@@ -25,6 +25,7 @@ import {
 import { useRequisitionSuggestions } from "@/services/itemRequestService";
 import { Office, useOffices } from "@/services/officeService";
 import { saveRequisitionDraft } from "@/lib/requisitionDraft";
+import { canCreateByRole } from "@/lib/permissions";
 
 const getOfficeOptions = (offices: Office[], currentUserOfficeId: number) => {
   const currentOffice = offices.find((office) => office.id === currentUserOfficeId);
@@ -42,6 +43,7 @@ export default function AIRecommendationsPage() {
   const router = useRouter();
   const { user } = useAuth();
   const { data: offices = [] } = useOffices();
+  const canCreate = canCreateByRole(user?.role);
 
   const suggestionMutation = useRequisitionSuggestions();
 
@@ -121,6 +123,11 @@ export default function AIRecommendationsPage() {
   };
 
   const handleCreateFromRecommendations = () => {
+    if (!canCreate) {
+      toast.error("You do not have permission to create requisitions.");
+      return;
+    }
+
     if (!parentOfficeId) {
       toast.error("Please select a source office first.");
       return;
@@ -273,12 +280,14 @@ export default function AIRecommendationsPage() {
                 </div>
 
                 <div className="mt-6 flex gap-2">
-                  <Button 
-                    size="sm"
-                    onClick={handleCreateFromRecommendations}
-                  >
-                    Create from Recommendations
-                  </Button>
+                  {canCreate && (
+                    <Button 
+                      size="sm"
+                      onClick={handleCreateFromRecommendations}
+                    >
+                      Create from Recommendations
+                    </Button>
+                  )}
                   <Button 
                     size="sm"
                     variant="outline"

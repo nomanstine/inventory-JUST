@@ -26,6 +26,7 @@ import { Eye, Pencil, Trash2 } from "lucide-react";
 import { useTableActions } from "@/hooks/useTableActions";
 import { useUnits, Unit } from "@/services/unitService";
 import { useAuth } from "@/contexts/AuthContext";
+import { canCreateByRole } from "@/lib/permissions";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
@@ -119,6 +120,7 @@ export default function UnitsPage() {
   const [paginatedData, setPaginatedData] = useState<Unit[]>([]);
 
   const { data: units = [], isLoading, error } = useUnits();
+  const canCreate = canCreateByRole(user?.role);
 
   useEffect(() => {
     setFilteredData(units);
@@ -180,7 +182,7 @@ export default function UnitsPage() {
               onFilteredData={setFilteredData}
             />
           }
-          actions={<Actions />}
+          actions={canCreate ? <Actions /> : null}
         />
       }
       body={<Body data={paginatedData} />}

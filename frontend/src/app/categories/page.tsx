@@ -26,6 +26,7 @@ import { Eye, Pencil, Trash2 } from "lucide-react";
 import { useTableActions } from "@/hooks/useTableActions";
 import { useCategories, Category } from "@/services/categoryService";
 import { useAuth } from "@/contexts/AuthContext";
+import { canCreateByRole } from "@/lib/permissions";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
@@ -119,6 +120,7 @@ export default function CategoriesPage() {
   const [paginatedData, setPaginatedData] = useState<Category[]>([]);
 
   const { data: categories = [], isLoading, error } = useCategories();
+  const canCreate = canCreateByRole(user?.role);
 
   useEffect(() => {
     setFilteredData(categories);
@@ -180,7 +182,7 @@ export default function CategoriesPage() {
               onFilteredData={setFilteredData}
             />
           }
-          actions={<Actions />}
+          actions={canCreate ? <Actions /> : null}
         />
       }
       body={<Body data={paginatedData} />}
