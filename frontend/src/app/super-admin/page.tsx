@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Loader2, ShieldCheck, UserCheck, UserPlus, UserX, Users, Trash2 } from "lucide-react";
@@ -151,13 +152,9 @@ export default function SuperAdminPage() {
 
   const isSubmitting = createAdminMutation.isPending || createOfficeUserMutation.isPending;
   const isAccountActionPending = deactivateUserMutation.isPending || activateUserMutation.isPending || deleteUserMutation.isPending;
+  const accountLabel = isSuperAdmin ? "admin" : "user";
 
   const handleDeactivateAccount = async (id: string, username: string) => {
-    const confirmed = window.confirm(`Deactivate @${username}? They will not be able to sign in until reactivated.`);
-    if (!confirmed) {
-      return;
-    }
-
     try {
       await deactivateUserMutation.mutateAsync(id);
       toast.success(`@${username} was deactivated.`);
@@ -176,12 +173,6 @@ export default function SuperAdminPage() {
   };
 
   const handleDeleteAccount = async (id: string, username: string) => {
-    const accountLabel = isSuperAdmin ? "admin" : "user";
-    const confirmed = window.confirm(`Delete ${accountLabel} @${username}? This action cannot be undone.`);
-    if (!confirmed) {
-      return;
-    }
-
     try {
       await deleteUserMutation.mutateAsync(id);
       toast.success(`@${username} was deleted.`);
@@ -370,38 +361,98 @@ export default function SuperAdminPage() {
                       </div>
                       <div className="mt-4 flex flex-wrap items-center gap-2">
                         {listedUser.active ? (
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            disabled={isAccountActionPending}
-                            onClick={() => handleDeactivateAccount(listedUser.id, listedUser.username)}
-                          >
-                            <UserX className="mr-2 h-4 w-4" />
-                            Deactivate
-                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                disabled={isAccountActionPending}
+                              >
+                                <UserX className="mr-2 h-4 w-4" />
+                                Deactivate
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Deactivate account?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Deactivate @{listedUser.username}? They will not be able to sign in until reactivated.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  disabled={isAccountActionPending}
+                                  onClick={() => handleDeactivateAccount(listedUser.id, listedUser.username)}
+                                >
+                                  {deactivateUserMutation.isPending ? "Deactivating..." : "Deactivate"}
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         ) : (
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            disabled={isAccountActionPending}
-                            onClick={() => handleActivateAccount(listedUser.id, listedUser.username)}
-                          >
-                            <UserCheck className="mr-2 h-4 w-4" />
-                            Activate
-                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                disabled={isAccountActionPending}
+                              >
+                                <UserCheck className="mr-2 h-4 w-4" />
+                                Activate
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Activate account?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Reactivate @{listedUser.username}? They will be able to sign in again.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  disabled={isAccountActionPending}
+                                  onClick={() => handleActivateAccount(listedUser.id, listedUser.username)}
+                                >
+                                  {activateUserMutation.isPending ? "Activating..." : "Activate"}
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         )}
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="destructive"
-                          disabled={isAccountActionPending}
-                          onClick={() => handleDeleteAccount(listedUser.id, listedUser.username)}
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
-                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="destructive"
+                              disabled={isAccountActionPending}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete account?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Delete {accountLabel} @{listedUser.username}? This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                disabled={isAccountActionPending}
+                                onClick={() => handleDeleteAccount(listedUser.id, listedUser.username)}
+                              >
+                                {deleteUserMutation.isPending ? "Deleting..." : "Delete"}
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     </div>
                   ))

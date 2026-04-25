@@ -64,7 +64,7 @@ app:
 
 ai:
   requisition:
-    enabled: ${AI_REQUISITION_ENABLED:}
+    enabled: ${AI_REQUISITION_ENABLED:false}
     api-url: ${AI_REQUISITION_API_URL:}
     api-key: ${AI_REQUISITION_API_KEY:}
     model: ${AI_REQUISITION_MODEL:}
