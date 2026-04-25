@@ -106,6 +106,12 @@ databaseChangeLog:
                   constraints:
                     nullable: true
               - column:
+                  name: is_active
+                  type: BOOLEAN
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+              - column:
                   name: role_id
                   type: BIGINT
                   constraints:
