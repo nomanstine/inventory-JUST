@@ -12,8 +12,8 @@ import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Loader2, ShieldCheck, UserCheck, UserPlus, UserX, Users, Trash2 } from "lucide-react";
-import { useOffices } from "@/services/officeService";
+import { Loader2, ShieldCheck, UserCheck, UserPlus, UserX, Users, Trash2, Building2 } from "lucide-react";
+import { useCreateOffice, useOffices, useUpdateOffice, type Office, type OfficeForm } from "@/services/officeService";
 import { useActivateUser, useCreateOfficeAdmin, useCreateOfficeUser, useDeactivateUser, useDeleteUser, useOfficeAdmins, useOfficeUsers } from "@/services/userService";
 import { toast } from "sonner";
 
@@ -24,6 +24,8 @@ export default function SuperAdminPage() {
   const { data: officeUsers = [], isLoading: isLoadingOfficeUsers, isError: isOfficeUsersError, error: officeUsersError } = useOfficeUsers();
   const createAdminMutation = useCreateOfficeAdmin();
   const createOfficeUserMutation = useCreateOfficeUser();
+  const createOfficeMutation = useCreateOffice();
+  const updateOfficeMutation = useUpdateOffice();
   const deactivateUserMutation = useDeactivateUser();
   const activateUserMutation = useActivateUser();
   const deleteUserMutation = useDeleteUser();
@@ -34,6 +36,17 @@ export default function SuperAdminPage() {
     email: "",
     password: "",
     officeId: "",
+  });
+
+  const [officeForm, setOfficeForm] = useState<OfficeForm>({
+    name: "",
+    nameBn: "",
+    type: "office",
+    code: "",
+    description: "",
+    order: 0,
+    isActive: true,
+    parentId: undefined,
   });
 
   const isSuperAdmin = role === "SUPER_ADMIN";
@@ -153,6 +166,7 @@ export default function SuperAdminPage() {
   const isSubmitting = createAdminMutation.isPending || createOfficeUserMutation.isPending;
   const isAccountActionPending = deactivateUserMutation.isPending || activateUserMutation.isPending || deleteUserMutation.isPending;
   const accountLabel = isSuperAdmin ? "admin" : "user";
+  const isOfficeActionPending = createOfficeMutation.isPending || updateOfficeMutation.isPending;
 
   const handleDeactivateAccount = async (id: string, username: string) => {
     try {
@@ -178,6 +192,70 @@ export default function SuperAdminPage() {
       toast.success(`@${username} was deleted.`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to delete account.");
+    }
+  };
+
+  const handleOfficeChange = (field: keyof OfficeForm, value: string | number | boolean | undefined) => {
+    setOfficeForm((previous) => ({ ...previous, [field]: value }));
+  };
+
+  const handleCreateOffice = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    if (!officeForm.name.trim()) {
+      toast.error("Office name is required.");
+      return;
+    }
+
+    if (!officeForm.type.trim()) {
+      toast.error("Office type is required.");
+      return;
+    }
+
+    try {
+      await createOfficeMutation.mutateAsync({
+        ...officeForm,
+        name: officeForm.name.trim(),
+        nameBn: officeForm.nameBn?.trim() || "",
+        code: officeForm.code?.trim() || "",
+        description: officeForm.description?.trim() || "",
+      });
+
+      setOfficeForm({
+        name: "",
+        nameBn: "",
+        type: "office",
+        code: "",
+        description: "",
+        order: 0,
+        isActive: true,
+        parentId: undefined,
+      });
+      toast.success("Office created successfully.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to create office.");
+    }
+  };
+
+  const handleSetOfficeStatus = async (office: Office, isActive: boolean) => {
+    try {
+      await updateOfficeMutation.mutateAsync({
+        id: office.id,
+        data: {
+          name: office.name,
+          nameBn: office.nameBn || "",
+          type: office.type,
+          code: office.code || "",
+          description: office.description || "",
+          order: office.order || 0,
+          isActive,
+          parentId: office.parent?.id,
+        },
+      });
+
+      toast.success(`Office ${isActive ? "activated" : "deactivated"} successfully.`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to update office status.");
     }
   };
 
@@ -464,6 +542,251 @@ export default function SuperAdminPage() {
               </CardContent>
             </Card>
           </div>
+
+          {isSuperAdmin && (
+            <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+              <Card className="border-border shadow-sm">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-xl">
+                    <Building2 className="h-5 w-5 text-primary" />
+                    Create Office
+                  </CardTitle>
+                  <CardDescription>Create a new office and choose its initial active status.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form className="space-y-4" onSubmit={handleCreateOffice}>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="officeName">Office name</Label>
+                        <Input
+                          id="officeName"
+                          value={officeForm.name}
+                          onChange={(event) => handleOfficeChange("name", event.target.value)}
+                          placeholder="Registrar Office"
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="officeNameBn">Office name (Bangla)</Label>
+                        <Input
+                          id="officeNameBn"
+                          value={officeForm.nameBn}
+                          onChange={(event) => handleOfficeChange("nameBn", event.target.value)}
+                          placeholder="রেজিস্ট্রার অফিস"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="officeType">Type</Label>
+                        <Select
+                          value={officeForm.type}
+                          onValueChange={(value) => handleOfficeChange("type", value)}
+                        >
+                          <SelectTrigger id="officeType">
+                            <SelectValue placeholder="Choose type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="office">Office</SelectItem>
+                            <SelectItem value="faculty">Faculty</SelectItem>
+                            <SelectItem value="department">Department</SelectItem>
+                            <SelectItem value="center">Center</SelectItem>
+                            <SelectItem value="institute">Institute</SelectItem>
+                            <SelectItem value="hall">Hall</SelectItem>
+                            <SelectItem value="facility">Facility</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="officeCode">Code</Label>
+                        <Input
+                          id="officeCode"
+                          value={officeForm.code}
+                          onChange={(event) => handleOfficeChange("code", event.target.value)}
+                          placeholder="REG"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="officeOrder">Display order</Label>
+                        <Input
+                          id="officeOrder"
+                          type="number"
+                          min="0"
+                          value={officeForm.order}
+                          onChange={(event) => handleOfficeChange("order", Number(event.target.value) || 0)}
+                        />
+                      </div>
+                      <div className="space-y-2 md:col-span-2">
+                        <Label>Parent office</Label>
+                        <Select
+                          value={officeForm.parentId ? officeForm.parentId.toString() : "none"}
+                          onValueChange={(value) => handleOfficeChange("parentId", value === "none" ? undefined : Number(value))}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="No parent" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">No parent</SelectItem>
+                            {offices.map((office) => (
+                              <SelectItem key={office.id} value={office.id.toString()}>
+                                {office.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="officeDescription">Description</Label>
+                      <Input
+                        id="officeDescription"
+                        value={officeForm.description}
+                        onChange={(event) => handleOfficeChange("description", event.target.value)}
+                        placeholder="Optional description"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Initial status</Label>
+                      <Select
+                        value={officeForm.isActive ? "active" : "inactive"}
+                        onValueChange={(value) => handleOfficeChange("isActive", value === "active")}
+                      >
+                        <SelectTrigger className="w-full md:w-72">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="active">Active</SelectItem>
+                          <SelectItem value="inactive">Deactivated</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="flex justify-end">
+                      <Button type="submit" disabled={isOfficeActionPending || isLoadingOffices} className="w-full sm:w-auto sm:min-w-40">
+                        {createOfficeMutation.isPending ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Creating office...
+                          </>
+                        ) : (
+                          "Create Office"
+                        )}
+                      </Button>
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
+
+              <Card className="border-border shadow-sm">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-xl">
+                    <Building2 className="h-5 w-5 text-primary" />
+                    Office Status
+                  </CardTitle>
+                  <CardDescription>Activate or deactivate offices from this panel.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {isLoadingOffices ? (
+                    <div className="space-y-3">
+                      <Skeleton className="h-16 w-full" />
+                      <Skeleton className="h-16 w-full" />
+                      <Skeleton className="h-16 w-full" />
+                    </div>
+                  ) : offices.length === 0 ? (
+                    <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+                      No offices found.
+                    </div>
+                  ) : (
+                    offices.map((office) => (
+                      <div key={office.id} className="rounded-2xl border border-border bg-muted/40 p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <div className="font-semibold text-foreground">{office.name}</div>
+                            <div className="text-sm text-muted-foreground">{office.code || "No code"} · {office.type}</div>
+                          </div>
+                          <Badge variant={office.isActive ? "default" : "outline"}>
+                            {office.isActive ? "Active" : "Deactivated"}
+                          </Badge>
+                        </div>
+                        <div className="mt-3 text-sm text-muted-foreground">
+                          Parent: {office.parent?.name || "None"}
+                        </div>
+                        <div className="mt-4">
+                          {office.isActive ? (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  disabled={isOfficeActionPending}
+                                >
+                                  Deactivate Office
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Deactivate office?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Deactivate {office.name}? Users mapped to this office will keep their account but this office will become inactive.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    disabled={isOfficeActionPending}
+                                    onClick={() => handleSetOfficeStatus(office, false)}
+                                  >
+                                    {updateOfficeMutation.isPending ? "Deactivating..." : "Deactivate"}
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          ) : (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  disabled={isOfficeActionPending}
+                                >
+                                  Activate Office
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Activate office?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Reactivate {office.name}? The office will be available again across the system.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    disabled={isOfficeActionPending}
+                                    onClick={() => handleSetOfficeStatus(office, true)}
+                                  >
+                                    {updateOfficeMutation.isPending ? "Activating..." : "Activate"}
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </div>
       }
     />

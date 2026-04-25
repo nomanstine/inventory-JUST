@@ -30,8 +30,27 @@ const officeService = serviceFactory<Office, OfficeForm>("/offices");
 
 export const getOffices = officeService.getAll;
 export const getOfficeById = officeService.getById;
-export const createOffice = officeService.create;
-export const updateOffice = officeService.update;
+
+const toOfficePayload = (data: Partial<OfficeForm>) => ({
+  name: data.name,
+  nameBn: data.nameBn,
+  type: data.type,
+  code: data.code,
+  description: data.description,
+  order: data.order,
+  isActive: data.isActive,
+  parent: data.parentId ? { id: data.parentId } : null,
+});
+
+export const createOffice = async (data: OfficeForm): Promise<Office> => {
+  const response = await api.post("/offices", toOfficePayload(data));
+  return response.data;
+};
+
+export const updateOffice = async (id: number, data: Partial<OfficeForm>): Promise<Office> => {
+  const response = await api.put(`/offices/${id}`, toOfficePayload(data));
+  return response.data;
+};
 export const deleteOffice = officeService.delete;
 
 // Get child offices by parent ID
