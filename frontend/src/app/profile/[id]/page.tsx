@@ -23,14 +23,33 @@ export default function UserProfilePage({ params }: ProfilePageProps) {
   const { user: currentUser } = useAuth();
   const router = useRouter();
   const { id: userId } = use(params);
+  const isValidUserId = /^\d+$/.test(userId);
 
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
 
-  const { data: viewedUser, isLoading: isLoadingUser } = useUser(userId);
+  const { data: viewedUser, isLoading: isLoadingUser } = useUser(isValidUserId ? userId : "");
 
   const user = viewedUser;
   const isOwnProfile = userId === currentUser?.id;
+
+  if (!isValidUserId) {
+    return (
+      <PageLayout
+        header={<Header title="Profile" subtitle="Not found" />}
+        body={
+          <div className="flex items-center justify-center h-[50vh]">
+            <Card className="w-96">
+              <CardHeader>
+                <CardTitle>Profile Not Found</CardTitle>
+                <CardDescription>The requested profile id is invalid.</CardDescription>
+              </CardHeader>
+            </Card>
+          </div>
+        }
+      />
+    );
+  }
 
   if (!currentUser) {
     return (

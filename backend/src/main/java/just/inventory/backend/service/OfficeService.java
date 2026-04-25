@@ -1,7 +1,9 @@
 package just.inventory.backend.service;
 
 import just.inventory.backend.model.Office;
+import just.inventory.backend.model.Inventory;
 import just.inventory.backend.repository.OfficeRepository;
+import just.inventory.backend.repository.InventoryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -13,6 +15,7 @@ import java.util.Optional;
 public class OfficeService {
 
     private final OfficeRepository officeRepository;
+    private final InventoryRepository inventoryRepository;
 
     public List<Office> getAllOffices() {
         return officeRepository.findAll();
@@ -27,7 +30,16 @@ public class OfficeService {
     }
 
     public Office createOffice(Office office) {
-        return officeRepository.save(office);
+        Office createdOffice = officeRepository.save(office);
+
+        if (createdOffice.getInventory() == null) {
+            Inventory inventory = new Inventory();
+            inventory.setOffice(createdOffice);
+            inventoryRepository.save(inventory);
+            createdOffice.setInventory(inventory);
+        }
+
+        return createdOffice;
     }
 
     public Office updateOffice(Long id, Office officeDetails) {

@@ -20,14 +20,15 @@ function ProfilePageContent() {
   const searchParams = useSearchParams();
   const userId = searchParams.get("userId");
   const isMobile = useIsMobile();
+  const isValidUserId = !userId || /^\d+$/.test(userId);
 
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
 
-  const { data: viewedUser, isLoading: isLoadingUser } = useUser(userId || "");
+  const { data: viewedUser, isLoading: isLoadingUser } = useUser(isValidUserId && userId ? userId : "");
 
   const user = viewedUser || currentUser;
-  const isOwnProfile = !userId || userId === currentUser?.id;
+  const isOwnProfile = !userId || !isValidUserId || userId === currentUser?.id;
 
   if (!currentUser) {
     return (

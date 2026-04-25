@@ -13,8 +13,8 @@ import java.util.stream.Collectors;
 @Service
 public class InventoryService {
 
-    // @Autowired
-    // private InventoryRepository inventoryRepository;
+    @Autowired
+    private InventoryRepository inventoryRepository;
 
     @Autowired
     private ItemInstanceRepository itemInstanceRepository;
@@ -25,12 +25,15 @@ public class InventoryService {
     public Inventory getInventoryByOfficeId(Long officeId) {
         Office office = officeRepository.findById(officeId)
                 .orElseThrow(() -> new RuntimeException("Office not found"));
-        
-        Inventory inventory = office.getInventory();
-        if (inventory == null) {
-            throw new RuntimeException("Inventory not found for office");
-        }
-        
+
+        Inventory inventory = inventoryRepository.findByOfficeId(officeId)
+                .orElseGet(() -> {
+                    Inventory createdInventory = new Inventory();
+                    createdInventory.setOffice(office);
+                    office.setInventory(createdInventory);
+                    return inventoryRepository.save(createdInventory);
+                });
+
         return inventory;
     }
 
