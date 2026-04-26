@@ -31,9 +31,8 @@ public class InventoryController {
         User currentUser = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         
-        // Check if user belongs to the same office or is admin
-        if (!currentUser.getOffice().getId().equals(officeId) && 
-            !"ADMIN".equals(currentUser.getRole().getName())) {
+        // Check if user belongs to the same office or is admin/super-admin
+        if (!canAccessOffice(currentUser, officeId)) {
             return ResponseEntity.status(403)
                 .body("You can only view inventory for your own office");
         }
@@ -49,9 +48,8 @@ public class InventoryController {
         User currentUser = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         
-        // Check if user belongs to the same office or is admin
-        if (!currentUser.getOffice().getId().equals(officeId) && 
-            !"ADMIN".equals(currentUser.getRole().getName())) {
+        // Check if user belongs to the same office or is admin/super-admin
+        if (!canAccessOffice(currentUser, officeId)) {
             return ResponseEntity.status(403)
                 .body("You can only view inventory for your own office");
         }
@@ -67,9 +65,8 @@ public class InventoryController {
         User currentUser = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         
-        // Check if user belongs to the same office or is admin
-        if (!currentUser.getOffice().getId().equals(officeId) && 
-            !"ADMIN".equals(currentUser.getRole().getName())) {
+        // Check if user belongs to the same office or is admin/super-admin
+        if (!canAccessOffice(currentUser, officeId)) {
             return ResponseEntity.status(403)
                 .body("You can only view inventory for your own office");
         }
@@ -87,9 +84,8 @@ public class InventoryController {
         
         ItemInstance instance = inventoryService.getItemInstanceById(id);
         
-        // Check if user belongs to the same office or is admin
-        if (!currentUser.getOffice().getId().equals(instance.getOwnerOffice().getId()) && 
-            !"ADMIN".equals(currentUser.getRole().getName())) {
+        // Check if user belongs to the same office or is admin/super-admin
+        if (!canAccessOffice(currentUser, instance.getOwnerOffice().getId())) {
             return ResponseEntity.status(403)
                 .body("You can only view items for your own office");
         }
@@ -117,5 +113,24 @@ public class InventoryController {
         
         Map<String, Object> summary = inventoryService.getInventorySummaryByOfficeId(currentUser.getOffice().getId());
         return ResponseEntity.ok(summary);
+    }
+
+    private boolean canAccessOffice(User user, Long officeId) {
+        String roleName = normalizeRoleName(
+            user.getRole() != null ? user.getRole().getName() : "");
+        if ("SUPER_ADMIN".equals(roleName)) {
+            return true;
+        }
+        if ("ADMIN".equals(roleName)) {
+            return true;
+        }
+        return user.getOffice() != null && user.getOffice().getId().equals(officeId);
+    }
+
+    private String normalizeRoleName(String roleName) {
+        if (roleName == null || roleName.isBlank()) {
+            return "";
+        }
+        return roleName.replaceFirst("^ROLE_", "").trim().toUpperCase();
     }
 }

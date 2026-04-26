@@ -45,7 +45,9 @@ public class PurchaseController {
         }
         
         // Check if user is admin
-        if (!"ADMIN".equals(currentUser.getRole().getName())) {
+        String roleName = currentUser.getRole() != null ? currentUser.getRole().getName() : "";
+        String normalizedRole = roleName.replaceFirst("^ROLE_", "").trim().toUpperCase();
+        if (!"ADMIN".equals(normalizedRole) && !"SUPER_ADMIN".equals(normalizedRole)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body("Only admins can create purchases");
         }

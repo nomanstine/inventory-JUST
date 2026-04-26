@@ -68,7 +68,7 @@ export default function Header() {
             placeholder="Scan barcode or enter item code..."
             value={barcode}
             onChange={(e) => setBarcode(e.target.value)}
-            onKeyPress={handleBarcodeKeyPress}
+            onKeyDown={handleBarcodeKeyPress}
             className="pl-10 w-80"
             autoComplete="off"
           />

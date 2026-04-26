@@ -88,8 +88,8 @@ public class AuthController {
         userInfo.put("permissions", userDetails.getAuthorities().stream()
             .map(GrantedAuthority::getAuthority)
             .toList());
-        userInfo.put("officeId", user.getOffice().getId().toString());
-        userInfo.put("officeName", user.getOffice().getName());
+        userInfo.put("officeId", user.getOffice() != null ? user.getOffice().getId().toString() : null);
+        userInfo.put("officeName", user.getOffice() != null ? user.getOffice().getName() : null);
         userInfo.put("avatarUrl", user.getAvatarUrl());
         userInfo.put("isActive", Boolean.TRUE.equals(user.getActive()));
         

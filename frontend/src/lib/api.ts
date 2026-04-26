@@ -75,7 +75,20 @@ api.interceptors.request.use(
 
 api.interceptors.response.use(
   (response) => response,
-  (error) => Promise.reject(new Error(getApiErrorMessage(error)))
+  (error) => {
+    // Auto-logout on 401 (token expired or invalid)
+    if (axios.isAxiosError(error) && error.response?.status === 401) {
+      // Only redirect if we're in the browser and not already on the login page
+      if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
+        localStorage.removeItem(KEY.auth_token);
+        localStorage.removeItem(KEY.user_info);
+        window.location.href = '/login';
+      }
+    }
+    // Attach a user-friendly message but preserve the original error for status code checks
+    const message = getApiErrorMessage(error);
+    return Promise.reject(new Error(message));
+  }
 );
 
 export default api;

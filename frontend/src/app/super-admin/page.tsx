@@ -320,7 +320,7 @@ export default function SuperAdminPage() {
           <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
 
             {/* User search filter (visible for both super admin and admin) */}
-            <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+            <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center lg:col-span-full">
               <Label htmlFor="userSearch">Search Users</Label>
               <Input
                 id="userSearch"
@@ -590,6 +590,18 @@ export default function SuperAdminPage() {
 
           {isSuperAdmin && (
             <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+              {/* Office search filter */}
+              <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center lg:col-span-full">
+                <Label htmlFor="officeSearch">Search Offices</Label>
+                <Input
+                  id="officeSearch"
+                  value={officeSearch}
+                  onChange={(e) => setOfficeSearch(e.target.value)}
+                  placeholder="Search by name, code, type..."
+                  className="max-w-xs"
+                />
+              </div>
+
               <Card className="border-border shadow-sm">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-xl">
@@ -755,12 +767,12 @@ export default function SuperAdminPage() {
                       <Skeleton className="h-16 w-full" />
                       <Skeleton className="h-16 w-full" />
                     </div>
-                  ) : offices.length === 0 ? (
+                  ) : filteredOffices.length === 0 ? (
                     <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-                      No offices found.
+                      {offices.length === 0 ? "No offices found." : "No offices match your search."}
                     </div>
                   ) : (
-                    offices.map((office) => (
+                    filteredOffices.map((office) => (
                       <div key={office.id} className="rounded-2xl border border-border bg-muted/40 p-4">
                         <div className="flex items-start justify-between gap-3">
                           <div>

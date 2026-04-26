@@ -305,8 +305,8 @@ export default function DashboardPage() {
                 ) : recentTransactions.length > 0 ? (
                   <div className="space-y-2 sm:space-y-3">
                     {recentTransactions.map((transaction) => {
-                      const isOutgoing = transaction.fromOffice.id === summary?.officeId;
-                      const otherOffice = isOutgoing ? transaction.toOffice.name : transaction.fromOffice.name;
+                      const isOutgoing = transaction.fromOffice?.id === summary?.officeId;
+                      const otherOffice = isOutgoing ? (transaction.toOffice?.name || 'Unknown') : (transaction.fromOffice?.name || 'Unknown');
                       const direction = isOutgoing ? 'to' : 'from';
                       
                       return (
@@ -316,7 +316,7 @@ export default function DashboardPage() {
                           onClick={() => router.push('/inventory')}
                         >
                           <div className="flex-1 min-w-0">
-                            <p className="text-xs sm:text-sm font-medium truncate">{transaction.itemInstance.item.name}</p>
+                            <p className="text-xs sm:text-sm font-medium truncate">{transaction.itemInstance?.item?.name || 'Unknown Item'}</p>
                             <p className="text-xs text-muted-foreground truncate">
                               {transaction.transactionType} • {direction} {otherOffice}
                             </p>

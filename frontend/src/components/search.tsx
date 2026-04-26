@@ -8,6 +8,11 @@ export interface SearchConfig {
     className?: string;
 }
 
+// Traverse nested object using dot-notation key (e.g. "item.name")
+const getNestedValue = (obj: any, path: string): any => {
+    return path.split('.').reduce((current, key) => current?.[key], obj);
+};
+
 export function SearchGroup<T = any>({
     data,
     config,
@@ -24,7 +29,8 @@ export function SearchGroup<T = any>({
         const searchedData = searchQuery 
             ? data.filter(item => {
                 return config.searchKeys.some(key => {
-                    const value = item[key as keyof T];
+                    const value = getNestedValue(item, key);
+                    if (value == null) return false;
                     return String(value).toLowerCase().includes(searchQuery.toLowerCase());
                 });
               })

@@ -13,6 +13,11 @@ export interface FilterConfig {
     options: FilterOption[];
 }
 
+// Traverse nested object using dot-notation key (e.g. "category.name")
+const getNestedValue = (obj: any, path: string): any => {
+    return path.split('.').reduce((current, key) => current?.[key], obj);
+};
+
 export function FilterGroup<T = any>({
     data,
     filters,
@@ -36,7 +41,8 @@ export function FilterGroup<T = any>({
         const filteredData = data.filter(item => {
             return Object.entries(activeFilters).every(([key, value]) => {
                 if (value === "all") return true;
-                return item[key as keyof T] === value;
+                const itemValue = getNestedValue(item, key);
+                return itemValue === value;
             });
         });
         onFilteredData(filteredData);

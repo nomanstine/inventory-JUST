@@ -18,7 +18,7 @@ interface LoginFormProps {
 
 export function LoginForm({
   onLoginSuccess,
-  redirectTo = "/offices"
+  redirectTo = "/dashboard"
 }: LoginFormProps) {
   const [credentials, setCredentials] = useState<LoginCredentials>({
     username: "",

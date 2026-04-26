@@ -220,7 +220,7 @@ export default function ItemsPage() {
       body={<Body data={paginatedData} />}
       footer={
         <Pagination
-          data={searchedData.length > 0 ? searchedData : filteredData}
+          data={searchedData}
           config={paginationConfig}
           onPaginatedData={setPaginatedData}
         />

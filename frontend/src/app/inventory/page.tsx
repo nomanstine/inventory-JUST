@@ -240,18 +240,18 @@ function HistoryTable({ purchases, transactions }: { purchases: Purchase[], tran
         reason: 'Purchase'
       }))
     ),
-    ...transactions.filter(t => t.toOffice.id === parseInt(user?.officeId || '0') && t.status !== 'PENDING').map(transaction => ({ 
+    ...transactions.filter(t => t.toOffice?.id === parseInt(user?.officeId || '0') && t.status !== 'PENDING').map(transaction => ({ 
       type: '+',
-      itemName: transaction.itemInstance.item.name,
+      itemName: transaction.itemInstance?.item?.name || 'Unknown Item',
       source: transaction.fromOffice?.name || 'Unknown',
       quantity: transaction.quantity,
       date: transaction.transactionDate,
       reason: 'Transfer In'
     })),
     // Deductions (-)
-    ...transactions.filter(t => t.fromOffice.id === parseInt(user?.officeId || '0') && t.status !== 'PENDING').map(transaction => ({ 
+    ...transactions.filter(t => t.fromOffice?.id === parseInt(user?.officeId || '0') && t.status !== 'PENDING').map(transaction => ({ 
       type: '-',
-      itemName: transaction.itemInstance.item.name,
+      itemName: transaction.itemInstance?.item?.name || 'Unknown Item',
       source: transaction.toOffice?.name || 'Unknown',
       quantity: transaction.quantity,
       date: transaction.transactionDate,
@@ -341,7 +341,7 @@ export default function InventoryPage() {
   const historyCount = purchases.reduce((sum, purchase) => sum + (purchase.items?.length || 0), 0) + 
     transactions.filter(t => 
       t.status !== 'PENDING' && 
-      (t.toOffice.id === parseInt(user?.officeId || '0') || t.fromOffice.id === parseInt(user?.officeId || '0'))
+      (t.toOffice?.id === parseInt(user?.officeId || '0') || t.fromOffice?.id === parseInt(user?.officeId || '0'))
     ).length;
 
   useEffect(() => {

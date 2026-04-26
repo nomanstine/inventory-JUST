@@ -67,12 +67,12 @@ export interface ItemTransaction {
       };
     };
   };
-  fromOffice: {
+  fromOffice?: {
     id: number;
     name: string;
     code?: string;
   };
-  toOffice: {
+  toOffice?: {
     id: number;
     name: string;
     code?: string;

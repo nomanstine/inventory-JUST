@@ -38,9 +38,6 @@ public class SecurityConfig {
     @Value("${app.frontend-url:http://localhost:3000}")
     private String frontendUrl;
 
-    @Value("${app.frontend-urls:}")
-    private String frontendUrls;
-
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
         http
@@ -118,7 +115,6 @@ public class SecurityConfig {
         Set<String> origins = new LinkedHashSet<>();
 
         addOrigins(origins, frontendUrl);
-        addOrigins(origins, frontendUrls);
         addOrigins(origins, "http://localhost:3000");
         addOrigins(origins, "https://inventory-just.vercel.app");
 

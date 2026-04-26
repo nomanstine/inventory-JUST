@@ -3,18 +3,20 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { PageLayout, Header } from "@/components/page";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Sparkles, Loader2, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 
-              {/* Removed office dropdown. Always use logged-in user's office. */}
-  const currentOffice = offices.find((office) => office.id === currentUserOfficeId);
-  const parentOfficeId = currentOffice?.parent?.id;
-
-  if (parentOfficeId) {
-    const parentOffice = offices.find((office) => office.id === parentOfficeId);
-    return parentOffice ? [parentOffice] : [];
-  }
-
-  return offices.filter((office) => office.id !== currentUserOfficeId);
-};
+import { useOffices } from "@/services/officeService";
+import { useRequisitionSuggestions } from "@/services/itemRequestService";
+import { saveRequisitionDraft } from "@/lib/requisitionDraft";
+import { canCreateByRole } from "@/lib/permissions";
 
 export default function AIRecommendationsPage() {
   const router = useRouter();
@@ -25,8 +27,9 @@ export default function AIRecommendationsPage() {
   const suggestionMutation = useRequisitionSuggestions();
 
   const [reason, setReason] = useState("");
-  // Always use the logged-in user's office
+  const currentUserOfficeId = user?.officeId ? parseInt(user.officeId, 10) : 0;
   const parentOfficeId = currentUserOfficeId;
+
   const [suggestionSummary, setSuggestionSummary] = useState("");
   const [aiUnavailableHint, setAiUnavailableHint] = useState("");
   const [suggestions, setSuggestions] = useState<Array<{
@@ -35,10 +38,6 @@ export default function AIRecommendationsPage() {
     quantity: number;
     rationale?: string;
   }>>([]);
-
-  const currentUserOfficeId = user?.officeId ? parseInt(user.officeId, 10) : 0;
-
-
 
   if (!user) {
     return (
@@ -139,26 +138,6 @@ export default function AIRecommendationsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="p-4 sm:p-6 pt-0 space-y-4">
-              <div>
-                <Label htmlFor="source-office">Request From Office</Label>
-                <Select
-                  value={parentOfficeId ? parentOfficeId.toString() : ""}
-                  onValueChange={(value) => setParentOfficeId(parseInt(value, 10))}
-                  disabled={officeOptions.length <= 1}
-                >
-                  <SelectTrigger id="source-office" className="mt-2">
-                    <SelectValue placeholder="Select source office" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {officeOptions.map((office) => (
-                      <SelectItem key={office.id} value={office.id.toString()}>
-                        {office.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
               <div>
                 <Label htmlFor="context">Need / Context (Optional)</Label>
                 <Textarea
