@@ -12,7 +12,7 @@ id,name,name_bn,type,parent_id,code,description,display_order,is_active
 11,Department of Bio-Medical Engineering,বায়ো-মেডিকেল প্রকৌশল বিভাগ,department,5,BME,Bio-Medical Engineering Department,110,true
 12,Department of Mechatronics Engineering,মেকাট্রনিক্স প্রকৌশল বিভাগ,department,5,ME,Mechatronics Engineering Department,120,true
 13,Faculty of Computing & Information Engineering,কম্পিউটিং ও তথ্য প্রকৌশল অনুষদ,faculty,,FCIE,Faculty of Computing and Information Engineering,130,true
-14,Department of Computer Science & Engineering,কম্পিউটার বিজ্ঞান ও প্রকৌশল বিভাগ,department,13,CSE,Computer Science and Engineering Department,140,true
+14,Department of Computer Science & Engineering,কম্পিউটার বিজ্ঞান ও প্রকৌশল বিভাগ,department,5,CSE,Computer Science and Engineering Department,140,true
 15,Department of Software Engineering,সফটওয়্যার প্রকৌশল বিভাগ,department,13,SE,Software Engineering Department,150,true
 16,Department of Computational Biology,কম্পিউটেশনাল জীববিজ্ঞান বিভাগ,department,13,CB,Computational Biology Department,160,true
 17,Faculty of Biological Science & Technology,জৈবিক বিজ্ঞান ও প্রযুক্তি অনুষদ,faculty,,FBST,Faculty of Biological Science and Technology,170,true
