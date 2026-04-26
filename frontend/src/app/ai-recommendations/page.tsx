@@ -4,30 +4,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
-import {
-  PageLayout,
-  Header
-} from "@/components/page";
-
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import {
-  AlertCircle,
-  Loader2,
-  Sparkles,
-} from "lucide-react";
-
-import { useRequisitionSuggestions } from "@/services/itemRequestService";
-import { Office, useOffices } from "@/services/officeService";
-import { saveRequisitionDraft } from "@/lib/requisitionDraft";
-import { canCreateByRole } from "@/lib/permissions";
-
-const getOfficeOptions = (offices: Office[], currentUserOfficeId: number) => {
+              {/* Removed office dropdown. Always use logged-in user's office. */}
   const currentOffice = offices.find((office) => office.id === currentUserOfficeId);
   const parentOfficeId = currentOffice?.parent?.id;
 
@@ -48,7 +25,8 @@ export default function AIRecommendationsPage() {
   const suggestionMutation = useRequisitionSuggestions();
 
   const [reason, setReason] = useState("");
-  const [parentOfficeId, setParentOfficeId] = useState<number>(0);
+  // Always use the logged-in user's office
+  const parentOfficeId = currentUserOfficeId;
   const [suggestionSummary, setSuggestionSummary] = useState("");
   const [aiUnavailableHint, setAiUnavailableHint] = useState("");
   const [suggestions, setSuggestions] = useState<Array<{
@@ -60,21 +38,7 @@ export default function AIRecommendationsPage() {
 
   const currentUserOfficeId = user?.officeId ? parseInt(user.officeId, 10) : 0;
 
-  const officeOptions = useMemo(
-    () => getOfficeOptions(offices, currentUserOfficeId),
-    [offices, currentUserOfficeId]
-  );
 
-  useEffect(() => {
-    if (officeOptions.length === 1) {
-      setParentOfficeId(officeOptions[0].id);
-      return;
-    }
-
-    if (!officeOptions.some((office) => office.id === parentOfficeId)) {
-      setParentOfficeId(0);
-    }
-  }, [officeOptions, parentOfficeId]);
 
   if (!user) {
     return (
@@ -97,7 +61,7 @@ export default function AIRecommendationsPage() {
   const handleSuggest = async () => {
     try {
       if (!parentOfficeId) {
-        throw new Error("Please select a source office");
+        throw new Error("No office found for this user");
       }
 
       const response = await suggestionMutation.mutateAsync({
@@ -129,7 +93,7 @@ export default function AIRecommendationsPage() {
     }
 
     if (!parentOfficeId) {
-      toast.error("Please select a source office first.");
+      toast.error("No office found for this user.");
       return;
     }
 

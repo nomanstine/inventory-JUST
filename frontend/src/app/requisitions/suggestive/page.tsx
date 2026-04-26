@@ -42,18 +42,10 @@ export default function SuggestiveRequisitionPage() {
   const { data: offices = [] } = useOffices();
 
   const currentUserOfficeId = user?.officeId ? parseInt(user.officeId, 10) : 0;
-  const [parentOfficeId, setParentOfficeId] = useState<number>(0);
+  // Always use the logged-in user's office
+  const parentOfficeId = currentUserOfficeId;
 
-  const officeOptions = useMemo(
-    () => getOfficeOptions(offices, currentUserOfficeId),
-    [offices, currentUserOfficeId]
-  );
 
-  useEffect(() => {
-    if (officeOptions.length === 1) {
-      setParentOfficeId(officeOptions[0].id);
-    }
-  }, [officeOptions]);
 
   const myOfficePurchases = useMemo(() => {
     if (!currentUserOfficeId) {
@@ -87,7 +79,7 @@ export default function SuggestiveRequisitionPage() {
 
   const handleLoadIntoRequisition = () => {
     if (!parentOfficeId) {
-      toast.error("Please select a source office first");
+      toast.error("No office found for this user.");
       return;
     }
 
@@ -137,30 +129,7 @@ export default function SuggestiveRequisitionPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="source-office">Request From Office</Label>
-                <Select
-                  value={parentOfficeId ? parentOfficeId.toString() : ""}
-                  onValueChange={(value) => setParentOfficeId(parseInt(value, 10))}
-                  disabled={officeOptions.length <= 1}
-                >
-                  <SelectTrigger id="source-office">
-                    <SelectValue placeholder="Select office" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {officeOptions.map((office) => (
-                      <SelectItem key={office.id} value={office.id.toString()}>
-                        {office.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {officeOptions.length <= 1 && (
-                  <p className="text-xs text-muted-foreground">
-                    Source office is locked based on your office hierarchy.
-                  </p>
-                )}
-              </div>
+              {/* Removed office dropdown. Always use logged-in user's office. */}
 
               <div className="flex flex-wrap gap-2">
                 <Button onClick={handleLoadIntoRequisition} disabled={!parentOfficeId || suggestions.length === 0}>
