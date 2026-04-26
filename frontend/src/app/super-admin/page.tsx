@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Loader2, ShieldCheck, UserCheck, UserPlus, UserX, Users, Trash2, Building2 } from "lucide-react";
-import { useCreateOffice, useOffices, useUpdateOffice, type Office, type OfficeForm } from "@/services/officeService";
+import { useCreateOffice, useOffices, useUpdateOffice, useDeleteOffice, type Office, type OfficeForm } from "@/services/officeService";
 import { useActivateUser, useCreateOfficeAdmin, useCreateOfficeUser, useDeactivateUser, useDeleteUser, useOfficeAdmins, useOfficeUsers } from "@/services/userService";
 import { toast } from "sonner";
 import { getInitials } from "@/lib/utils";
@@ -37,6 +37,7 @@ export default function SuperAdminPage() {
   const deleteUserMutation = useDeleteUser();
   const createOfficeMutation = useCreateOffice();
   const updateOfficeMutation = useUpdateOffice();
+  const deleteOfficeMutation = useDeleteOffice();
   // Search/filter states
   const [userSearch, setUserSearch] = useState("");
   const [officeSearch, setOfficeSearch] = useState("");
@@ -181,7 +182,7 @@ export default function SuperAdminPage() {
   const isSubmitting = createAdminMutation.isPending || createOfficeUserMutation.isPending;
   const isAccountActionPending = deactivateUserMutation.isPending || activateUserMutation.isPending || deleteUserMutation.isPending;
   const accountLabel = isSuperAdmin ? "admin" : "user";
-  const isOfficeActionPending = createOfficeMutation.isPending || updateOfficeMutation.isPending;
+  const isOfficeActionPending = createOfficeMutation.isPending || updateOfficeMutation.isPending || deleteOfficeMutation.isPending;
 
   const handleDeactivateAccount = async (id: string, username: string) => {
     try {
@@ -271,6 +272,15 @@ export default function SuperAdminPage() {
       toast.success(`Office ${isActive ? "activated" : "deactivated"} successfully.`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to update office status.");
+    }
+  };
+
+  const handleDeleteOffice = async (id: number, name: string) => {
+    try {
+      await deleteOfficeMutation.mutateAsync(id);
+      toast.success(`Office "${name}" was deleted.`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to delete office.");
     }
   };
 
@@ -821,7 +831,7 @@ export default function SuperAdminPage() {
                                   variant="outline"
                                   disabled={isOfficeActionPending}
                                 >
-                                  Deactivate Office
+                                  Deactivate
                                 </Button>
                               </AlertDialogTrigger>
                               <AlertDialogContent>
@@ -873,6 +883,36 @@ export default function SuperAdminPage() {
                               </AlertDialogContent>
                             </AlertDialog>
                           )}
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="destructive"
+                                disabled={isOfficeActionPending}
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete office?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Delete {office.name}? This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  disabled={isOfficeActionPending}
+                                  onClick={() => handleDeleteOffice(office.id, office.name)}
+                                >
+                                  {deleteOfficeMutation.isPending ? "Deleting..." : "Delete"}
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </div>
                       </div>
                     ))}

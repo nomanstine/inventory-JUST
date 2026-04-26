@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import just.inventory.backend.model.Office;
 import just.inventory.backend.service.OfficeService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -42,6 +43,7 @@ public class OfficeController {
 
     @PostMapping
     @Operation(summary = "Create a new office")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<Office> createOffice(@RequestBody Office office) {
         Office createdOffice = officeService.createOffice(office);
         return ResponseEntity.ok(createdOffice);
@@ -49,6 +51,7 @@ public class OfficeController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Update an office")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<Office> updateOffice(@PathVariable Long id, @RequestBody Office officeDetails) {
         Office updatedOffice = officeService.updateOffice(id, officeDetails);
         return ResponseEntity.ok(updatedOffice);
@@ -56,6 +59,7 @@ public class OfficeController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete an office (soft delete)")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public ResponseEntity<Void> deleteOffice(@PathVariable Long id) {
         officeService.deleteOffice(id);
         return ResponseEntity.noContent().build();
