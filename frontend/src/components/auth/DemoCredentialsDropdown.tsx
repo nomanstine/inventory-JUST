@@ -1,4 +1,5 @@
 "use client";
+import * as React from "react";
 import {
   Select,
   SelectContent,
@@ -56,12 +57,20 @@ export function DemoCredentialsDropdown({
   onCredentialSelect,
   disabled = false
 }: DemoCredentialsDropdownProps) {
+  const [isMounted, setIsMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   const handleValueChange = (username: string) => {
     const credential = DEMO_CREDENTIALS.find(c => c.username === username);
     if (credential) {
       onCredentialSelect(credential);
     }
   };
+
+  if (!isMounted) return null;
 
   return (
     <div className="space-y-2">

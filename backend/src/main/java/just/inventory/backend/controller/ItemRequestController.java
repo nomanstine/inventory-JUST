@@ -302,9 +302,12 @@ public class ItemRequestController {
             Long userOfficeId = currentUser.getOffice().getId();
             boolean isSameOffice = parentOfficeId.equals(userOfficeId);
 
-            // Allow regular users to get recommendations for their own office
-            // Only admins can get suggestions from other offices
-            if (!isSameOffice && !hasRole(currentUser, "ADMIN")) {
+            boolean isParentOffice = currentUser.getOffice().getParent() != null && 
+                                     parentOfficeId.equals(currentUser.getOffice().getParent().getId());
+
+            // Allow regular users to get recommendations for their own office or from their parent office
+            // Only admins can get suggestions from other arbitrary offices
+            if (!isSameOffice && !isParentOffice && !hasRole(currentUser, "ADMIN") && !hasRole(currentUser, "SUPER_ADMIN")) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body("Only admins can request suggestions from other offices");
             }
@@ -335,7 +338,7 @@ public class ItemRequestController {
         return Optional.ofNullable(user.getRole())
             .map(role -> role.getName())
             .map(this::normalizeRoleName)
-            .map(roleName::equals)
+            .map(role -> role.equals(roleName) || role.equals("SUPER_ADMIN"))
             .orElse(false);
     }
 

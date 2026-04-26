@@ -28,7 +28,8 @@ export default function AIRecommendationsPage() {
 
   const [reason, setReason] = useState("");
   const currentUserOfficeId = user?.officeId ? parseInt(user.officeId, 10) : 0;
-  const parentOfficeId = currentUserOfficeId;
+  const currentOffice = offices.find((o) => o.id === currentUserOfficeId);
+  const parentOfficeId = currentOffice?.parent?.id || currentUserOfficeId;
 
   const [suggestionSummary, setSuggestionSummary] = useState("");
   const [aiUnavailableHint, setAiUnavailableHint] = useState("");

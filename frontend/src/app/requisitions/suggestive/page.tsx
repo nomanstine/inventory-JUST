@@ -21,17 +21,7 @@ import { usePurchases } from "@/services/purchaseService";
 import { saveRequisitionDraft } from "@/lib/requisitionDraft";
 import { buildSuggestiveRequisition, SuggestedRequisitionItem } from "../utils/suggestiveRequisition";
 
-const getOfficeOptions = (offices: Office[], currentUserOfficeId: number) => {
-  const currentOffice = offices.find((office) => office.id === currentUserOfficeId);
-  const parentOfficeId = currentOffice?.parent?.id;
 
-  if (parentOfficeId) {
-    const parentOffice = offices.find((office) => office.id === parentOfficeId);
-    return parentOffice ? [parentOffice] : [];
-  }
-
-  return offices.filter((office) => office.id !== currentUserOfficeId);
-};
 
 export default function SuggestiveRequisitionPage() {
   const router = useRouter();
@@ -42,8 +32,8 @@ export default function SuggestiveRequisitionPage() {
   const { data: offices = [] } = useOffices();
 
   const currentUserOfficeId = user?.officeId ? parseInt(user.officeId, 10) : 0;
-  // Always use the logged-in user's office
-  const parentOfficeId = currentUserOfficeId;
+  const currentOffice = offices.find((o) => o.id === currentUserOfficeId);
+  const parentOfficeId = currentOffice?.parent?.id || currentUserOfficeId;
 
 
 
