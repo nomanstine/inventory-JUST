@@ -1,3 +1,5 @@
+
+
 "use client";
 
 import { useMemo, useState } from "react";
@@ -24,12 +26,16 @@ export default function SuperAdminPage() {
   const { data: officeUsers = [], isLoading: isLoadingOfficeUsers, isError: isOfficeUsersError, error: officeUsersError } = useOfficeUsers();
   const createAdminMutation = useCreateOfficeAdmin();
   const createOfficeUserMutation = useCreateOfficeUser();
-  const createOfficeMutation = useCreateOffice();
-  const updateOfficeMutation = useUpdateOffice();
   const deactivateUserMutation = useDeactivateUser();
   const activateUserMutation = useActivateUser();
   const deleteUserMutation = useDeleteUser();
-
+  const createOfficeMutation = useCreateOffice();
+  const updateOfficeMutation = useUpdateOffice();
+  // Search/filter states
+  const [userSearch, setUserSearch] = useState("");
+  const [officeSearch, setOfficeSearch] = useState("");
+  const [officeDropdownSearch, setOfficeDropdownSearch] = useState("");
+  const [parentDropdownSearch, setParentDropdownSearch] = useState("");
   const [form, setForm] = useState({
     fullName: "",
     username: "",
@@ -37,7 +43,6 @@ export default function SuperAdminPage() {
     password: "",
     officeId: "",
   });
-
   const [officeForm, setOfficeForm] = useState<OfficeForm>({
     name: "",
     nameBn: "",
@@ -55,27 +60,31 @@ export default function SuperAdminPage() {
   const currentUserOfficeId = user?.officeId ? Number(user.officeId) : null;
 
   const availableOffices = useMemo(() => {
-    if (isSuperAdmin) {
-      return offices;
-    }
-
-    if (!currentUserOfficeId) {
-      return [];
-    }
-
+    if (isSuperAdmin) return offices;
+    if (!currentUserOfficeId) return [];
     return offices.filter((office) => office.id === currentUserOfficeId);
   }, [currentUserOfficeId, isSuperAdmin, offices]);
 
-  const stats = useMemo(() => ([
-    { label: "Managed Offices", value: isSuperAdmin ? offices.length : availableOffices.length },
-    { label: isSuperAdmin ? "Office Admins" : "Office Users", value: isSuperAdmin ? admins.length : officeUsers.length },
-    { label: "Active Context", value: user?.officeName || "N/A" },
-  ]), [admins.length, availableOffices.length, isSuperAdmin, officeUsers.length, offices.length, user?.officeName]);
+  const listedUsers = useMemo(() => {
+    const users = isSuperAdmin ? admins : officeUsers;
+    if (!userSearch.trim()) return users;
+    return users.filter((u) =>
+      [u.name, u.username, u.email, u.officeName]
+        .filter(Boolean)
+        .some((field) => field && field.toLowerCase().includes(userSearch.toLowerCase()))
+    );
+  }, [isSuperAdmin, admins, officeUsers, userSearch]);
 
-  const listedUsers = isSuperAdmin ? admins : officeUsers;
-  const isListLoading = isSuperAdmin ? isLoadingAdmins : isLoadingOfficeUsers;
-  const isListError = isSuperAdmin ? isAdminsError : isOfficeUsersError;
-  const listError = isSuperAdmin ? adminsError : officeUsersError;
+  const filteredOffices = useMemo(() => {
+    if (!officeSearch.trim()) return offices;
+    return offices.filter((office) =>
+      [office.name, office.code, office.type]
+        .filter(Boolean)
+        .some((field) => field && field.toLowerCase().includes(officeSearch.toLowerCase()))
+    );
+  }, [offices, officeSearch]);
+
+
 
   if (!user) {
     return (
@@ -259,6 +268,17 @@ export default function SuperAdminPage() {
     }
   };
 
+  // Dashboard stats and list helpers (must be after all hooks and state, just before return)
+  const stats = useMemo(() => ([
+    { label: "Managed Offices", value: isSuperAdmin ? offices.length : availableOffices.length },
+    { label: isSuperAdmin ? "Office Admins" : "Office Users", value: isSuperAdmin ? admins.length : officeUsers.length },
+    { label: "Active Context", value: user?.officeName || "N/A" },
+  ]), [admins.length, availableOffices.length, isSuperAdmin, officeUsers.length, offices.length, user?.officeName]);
+
+  const isListLoading = isSuperAdmin ? isLoadingAdmins : isLoadingOfficeUsers;
+  const isListError = isSuperAdmin ? isAdminsError : isOfficeUsersError;
+  const listError = isSuperAdmin ? adminsError : officeUsersError;
+
   return (
     <PageLayout
       header={
@@ -298,6 +318,19 @@ export default function SuperAdminPage() {
           </div>
 
           <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+
+            {/* User search filter (visible for both super admin and admin) */}
+            <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+              <Label htmlFor="userSearch">Search Users</Label>
+              <Input
+                id="userSearch"
+                value={userSearch}
+                onChange={(e) => setUserSearch(e.target.value)}
+                placeholder="Search by name, username, email, office..."
+                className="max-w-xs"
+              />
+            </div>
+
             <Card className="border-border shadow-sm">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-xl">
@@ -371,11 +404,23 @@ export default function SuperAdminPage() {
                           <SelectValue placeholder={isLoadingOffices ? "Loading offices..." : "Choose an office"} />
                         </SelectTrigger>
                         <SelectContent>
-                          {availableOffices.map((office) => (
-                            <SelectItem key={office.id} value={office.id.toString()}>
-                              {office.name}
-                            </SelectItem>
-                          ))}
+                          <div className="p-2">
+                            <Input
+                              placeholder="Type to search..."
+                              value={officeDropdownSearch}
+                              onChange={e => setOfficeDropdownSearch(e.target.value)}
+                              className="mb-2"
+                            />
+                          </div>
+                          {availableOffices
+                            .filter((office) =>
+                              office.name.toLowerCase().includes(officeDropdownSearch.toLowerCase())
+                            )
+                            .map((office) => (
+                              <SelectItem key={office.id} value={office.id.toString()}>
+                                {office.name}
+                              </SelectItem>
+                            ))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -630,12 +675,24 @@ export default function SuperAdminPage() {
                             <SelectValue placeholder="No parent" />
                           </SelectTrigger>
                           <SelectContent>
+                            <div className="p-2">
+                              <Input
+                                placeholder="Type to search..."
+                                value={parentDropdownSearch}
+                                onChange={e => setParentDropdownSearch(e.target.value)}
+                                className="mb-2"
+                              />
+                            </div>
                             <SelectItem value="none">No parent</SelectItem>
-                            {offices.map((office) => (
-                              <SelectItem key={office.id} value={office.id.toString()}>
-                                {office.name}
-                              </SelectItem>
-                            ))}
+                            {offices
+                              .filter((office) =>
+                                office.name.toLowerCase().includes(parentDropdownSearch.toLowerCase())
+                              )
+                              .map((office) => (
+                                <SelectItem key={office.id} value={office.id.toString()}>
+                                  {office.name}
+                                </SelectItem>
+                              ))}
                           </SelectContent>
                         </Select>
                       </div>

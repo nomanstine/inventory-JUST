@@ -50,8 +50,14 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
         Optional<User> existingUser = userRepository.findByUsername(loginRequest.getUsername());
-        if (existingUser.isPresent() && !Boolean.TRUE.equals(existingUser.get().getActive())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Your account is deactivated. Please contact your administrator.");
+        if (existingUser.isPresent()) {
+            User user = existingUser.get();
+            if (!Boolean.TRUE.equals(user.getActive())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Your account is deactivated. Please contact your administrator.");
+            }
+            if (user.getOffice() != null && !Boolean.TRUE.equals(user.getOffice().getIsActive())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Your office is deactivated. Please contact your administrator.");
+            }
         }
 
         try {
