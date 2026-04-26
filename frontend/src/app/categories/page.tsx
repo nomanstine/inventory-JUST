@@ -43,6 +43,8 @@ const paginationConfig = {
   maxVisiblePages: 5,
 };
 
+const EMPTY_ARRAY: any[] = [];
+
 const Actions = () => {
   const router = useRouter();
   return (
@@ -119,7 +121,7 @@ export default function CategoriesPage() {
   const [searchedData, setSearchedData] = useState<Category[]>([]);
   const [paginatedData, setPaginatedData] = useState<Category[]>([]);
 
-  const { data: categories = [], isLoading, error } = useCategories();
+  const { data: categories = EMPTY_ARRAY, isLoading, error } = useCategories();
   const canCreate = canCreateByRole(user?.role);
 
   useEffect(() => {

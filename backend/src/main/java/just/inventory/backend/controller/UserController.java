@@ -221,7 +221,7 @@ public class UserController {
     }
 
     @PostMapping("/office-users")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ResponseEntity<?> createOfficeUser(@RequestBody CreateOfficeUserRequest request, Authentication authentication) {
         if (request.getUsername() == null || request.getUsername().isBlank()) {
             return ResponseEntity.badRequest().body("Username is required");
@@ -259,7 +259,7 @@ public class UserController {
             return ResponseEntity.badRequest().body("Office ID is required");
         }
 
-        if (request.getOfficeId() != null && !request.getOfficeId().equals(currentOfficeId)) {
+        if (!hasRole(currentUser, "SUPER_ADMIN") && request.getOfficeId() != null && !request.getOfficeId().equals(currentOfficeId)) {
             return ResponseEntity.badRequest().body("Admins can only create users for their own office");
         }
 

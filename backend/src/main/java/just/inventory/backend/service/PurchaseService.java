@@ -24,6 +24,9 @@ public class PurchaseService {
     private OfficeRepository officeRepository;
 
     @Autowired
+    private InventoryRepository inventoryRepository;
+
+    @Autowired
     private UserRepository userRepository;
 
     @Transactional
@@ -47,7 +50,11 @@ public class PurchaseService {
         // Get inventory for this office
         Inventory inventory = savedPurchase.getOffice().getInventory();
         if (inventory == null) {
-            throw new RuntimeException("Office does not have an inventory");
+            inventory = new Inventory();
+            inventory.setOffice(savedPurchase.getOffice());
+            inventory = inventoryRepository.save(inventory);
+            savedPurchase.getOffice().setInventory(inventory);
+            officeRepository.save(savedPurchase.getOffice());
         }
         
         // Process each purchase item

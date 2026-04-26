@@ -78,7 +78,7 @@ function SidebarContent({ isCollapsed = false, onNavigate }: SidebarContentProps
       items: [
         { icon: BarChart3, label: 'Reports', href: '/reports' },
         { icon: QrCode, label: 'Barcode Scan', href: '/barcode' },
-        { icon: Sparkles, label: 'AI Recommendations', href: '/ai-recommendations' },
+        // { icon: Sparkles, label: 'AI Recommendations', href: '/ai-recommendations' },
       ]
     },
     {

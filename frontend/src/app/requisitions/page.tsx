@@ -57,6 +57,7 @@ const filterConfig = [
   },
 ];
 
+const EMPTY_ARRAY: any[] = [];
 const normalizeRole = (role?: string) => (role || "").replace(/^ROLE_/, "").toUpperCase();
 
 export default function RequisitionsPage() {
@@ -72,13 +73,13 @@ export default function RequisitionsPage() {
   const [aiUnavailableHint, setAiUnavailableHint] = useState<string>("");
   const autoSuggestKeyRef = useRef<string>("");
 
-  const { data: myRequests = [], isLoading: loadingMyRequests } = useMyRequests();
-  const { data: incomingRequests = [], isLoading: loadingIncoming } = useIncomingRequests();
-  const { data: approvedRequests = [], isLoading: loadingApproved } = useApprovedRequests();
-  const { data: fulfilledRequests = [], isLoading: loadingFulfilled } = useFulfilledRequests();
-  const { data: historyRequests = [], isLoading: loadingHistory } = useHistoryRequests();
-  const { data: items = [] } = useItems();
-  const { data: offices = [] } = useOffices();
+  const { data: myRequests = EMPTY_ARRAY, isLoading: loadingMyRequests } = useMyRequests();
+  const { data: incomingRequests = EMPTY_ARRAY, isLoading: loadingIncoming } = useIncomingRequests();
+  const { data: approvedRequests = EMPTY_ARRAY, isLoading: loadingApproved } = useApprovedRequests();
+  const { data: fulfilledRequests = EMPTY_ARRAY, isLoading: loadingFulfilled } = useFulfilledRequests();
+  const { data: historyRequests = EMPTY_ARRAY, isLoading: loadingHistory } = useHistoryRequests();
+  const { data: items = EMPTY_ARRAY } = useItems();
+  const { data: offices = EMPTY_ARRAY } = useOffices();
   
   const {
     items: requestItems,

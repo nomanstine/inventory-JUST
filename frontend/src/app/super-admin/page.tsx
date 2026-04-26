@@ -22,12 +22,14 @@ import { useActivateUser, useCreateOfficeAdmin, useCreateOfficeUser, useDeactiva
 import { toast } from "sonner";
 import { getInitials } from "@/lib/utils";
 
+const EMPTY_ARRAY: any[] = [];
+
 export default function SuperAdminPage() {
   const { user, role } = useAuth();
   const router = useRouter();
-  const { data: offices = [], isLoading: isLoadingOffices } = useOffices();
-  const { data: admins = [], isLoading: isLoadingAdmins, isError: isAdminsError, error: adminsError } = useOfficeAdmins();
-  const { data: officeUsers = [], isLoading: isLoadingOfficeUsers, isError: isOfficeUsersError, error: officeUsersError } = useOfficeUsers();
+  const { data: offices = EMPTY_ARRAY, isLoading: isLoadingOffices } = useOffices();
+  const { data: admins = EMPTY_ARRAY, isLoading: isLoadingAdmins, isError: isAdminsError, error: adminsError } = useOfficeAdmins();
+  const { data: officeUsers = EMPTY_ARRAY, isLoading: isLoadingOfficeUsers, isError: isOfficeUsersError, error: officeUsersError } = useOfficeUsers();
   const createAdminMutation = useCreateOfficeAdmin();
   const createOfficeUserMutation = useCreateOfficeUser();
   const deactivateUserMutation = useDeactivateUser();

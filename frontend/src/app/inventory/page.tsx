@@ -43,6 +43,8 @@ const paginationConfig = {
   maxVisiblePages: 5,
 };
 
+const EMPTY_ARRAY: any[] = [];
+
 const RowActions = ({ item, onView, onPrintBarcode }: { item: ItemInstance, onView: (item: any) => void, onPrintBarcode: (item: ItemInstance) => void }) => (
   <div className="flex gap-2 sm:gap-3">
     <Eye
@@ -368,9 +370,9 @@ function HistoryTable({ purchases, transactions }: { purchases: Purchase[], tran
 
 export default function InventoryPage() {
   const { user } = useAuth();
-  const { data: items = [], isLoading: itemsLoading, error: itemsError } = useMyOfficeInventory();
-  const { data: purchases = [], isLoading: purchasesLoading, error: purchasesError } = useMyOfficePurchases();
-  const { data: transactions = [], isLoading: transactionsLoading, error: transactionsError } = useMyOfficeTransactionHistory();
+  const { data: items = EMPTY_ARRAY, isLoading: itemsLoading, error: itemsError } = useMyOfficeInventory();
+  const { data: purchases = EMPTY_ARRAY, isLoading: purchasesLoading, error: purchasesError } = useMyOfficePurchases();
+  const { data: transactions = EMPTY_ARRAY, isLoading: transactionsLoading, error: transactionsError } = useMyOfficeTransactionHistory();
   
   const [searchQuery, setSearchQuery] = useState("");
   const [groupedData, setGroupedData] = useState<GroupedItem[]>([]);

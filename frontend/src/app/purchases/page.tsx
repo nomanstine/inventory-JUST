@@ -40,6 +40,8 @@ const filterConfig = [
   },
 ];
 
+const EMPTY_ARRAY: any[] = [];
+
 export default function PurchasesPage() {
   const router = useRouter();
   const { user } = useAuth();
@@ -48,8 +50,8 @@ export default function PurchasesPage() {
   const [showBarcodeDialog, setShowBarcodeDialog] = useState(false);
   const [barcodeItems, setBarcodeItems] = useState<{ itemInstanceId: number; barcode: string; itemName: string; }[]>([]);
 
-  const { data: purchases = [], isLoading } = usePurchases();
-  const { data: items = [] } = useItems();
+  const { data: purchases = EMPTY_ARRAY, isLoading } = usePurchases();
+  const { data: items = EMPTY_ARRAY } = useItems();
   
   const {
     purchaseItems,
