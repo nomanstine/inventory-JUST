@@ -11,10 +11,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Check, X, FileX, PackageCheck, ClipboardCheck } from "lucide-react";
+import { Check, X, FileX, PackageCheck, ClipboardCheck, User as UserIcon } from "lucide-react";
 import { ItemRequest } from "@/services/itemRequestService";
 import { getStatusColor, formatStatus } from "../utils/statusUtils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { getInitials } from "@/lib/utils";
 
 interface RequisitionsTableProps {
   data: ItemRequest[];
@@ -134,7 +136,15 @@ function MobileRequisitionCard({
           ) : (
             <div>
               <p className="text-xs text-muted-foreground">Requested By</p>
-              <p className="font-medium">{request.requestingOffice.name}</p>
+              <div className="flex items-center gap-2 mt-1">
+                <Avatar className="h-6 w-6">
+                  <AvatarImage src={request.requestedBy.avatarUrl || ""} />
+                  <AvatarFallback className="text-[10px]">
+                    {getInitials(request.requestedBy.name, request.requestedBy.username)}
+                  </AvatarFallback>
+                </Avatar>
+                <p className="font-medium">{request.requestingOffice.name}</p>
+              </div>
             </div>
           )}
           <div>
@@ -319,7 +329,20 @@ export function RequisitionsTable({
               ) : activeTab === 'my-requests' || activeTab === 'approved' || activeTab === 'fulfilled' ? (
                 <TableCell>{request.parentOffice.name}</TableCell>
               ) : (
-                <TableCell>{request.requestingOffice.name}</TableCell>
+                <TableCell>
+                  <div className="flex flex-col">
+                    <span className="font-medium">{request.requestingOffice.name}</span>
+                    <div className="flex items-center gap-1.5 mt-1 text-xs text-muted-foreground">
+                      <Avatar className="h-5 w-5">
+                        <AvatarImage src={request.requestedBy.avatarUrl || ""} />
+                        <AvatarFallback className="text-[8px]">
+                          {getInitials(request.requestedBy.name, request.requestedBy.username)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span>{request.requestedBy.name || request.requestedBy.username}</span>
+                    </div>
+                  </div>
+                </TableCell>
               )}
               <TableCell>{request.requestedQuantity}</TableCell>
               <TableCell>{request.approvedQuantity ?? '-'}</TableCell>

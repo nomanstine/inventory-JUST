@@ -33,6 +33,7 @@ export interface Purchase {
     username: string;
     name?: string;
     fullName?: string;
+    avatarUrl?: string | null;
   };
 }
 

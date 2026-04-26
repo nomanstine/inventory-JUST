@@ -14,6 +14,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Purchase } from "@/services/purchaseService";
 import { toast } from "sonner";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { getInitials } from "@/lib/utils";
 
 interface PurchasesTableProps {
   data: Purchase[];
@@ -161,9 +163,15 @@ export function PurchasesTable({
                 <TableCell className="text-xs sm:text-sm hidden xl:table-cell">
                   <Link 
                     href={`/profile/${purchase.purchasedBy.id}`}
-                    className="text-blue-600 hover:text-blue-800 hover:underline"
+                    className="flex items-center gap-2 text-blue-600 hover:text-blue-800 hover:underline"
                   >
-                    {purchase.purchasedBy.name || purchase.purchasedBy.username}
+                    <Avatar className="h-6 w-6">
+                      <AvatarImage src={purchase.purchasedBy.avatarUrl || ""} />
+                      <AvatarFallback className="text-[10px]">
+                        {getInitials(purchase.purchasedBy.name, purchase.purchasedBy.username)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span>{purchase.purchasedBy.name || purchase.purchasedBy.username}</span>
                   </Link>
                 </TableCell>
                 <TableCell>

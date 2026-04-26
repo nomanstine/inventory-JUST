@@ -483,7 +483,8 @@ public class UserController {
         String role,
         Long officeId,
         String officeName,
-        Boolean active
+        Boolean active,
+        String avatarUrl
     ) {
         public static UserSummaryResponse fromUser(User user) {
             Office office = user.getOffice();
@@ -495,7 +496,8 @@ public class UserController {
                 user.getRole() != null ? user.getRole().getName() : null,
                 office != null ? office.getId() : null,
                 office != null ? office.getName() : null,
-                Boolean.TRUE.equals(user.getActive())
+                Boolean.TRUE.equals(user.getActive()),
+                user.getAvatarUrl()
             );
         }
     }

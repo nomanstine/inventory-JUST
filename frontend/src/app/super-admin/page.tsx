@@ -15,10 +15,12 @@ import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Loader2, ShieldCheck, UserCheck, UserPlus, UserX, Users, Trash2, Building2 } from "lucide-react";
 import { useCreateOffice, useOffices, useUpdateOffice, type Office, type OfficeForm } from "@/services/officeService";
 import { useActivateUser, useCreateOfficeAdmin, useCreateOfficeUser, useDeactivateUser, useDeleteUser, useOfficeAdmins, useOfficeUsers } from "@/services/userService";
 import { toast } from "sonner";
+import { getInitials } from "@/lib/utils";
 
 export default function SuperAdminPage() {
   const { user, role } = useAuth();
@@ -474,9 +476,17 @@ export default function SuperAdminPage() {
                         onClick={() => router.push(`/profile/${listedUser.id}`)}
                       >
                       <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <div className="font-semibold text-foreground">{listedUser.name}</div>
-                          <div className="text-sm text-muted-foreground">@{listedUser.username}</div>
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-10 w-10 border border-border shadow-sm">
+                            <AvatarImage src={listedUser.avatarUrl || ""} alt={listedUser.name || listedUser.username} />
+                            <AvatarFallback className="bg-primary/10 text-primary font-medium">
+                              {getInitials(listedUser.name, listedUser.username)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <div className="font-semibold text-foreground">{listedUser.name}</div>
+                            <div className="text-sm text-muted-foreground">@{listedUser.username}</div>
+                          </div>
                         </div>
                         <div className="flex items-center gap-2">
                           <Badge variant={listedUser.active ? "default" : "outline"}>

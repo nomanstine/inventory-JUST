@@ -34,6 +34,8 @@ import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/ca
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { BarcodePrintDialog } from "@/components/BarcodePrintDialog";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { getInitials } from "@/lib/utils";
 
 const paginationConfig = {
   itemsPerPage: 10,
@@ -222,6 +224,11 @@ type HistoryItem = {
   quantity: number;
   date: string;
   reason: string;
+  user?: {
+    name?: string;
+    username: string;
+    avatarUrl?: string | null;
+  };
 };
 
 function HistoryTable({ purchases, transactions }: { purchases: Purchase[], transactions: ItemTransaction[] }) {
@@ -237,7 +244,12 @@ function HistoryTable({ purchases, transactions }: { purchases: Purchase[], tran
         source: purchase.supplier || 'Supplier',
         quantity: item.quantity || 1,
         date: purchase.purchasedDate,
-        reason: 'Purchase'
+        reason: 'Purchase',
+        user: {
+          name: purchase.purchasedBy.name || purchase.purchasedBy.fullName,
+          username: purchase.purchasedBy.username,
+          avatarUrl: purchase.purchasedBy.avatarUrl
+        }
       }))
     ),
     ...transactions.filter(t => t.toOffice?.id === parseInt(user?.officeId || '0') && t.status !== 'PENDING').map(transaction => ({ 
@@ -246,7 +258,12 @@ function HistoryTable({ purchases, transactions }: { purchases: Purchase[], tran
       source: transaction.fromOffice?.name || 'Unknown',
       quantity: transaction.quantity,
       date: transaction.transactionDate,
-      reason: 'Transfer In'
+      reason: 'Transfer In',
+      user: {
+        name: transaction.user.fullName,
+        username: transaction.user.username,
+        avatarUrl: transaction.user.avatarUrl
+      }
     })),
     // Deductions (-)
     ...transactions.filter(t => t.fromOffice?.id === parseInt(user?.officeId || '0') && t.status !== 'PENDING').map(transaction => ({ 
@@ -255,7 +272,12 @@ function HistoryTable({ purchases, transactions }: { purchases: Purchase[], tran
       source: transaction.toOffice?.name || 'Unknown',
       quantity: transaction.quantity,
       date: transaction.transactionDate,
-      reason: 'Transfer Out'
+      reason: 'Transfer Out',
+      user: {
+        name: transaction.user.fullName,
+        username: transaction.user.username,
+        avatarUrl: transaction.user.avatarUrl
+      }
     }))
   ];
 
@@ -273,6 +295,9 @@ function HistoryTable({ purchases, transactions }: { purchases: Purchase[], tran
       };
     }
     acc[key].quantity += item.quantity;
+    if (item.user && !acc[key].user) {
+      acc[key].user = item.user;
+    }
     return acc;
   }, {} as Record<string, HistoryItem>);
 
@@ -292,6 +317,7 @@ function HistoryTable({ purchases, transactions }: { purchases: Purchase[], tran
                 <TableHead className="text-xs sm:text-sm whitespace-nowrap hidden md:table-cell">Source/Destination</TableHead>
                 <TableHead className="text-xs sm:text-sm whitespace-nowrap">Quantity</TableHead>
                 <TableHead className="text-xs sm:text-sm whitespace-nowrap hidden lg:table-cell">Type</TableHead>
+                <TableHead className="text-xs sm:text-sm whitespace-nowrap">User</TableHead>
                 <TableHead className="text-xs sm:text-sm whitespace-nowrap">Date</TableHead>
               </TableRow>
             </TableHeader>
@@ -311,6 +337,21 @@ function HistoryTable({ purchases, transactions }: { purchases: Purchase[], tran
                       {item.type === '+' ? '+' : '-'}{item.quantity}
                     </TableCell>
                     <TableCell className="text-xs sm:text-sm hidden lg:table-cell">{item.reason}</TableCell>
+                    <TableCell className="text-xs sm:text-sm">
+                      {item.user ? (
+                        <div className="flex items-center gap-2">
+                          <Avatar className="h-6 w-6">
+                            <AvatarImage src={item.user.avatarUrl || ""} />
+                            <AvatarFallback className="text-[10px]">
+                              {getInitials(item.user.name, item.user.username)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="hidden sm:inline">{item.user.name || item.user.username}</span>
+                        </div>
+                      ) : (
+                        <span className="text-gray-400">-</span>
+                      )}
+                    </TableCell>
                     <TableCell className="text-xs sm:text-sm">
                       {new Date(item.date).toLocaleDateString()}
                     </TableCell>

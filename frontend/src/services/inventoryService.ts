@@ -81,6 +81,7 @@ export interface ItemTransaction {
     id: number;
     fullName: string;
     username: string;
+    avatarUrl?: string | null;
   };
   transactionType: string;
   quantity: number;
@@ -91,6 +92,7 @@ export interface ItemTransaction {
     id: number;
     fullName: string;
     username: string;
+    avatarUrl?: string | null;
   };
   confirmedDate?: string;
 }

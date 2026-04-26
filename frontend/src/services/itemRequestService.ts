@@ -33,16 +33,19 @@ export interface ItemRequest {
     id: number;
     username: string;
     name?: string;
+    avatarUrl?: string | null;
   };
   approvedBy?: {
     id: number;
     username: string;
     name?: string;
+    avatarUrl?: string | null;
   };
   confirmedBy?: {
     id: number;
     username: string;
     name?: string;
+    avatarUrl?: string | null;
   };
 }
 

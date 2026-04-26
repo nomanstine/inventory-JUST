@@ -33,6 +33,7 @@ export interface OfficeAdminSummary {
   officeId: string;
   officeName: string;
   active: boolean;
+  avatarUrl?: string | null;
 }
 
 export interface CreateOfficeAdminPayload {
