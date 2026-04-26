@@ -4,6 +4,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { PageLayout, Header } from "@/components/page";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,6 +22,7 @@ import { toast } from "sonner";
 
 export default function SuperAdminPage() {
   const { user, role } = useAuth();
+  const router = useRouter();
   const { data: offices = [], isLoading: isLoadingOffices } = useOffices();
   const { data: admins = [], isLoading: isLoadingAdmins, isError: isAdminsError, error: adminsError } = useOfficeAdmins();
   const { data: officeUsers = [], isLoading: isLoadingOfficeUsers, isError: isOfficeUsersError, error: officeUsersError } = useOfficeUsers();
@@ -464,8 +466,13 @@ export default function SuperAdminPage() {
                     {listError instanceof Error ? listError.message : "Failed to load users. Please try again."}
                   </div>
                 ) : listedUsers.length > 0 ? (
-                  listedUsers.map((listedUser) => (
-                    <div key={listedUser.id} className="rounded-2xl border border-border bg-muted/40 p-4">
+                  <div className="flex flex-col gap-3 max-h-[850px] overflow-y-auto pr-2 pb-2 custom-scrollbar">
+                    {listedUsers.map((listedUser) => (
+                      <div 
+                        key={listedUser.id} 
+                        className="rounded-2xl border border-border bg-muted/40 p-4 shrink-0 cursor-pointer transition-all hover:border-primary/40 hover:bg-muted/60"
+                        onClick={() => router.push(`/profile/${listedUser.id}`)}
+                      >
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <div className="font-semibold text-foreground">{listedUser.name}</div>
@@ -482,7 +489,7 @@ export default function SuperAdminPage() {
                         <div>Email: {listedUser.email}</div>
                         <div>Office: {listedUser.officeName}</div>
                       </div>
-                      <div className="mt-4 flex flex-wrap items-center gap-2">
+                      <div className="mt-4 flex flex-wrap items-center gap-2" onClick={(e) => e.stopPropagation()}>
                         {listedUser.active ? (
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
@@ -578,7 +585,8 @@ export default function SuperAdminPage() {
                         </AlertDialog>
                       </div>
                     </div>
-                  ))
+                  ))}
+                  </div>
                 ) : (
                   <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
                     {isSuperAdmin ? "No office admins have been created yet." : "No office users have been created yet."}
@@ -772,8 +780,13 @@ export default function SuperAdminPage() {
                       {offices.length === 0 ? "No offices found." : "No offices match your search."}
                     </div>
                   ) : (
-                    filteredOffices.map((office) => (
-                      <div key={office.id} className="rounded-2xl border border-border bg-muted/40 p-4">
+                    <div className="flex flex-col gap-3 max-h-[850px] overflow-y-auto pr-2 pb-2 custom-scrollbar">
+                      {filteredOffices.map((office) => (
+                        <div 
+                          key={office.id} 
+                          className="rounded-2xl border border-border bg-muted/40 p-4 shrink-0 cursor-pointer transition-all hover:border-primary/40 hover:bg-muted/60"
+                          onClick={() => router.push(`/offices/${office.id}`)}
+                        >
                         <div className="flex items-start justify-between gap-3">
                           <div>
                             <div className="font-semibold text-foreground">{office.name}</div>
@@ -786,7 +799,7 @@ export default function SuperAdminPage() {
                         <div className="mt-3 text-sm text-muted-foreground">
                           Parent: {office.parent?.name || "None"}
                         </div>
-                        <div className="mt-4">
+                        <div className="mt-4 flex gap-2" onClick={(e) => e.stopPropagation()}>
                           {office.isActive ? (
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
@@ -850,7 +863,8 @@ export default function SuperAdminPage() {
                           )}
                         </div>
                       </div>
-                    ))
+                    ))}
+                    </div>
                   )}
                 </CardContent>
               </Card>
