@@ -30,14 +30,12 @@ public class RequisitionSuggestionService {
     @Value("${ai.requisition.enabled:true}")
     private boolean aiEnabled;
 
-    // Use: https://generativelanguage.googleapis.com
     @Value("${ai.requisition.api-url:https://generativelanguage.googleapis.com}")
     private String aiApiUrl;
 
     @Value("${ai.requisition.api-key:}")
     private String aiApiKey;
 
-    // Use: gemini-1.5-flash
     @Value("${ai.requisition.model:gemini-1.5-flash}")
     private String aiModel;
 
@@ -51,25 +49,23 @@ public class RequisitionSuggestionService {
     ) {
         if (!aiEnabled || aiApiKey == null || aiApiKey.isBlank()) {
             return buildFallbackSuggestions(availableInstances, recentRequests, catalogItems,
-                    "AI configuration missing; returned deterministic recommendations.");
+                "AI unavailable; returned deterministic recommendations from request and stock history.");
         }
 
         String prompt = buildPrompt(requestingOfficeName, parentOfficeName, reason, availableInstances, recentRequests);
-        
         try {
             String modelContent = callChatCompletion(prompt);
             RequisitionSuggestionResponse aiResponse = normalizeSuggestions(modelContent, catalogItems);
-            
             if (aiResponse.getSuggestions() == null || aiResponse.getSuggestions().isEmpty()) {
                 return buildFallbackSuggestions(availableInstances, recentRequests, catalogItems,
-                        "AI returned no catalog matches; using fallback recommendations.");
+                    "AI returned no catalog matches; using deterministic fallback recommendations.");
             }
             return aiResponse;
         } catch (ResponseStatusException e) {
-            // Log error here in a real app: log.error("AI Service Error: {}", e.getReason());
-            if (e.getStatusCode().is5xxServerError() || e.getStatusCode() == HttpStatus.TOO_MANY_REQUESTS) {
+            if (e.getStatusCode() == HttpStatus.TOO_MANY_REQUESTS || e.getStatusCode() == HttpStatus.BAD_GATEWAY
+                || e.getStatusCode() == HttpStatus.SERVICE_UNAVAILABLE || e.getStatusCode() == HttpStatus.UNAUTHORIZED) {
                 return buildFallbackSuggestions(availableInstances, recentRequests, catalogItems,
-                        "AI service currently unavailable (" + e.getStatusCode() + "); using fallback.");
+                    "AI service issue (" + e.getStatusCode() + "); using deterministic fallback recommendations.");
             }
             throw e;
         }
@@ -77,11 +73,11 @@ public class RequisitionSuggestionService {
 
     private String callChatCompletion(String prompt) {
         try {
-            // Gemini API Structure: { "contents": [ { "parts": [ { "text": "..." } ] } ] }
+            // Gemini API JSON Structure
             Map<String, Object> textPart = Map.of("text", prompt);
             Map<String, Object> content = Map.of("parts", List.of(textPart));
             
-            // generationConfig forces Gemini to return valid JSON
+            // Constrain output to JSON mode
             Map<String, Object> generationConfig = Map.of(
                     "temperature", 0.2,
                     "response_mime_type", "application/json"
@@ -94,13 +90,14 @@ public class RequisitionSuggestionService {
 
             String payload = objectMapper.writeValueAsString(body);
 
-            // Construct full Gemini URL
+            // Gemini URL format: {base}/v1beta/models/{model}:generateContent
             String fullUrl = String.format("%s/v1beta/models/%s:generateContent", aiApiUrl, aiModel);
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(fullUrl))
                     .header("Content-Type", "application/json")
-                    .header("x-goog-api-key", aiApiKey) // Gemini uses this header
+                    // Gemini uses x-goog-api-key instead of Authorization Bearer
+                    .header("x-goog-api-key", aiApiKey)
                     .timeout(Duration.ofSeconds(35))
                     .POST(HttpRequest.BodyPublishers.ofString(payload))
                     .build();
@@ -112,29 +109,27 @@ public class RequisitionSuggestionService {
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
             if (response.statusCode() >= 400) {
-                String errorMsg = extractProviderErrorMessage(response.body());
-                throw new ResponseStatusException(HttpStatus.valueOf(response.statusCode()), 
-                        "Gemini API Error: " + errorMsg);
+                String providerMessage = extractProviderErrorMessage(response.body());
+                throw new ResponseStatusException(HttpStatus.valueOf(response.statusCode()), providerMessage);
             }
 
             JsonNode root = objectMapper.readTree(response.body());
             
-            // Gemini Response Path: candidates[0].content.parts[0].text
+            // Extract text from Gemini structure: candidates[0].content.parts[0].text
             JsonNode candidate = root.path("candidates").get(0);
             if (candidate == null || candidate.path("content").path("parts").isEmpty()) {
-                throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Gemini returned an empty candidate (blocked or no response)");
+                throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "AI returned no content");
             }
 
             String content = candidate.path("content").path("parts").get(0).path("text").asText("");
             if (content.isBlank()) {
-                throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Gemini returned empty text content");
+                throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "AI API returned empty content");
             }
-            
             return content;
         } catch (ResponseStatusException e) {
             throw e;
         } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Failed to connect to Gemini API", e);
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Failed to fetch AI suggestions", e);
         }
     }
 
@@ -162,43 +157,41 @@ public class RequisitionSuggestionService {
                 .map(r -> String.format(Locale.ROOT, "- %s | item=%s | requested=%.0f | reason=%s",
                         r.getRequestedDate() == null ? "unknown" : r.getRequestedDate().format(formatter),
                         r.getItem().getName(), r.getRequestedQuantity(), 
-                        r.getReason() == null ? "" : r.getReason()))
+                        Optional.ofNullable(r.getReason()).orElse("")))
                 .collect(Collectors.joining("\n"));
 
         return """
-                You are an inventory requisition planner. Generate requisition suggestions for office transfers.
-                
+                You are an inventory requisition planner. 
+                Generate a list of recommended items for an office transfer.
+
                 Context:
                 - Requesting office: %s
                 - Source office: %s
-                - User note: %s
+                - User note/reason: %s
 
-                Source office stock:
+                Source office available stock:
                 %s
 
-                Recent demand history:
+                Recent request history:
                 %s
 
                 Rules:
                 - Suggest up to 5 items.
+                - Use only item names found in the stock list.
                 - Quantities must be positive integers.
-                - Use only item names exactly as listed in 'Source office stock'.
-                - Return valid JSON.
-
-                Output Format:
+                
+                Return ONLY valid JSON in this format:
                 {
-                  "summary": "short explanation",
+                  "summary": "short sentence",
                   "suggestions": [
-                    { "itemName": "string", "quantity": 5, "rationale": "string" }
+                    { "itemName": "Item Name", "quantity": 1, "rationale": "short reason" }
                   ]
                 }
-                """.formatted(requestingOfficeName, parentOfficeName, reason, availableLines, recentRequestLines);
-    }
-
-    private RequisitionSuggestionResponse normalizeSuggestions(String modelContent, List<List<Item>> catalogItemsList) {
-        // Flat mapping catalogItems from potential nested list to single list
-        List<Item> catalogItems = catalogItemsList.stream().flatMap(List::stream).collect(Collectors.toList());
-        return normalizeSuggestions(modelContent, catalogItems);
+                """.formatted(
+                requestingOfficeName, parentOfficeName,
+                reason == null || reason.isBlank() ? "(not provided)" : reason,
+                availableLines, recentRequestLines
+        );
     }
 
     private RequisitionSuggestionResponse normalizeSuggestions(String modelContent, List<Item> catalogItems) {
@@ -224,43 +217,108 @@ public class RequisitionSuggestionService {
             }
 
             RequisitionSuggestionResponse response = new RequisitionSuggestionResponse();
-            response.setSummary(root.path("summary").asText("AI Suggestions"));
-            response.setSource("ai-gemini");
+            response.setSummary(root.path("summary").asText("AI-generated suggestions"));
+            response.setSource("ai-api");
             response.setSuggestions(lines);
             return response;
         } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "JSON Parsing failed", e);
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Failed to parse AI response", e);
         }
     }
 
     private String extractJson(String text) {
-        // Strips markdown backticks if Gemini accidentally includes them
-        if (text.contains("```json")) {
-            text = text.substring(text.indexOf("```json") + 7);
-            text = text.substring(0, text.lastIndexOf("```"));
-        } else if (text.contains("```")) {
-            text = text.substring(text.indexOf("```") + 3);
-            text = text.substring(0, text.lastIndexOf("```"));
+        String trimmed = text.trim();
+        if (trimmed.contains("```json")) {
+            trimmed = trimmed.substring(trimmed.indexOf("```json") + 7);
+            trimmed = trimmed.substring(0, trimmed.lastIndexOf("```"));
+        } else if (trimmed.contains("```")) {
+            trimmed = trimmed.substring(trimmed.indexOf("```") + 3);
+            trimmed = trimmed.substring(0, trimmed.lastIndexOf("```"));
         }
-        return text.trim();
+        return trimmed.trim();
     }
 
     private String extractProviderErrorMessage(String responseBody) {
         try {
-            JsonNode node = objectMapper.readTree(responseBody);
-            return node.path("error").path("message").asText(responseBody);
+            JsonNode root = objectMapper.readTree(responseBody);
+            return root.path("error").path("message").asText(responseBody);
         } catch (Exception e) {
             return responseBody;
         }
     }
 
-    private RequisitionSuggestionResponse buildFallbackSuggestions(List<ItemInstance> available, List<ItemRequest> recent, List<Item> catalog, String warning) {
-        // This is a simplified version of your original fallback logic
+    private RequisitionSuggestionResponse buildFallbackSuggestions(
+            List<ItemInstance> availableInstances,
+            List<ItemRequest> recentRequests,
+            List<Item> catalogItems,
+            String warning
+    ) {
+        Map<Long, Long> availableCountByItemId = availableInstances.stream()
+            .filter(instance -> instance.getItem() != null)
+            .filter(instance -> instance.getStatus() == ItemInstance.ItemStatus.AVAILABLE)
+            .collect(Collectors.groupingBy(instance -> instance.getItem().getId(), Collectors.counting()));
+
+        Map<Long, Double> requestedQuantityByItemId = recentRequests.stream()
+            .filter(request -> request.getItem() != null)
+            .collect(Collectors.groupingBy(
+                request -> request.getItem().getId(),
+                Collectors.summingDouble(ItemRequest::getRequestedQuantity)
+            ));
+
+        Map<Long, Long> requestCountByItemId = recentRequests.stream()
+            .filter(request -> request.getItem() != null)
+            .collect(Collectors.groupingBy(
+                request -> request.getItem().getId(),
+                Collectors.counting()
+            ));
+
+        Map<Long, Item> catalogById = catalogItems.stream()
+            .collect(Collectors.toMap(Item::getId, item -> item, (a, b) -> a));
+
+        List<RequisitionSuggestionResponse.SuggestionLine> suggestions = requestedQuantityByItemId.entrySet().stream()
+            .filter(entry -> availableCountByItemId.getOrDefault(entry.getKey(), 0L) > 0)
+            .map(entry -> {
+                Long itemId = entry.getKey();
+                Item item = catalogById.get(itemId);
+                if (item == null) return null;
+
+                long requestCount = requestCountByItemId.getOrDefault(itemId, 0L);
+                int quantity = (int) Math.max(1, Math.round(entry.getValue() / Math.max(1L, requestCount)));
+
+                RequisitionSuggestionResponse.SuggestionLine line = new RequisitionSuggestionResponse.SuggestionLine();
+                line.setItemId(itemId);
+                line.setItemName(item.getName());
+                line.setQuantity(quantity);
+                line.setRationale("Based on recent request average and available stock.");
+                return line;
+            })
+            .filter(Objects::nonNull)
+            .sorted(Comparator.comparingInt(RequisitionSuggestionResponse.SuggestionLine::getQuantity).reversed())
+            .limit(5)
+            .toList();
+
+        if (suggestions.isEmpty()) {
+            suggestions = availableCountByItemId.entrySet().stream()
+                .limit(5)
+                .map(entry -> {
+                    Item item = catalogById.get(entry.getKey());
+                    if (item == null) return null;
+                    RequisitionSuggestionResponse.SuggestionLine line = new RequisitionSuggestionResponse.SuggestionLine();
+                    line.setItemId(entry.getKey());
+                    line.setItemName(item.getName());
+                    line.setQuantity(1);
+                    line.setRationale("Suggested from currently available stock.");
+                    return line;
+                })
+                .filter(Objects::nonNull)
+                .toList();
+        }
+
         RequisitionSuggestionResponse response = new RequisitionSuggestionResponse();
-        response.setSummary("Deterministic suggestions based on available stock.");
+        response.setSummary("Recommendations generated from available stock and demand history.");
         response.setSource("fallback");
         response.setWarning(warning);
-        response.setSuggestions(new ArrayList<>()); 
+        response.setSuggestions(suggestions);
         return response;
     }
 }
