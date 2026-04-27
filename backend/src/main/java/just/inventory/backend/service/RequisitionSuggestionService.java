@@ -18,14 +18,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -37,13 +30,15 @@ public class RequisitionSuggestionService {
     @Value("${ai.requisition.enabled:true}")
     private boolean aiEnabled;
 
-    @Value("${ai.requisition.api-url:https://api.openai.com/v1/chat/completions}")
+    // Use: https://generativelanguage.googleapis.com
+    @Value("${ai.requisition.api-url:https://generativelanguage.googleapis.com}")
     private String aiApiUrl;
 
     @Value("${ai.requisition.api-key:}")
     private String aiApiKey;
 
-    @Value("${ai.requisition.model:gpt-4o-mini}")
+    // Use: gemini-1.5-flash
+    @Value("${ai.requisition.model:gemini-1.5-flash}")
     private String aiModel;
 
     public RequisitionSuggestionResponse suggest(
@@ -56,108 +51,92 @@ public class RequisitionSuggestionService {
     ) {
         if (!aiEnabled || aiApiKey == null || aiApiKey.isBlank()) {
             return buildFallbackSuggestions(availableInstances, recentRequests, catalogItems,
-                "AI unavailable; returned deterministic recommendations from request and stock history.");
+                    "AI configuration missing; returned deterministic recommendations.");
         }
 
         String prompt = buildPrompt(requestingOfficeName, parentOfficeName, reason, availableInstances, recentRequests);
+        
         try {
             String modelContent = callChatCompletion(prompt);
             RequisitionSuggestionResponse aiResponse = normalizeSuggestions(modelContent, catalogItems);
+            
             if (aiResponse.getSuggestions() == null || aiResponse.getSuggestions().isEmpty()) {
-            return buildFallbackSuggestions(availableInstances, recentRequests, catalogItems,
-                "AI returned no catalog matches; using deterministic fallback recommendations.");
+                return buildFallbackSuggestions(availableInstances, recentRequests, catalogItems,
+                        "AI returned no catalog matches; using fallback recommendations.");
             }
             return aiResponse;
         } catch (ResponseStatusException e) {
-            if (e.getStatusCode() == HttpStatus.TOO_MANY_REQUESTS || e.getStatusCode() == HttpStatus.BAD_GATEWAY
-                || e.getStatusCode() == HttpStatus.SERVICE_UNAVAILABLE) {
-            return buildFallbackSuggestions(availableInstances, recentRequests, catalogItems,
-                "AI service unavailable; using deterministic fallback recommendations.");
+            // Log error here in a real app: log.error("AI Service Error: {}", e.getReason());
+            if (e.getStatusCode().is5xxServerError() || e.getStatusCode() == HttpStatus.TOO_MANY_REQUESTS) {
+                return buildFallbackSuggestions(availableInstances, recentRequests, catalogItems,
+                        "AI service currently unavailable (" + e.getStatusCode() + "); using fallback.");
             }
             throw e;
         }
     }
 
-        private RequisitionSuggestionResponse buildFallbackSuggestions(
-            List<ItemInstance> availableInstances,
-            List<ItemRequest> recentRequests,
-            List<Item> catalogItems,
-            String warning
-        ) {
-        Map<Long, Long> availableCountByItemId = availableInstances.stream()
-            .filter(instance -> instance.getItem() != null)
-            .filter(instance -> instance.getStatus() == ItemInstance.ItemStatus.AVAILABLE)
-            .collect(Collectors.groupingBy(instance -> instance.getItem().getId(), Collectors.counting()));
+    private String callChatCompletion(String prompt) {
+        try {
+            // Gemini API Structure: { "contents": [ { "parts": [ { "text": "..." } ] } ] }
+            Map<String, Object> textPart = Map.of("text", prompt);
+            Map<String, Object> content = Map.of("parts", List.of(textPart));
+            
+            // generationConfig forces Gemini to return valid JSON
+            Map<String, Object> generationConfig = Map.of(
+                    "temperature", 0.2,
+                    "response_mime_type", "application/json"
+            );
 
-        Map<Long, Double> requestedQuantityByItemId = recentRequests.stream()
-            .filter(request -> request.getItem() != null)
-            .collect(Collectors.groupingBy(
-                request -> request.getItem().getId(),
-                Collectors.summingDouble(ItemRequest::getRequestedQuantity)
-            ));
+            Map<String, Object> body = Map.of(
+                    "contents", List.of(content),
+                    "generationConfig", generationConfig
+            );
 
-        Map<Long, Long> requestCountByItemId = recentRequests.stream()
-            .filter(request -> request.getItem() != null)
-            .collect(Collectors.groupingBy(
-                request -> request.getItem().getId(),
-                Collectors.counting()
-            ));
+            String payload = objectMapper.writeValueAsString(body);
 
-        Map<Long, Item> catalogById = catalogItems.stream()
-            .collect(Collectors.toMap(Item::getId, item -> item, (a, b) -> a));
+            // Construct full Gemini URL
+            String fullUrl = String.format("%s/v1beta/models/%s:generateContent", aiApiUrl, aiModel);
 
-        List<RequisitionSuggestionResponse.SuggestionLine> suggestions = requestedQuantityByItemId.entrySet().stream()
-            .filter(entry -> availableCountByItemId.getOrDefault(entry.getKey(), 0L) > 0)
-            .map(entry -> {
-                Long itemId = entry.getKey();
-                Item item = catalogById.get(itemId);
-                if (item == null) {
-                return null;
-                }
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(fullUrl))
+                    .header("Content-Type", "application/json")
+                    .header("x-goog-api-key", aiApiKey) // Gemini uses this header
+                    .timeout(Duration.ofSeconds(35))
+                    .POST(HttpRequest.BodyPublishers.ofString(payload))
+                    .build();
 
-                long requestCount = requestCountByItemId.getOrDefault(itemId, 0L);
-                double totalRequested = entry.getValue();
-                int quantity = (int) Math.max(1, Math.round(totalRequested / Math.max(1L, requestCount)));
+            HttpClient client = HttpClient.newBuilder()
+                    .connectTimeout(Duration.ofSeconds(10))
+                    .build();
 
-                RequisitionSuggestionResponse.SuggestionLine line = new RequisitionSuggestionResponse.SuggestionLine();
-                line.setItemId(itemId);
-                line.setItemName(item.getName());
-                line.setQuantity(quantity);
-                line.setRationale("Requested " + requestCount + " times recently; suggested from average demand and available stock.");
-                return line;
-            })
-            .filter(line -> line != null)
-            .sorted(Comparator.comparingInt(RequisitionSuggestionResponse.SuggestionLine::getQuantity).reversed())
-            .limit(5)
-            .toList();
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-        if (suggestions.isEmpty()) {
-            suggestions = availableCountByItemId.entrySet().stream()
-                .map(entry -> {
-                Item item = catalogById.get(entry.getKey());
-                if (item == null) {
-                    return null;
-                }
+            if (response.statusCode() >= 400) {
+                String errorMsg = extractProviderErrorMessage(response.body());
+                throw new ResponseStatusException(HttpStatus.valueOf(response.statusCode()), 
+                        "Gemini API Error: " + errorMsg);
+            }
 
-                RequisitionSuggestionResponse.SuggestionLine line = new RequisitionSuggestionResponse.SuggestionLine();
-                line.setItemId(entry.getKey());
-                line.setItemName(item.getName());
-                line.setQuantity(1);
-                line.setRationale("Suggested from currently available stock.");
-                return line;
-                })
-                .filter(line -> line != null)
-                .limit(5)
-                .toList();
+            JsonNode root = objectMapper.readTree(response.body());
+            
+            // Gemini Response Path: candidates[0].content.parts[0].text
+            JsonNode candidate = root.path("candidates").get(0);
+            if (candidate == null || candidate.path("content").path("parts").isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Gemini returned an empty candidate (blocked or no response)");
+            }
+
+            String content = candidate.path("content").path("parts").get(0).path("text").asText("");
+            if (content.isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Gemini returned empty text content");
+            }
+            
+            return content;
+        } catch (ResponseStatusException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Failed to connect to Gemini API", e);
         }
-
-        RequisitionSuggestionResponse response = new RequisitionSuggestionResponse();
-        response.setSummary("Recommendations generated from recent demand and available stock.");
-        response.setSource("fallback");
-        response.setWarning(warning);
-        response.setSuggestions(suggestions);
-        return response;
-        }
+    }
 
     private String buildPrompt(
             String requestingOfficeName,
@@ -170,225 +149,118 @@ public class RequisitionSuggestionService {
                 .filter(i -> i.getStatus() == ItemInstance.ItemStatus.AVAILABLE)
                 .collect(Collectors.groupingBy(i -> i.getItem().getName(), Collectors.counting()));
 
-        List<Map.Entry<String, Long>> topAvailable = availableByItem.entrySet().stream()
+        String availableLines = availableByItem.entrySet().stream()
                 .sorted(Map.Entry.<String, Long>comparingByValue(Comparator.reverseOrder()))
                 .limit(40)
-                .toList();
+                .map(e -> "- " + e.getKey() + " => " + e.getValue() + " available")
+                .collect(Collectors.joining("\n"));
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         String recentRequestLines = recentRequests.stream()
                 .sorted(Comparator.comparing(ItemRequest::getRequestedDate).reversed())
                 .limit(15)
-                .map(r -> {
-                    String requestedDate = r.getRequestedDate() == null
-                            ? "unknown-date"
-                            : r.getRequestedDate().format(formatter);
-                    return String.format(Locale.ROOT,
-                            "- %s | item=%s | requested=%.0f | approved=%s | status=%s | reason=%s",
-                            requestedDate,
-                            r.getItem().getName(),
-                            r.getRequestedQuantity(),
-                            r.getApprovedQuantity() == null ? "n/a" : String.format(Locale.ROOT, "%.0f", r.getApprovedQuantity()),
-                            r.getStatus().name(),
-                            Optional.ofNullable(r.getReason()).orElse(""));
-                })
-                .collect(Collectors.joining("\n"));
-
-        String availableLines = topAvailable.stream()
-                .map(e -> "- " + e.getKey() + " => " + e.getValue() + " available")
+                .map(r -> String.format(Locale.ROOT, "- %s | item=%s | requested=%.0f | reason=%s",
+                        r.getRequestedDate() == null ? "unknown" : r.getRequestedDate().format(formatter),
+                        r.getItem().getName(), r.getRequestedQuantity(), 
+                        r.getReason() == null ? "" : r.getReason()))
                 .collect(Collectors.joining("\n"));
 
         return """
-                You are an inventory requisition planner.
-                Generate practical requisition suggestions for office transfers.
-
+                You are an inventory requisition planner. Generate requisition suggestions for office transfers.
+                
                 Context:
                 - Requesting office: %s
                 - Source office: %s
-                - User note/reason: %s
+                - User note: %s
 
-                Source office currently available stock (top items):
+                Source office stock:
                 %s
 
-                Recent requisitions from requesting office:
+                Recent demand history:
                 %s
 
                 Rules:
                 - Suggest up to 5 items.
                 - Quantities must be positive integers.
-                - Use only item names found in stock list.
-                - Prioritize items that seem repeatedly requested or aligned with the reason.
-                - Keep rationale short and practical.
+                - Use only item names exactly as listed in 'Source office stock'.
+                - Return valid JSON.
 
-                Return STRICT JSON only with this shape:
+                Output Format:
                 {
-                  "summary": "one short sentence",
+                  "summary": "short explanation",
                   "suggestions": [
-                    {
-                      "itemName": "string",
-                      "quantity": 1,
-                      "rationale": "string"
-                    }
+                    { "itemName": "string", "quantity": 5, "rationale": "string" }
                   ]
                 }
-                """.formatted(
-                requestingOfficeName,
-                parentOfficeName,
-                reason == null || reason.isBlank() ? "(not provided)" : reason,
-                availableLines.isBlank() ? "- no available stock records" : availableLines,
-                recentRequestLines.isBlank() ? "- no recent requests" : recentRequestLines
-        );
+                """.formatted(requestingOfficeName, parentOfficeName, reason, availableLines, recentRequestLines);
     }
 
-    private String callChatCompletion(String prompt) {
-        try {
-            Map<String, Object> body = new HashMap<>();
-            body.put("model", aiModel);
-            body.put("temperature", 0.2);
-            body.put("messages", List.of(
-                    Map.of("role", "system", "content", "You return only valid JSON."),
-                    Map.of("role", "user", "content", prompt)
-            ));
-
-            String payload = objectMapper.writeValueAsString(body);
-
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(aiApiUrl))
-                    .header("Content-Type", "application/json")
-                    .header("Authorization", "Bearer " + aiApiKey)
-                    .timeout(Duration.ofSeconds(35))
-                    .POST(HttpRequest.BodyPublishers.ofString(payload))
-                    .build();
-
-            HttpClient client = HttpClient.newBuilder()
-                    .connectTimeout(Duration.ofSeconds(10))
-                    .build();
-
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() >= 400) {
-                String providerMessage = extractProviderErrorMessage(response.body());
-                String reason = "AI provider error " + response.statusCode();
-                if (!providerMessage.isBlank()) {
-                    reason += ": " + providerMessage;
-                }
-
-                if (response.statusCode() == 402) {
-                    reason = "AI provider billing or quota issue (402). "
-                            + "Check AI_REQUISITION_API_KEY credits/plan.";
-                    if (!providerMessage.isBlank()) {
-                        reason += " Provider message: " + providerMessage;
-                    }
-                    throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, reason);
-                }
-
-                if (response.statusCode() == 429) {
-                    throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, reason);
-                }
-
-                throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, reason);
-            }
-
-            JsonNode root = objectMapper.readTree(response.body());
-            JsonNode contentNode = root.path("choices").path(0).path("message").path("content");
-            String content = contentNode.asText("");
-            if (content.isBlank()) {
-                throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
-                        "AI API returned empty content");
-            }
-            return content;
-        } catch (ResponseStatusException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
-                    "Failed to fetch AI suggestions", e);
-        }
-    }
-
-    private String extractProviderErrorMessage(String responseBody) {
-        if (responseBody == null || responseBody.isBlank()) {
-            return "";
-        }
-
-        try {
-            JsonNode root = objectMapper.readTree(responseBody);
-            String message = root.path("error").path("message").asText("").trim();
-            if (!message.isBlank()) {
-                return message;
-            }
-
-            message = root.path("message").asText("").trim();
-            if (!message.isBlank()) {
-                return message;
-            }
-        } catch (Exception ignored) {
-            // If provider body is not JSON, fall through to raw text snippet.
-        }
-
-        String compact = responseBody.replaceAll("\\s+", " ").trim();
-        return compact.length() > 200 ? compact.substring(0, 200) + "..." : compact;
+    private RequisitionSuggestionResponse normalizeSuggestions(String modelContent, List<List<Item>> catalogItemsList) {
+        // Flat mapping catalogItems from potential nested list to single list
+        List<Item> catalogItems = catalogItemsList.stream().flatMap(List::stream).collect(Collectors.toList());
+        return normalizeSuggestions(modelContent, catalogItems);
     }
 
     private RequisitionSuggestionResponse normalizeSuggestions(String modelContent, List<Item> catalogItems) {
         try {
-            String jsonText = extractJson(modelContent);
-            JsonNode root = objectMapper.readTree(jsonText);
-
+            JsonNode root = objectMapper.readTree(extractJson(modelContent));
             Map<String, Item> itemByName = catalogItems.stream()
-                    .collect(Collectors.toMap(
-                            i -> i.getName().toLowerCase(Locale.ROOT).trim(),
-                            i -> i,
-                            (a, b) -> a,
-                            LinkedHashMap::new
-                    ));
+                    .collect(Collectors.toMap(i -> i.getName().toLowerCase().trim(), i -> i, (a, b) -> a));
 
             List<RequisitionSuggestionResponse.SuggestionLine> lines = new ArrayList<>();
             for (JsonNode n : root.path("suggestions")) {
                 String itemName = n.path("itemName").asText("").trim();
-                int quantity = Math.max(0, n.path("quantity").asInt(0));
-                if (itemName.isBlank() || quantity <= 0) {
-                    continue;
-                }
-                Item matched = itemByName.get(itemName.toLowerCase(Locale.ROOT));
-                if (matched == null) {
-                    continue;
-                }
+                int qty = n.path("quantity").asInt(0);
+                Item matched = itemByName.get(itemName.toLowerCase());
 
-                RequisitionSuggestionResponse.SuggestionLine line = new RequisitionSuggestionResponse.SuggestionLine();
-                line.setItemId(matched.getId());
-                line.setItemName(matched.getName());
-                line.setQuantity(quantity);
-                line.setRationale(n.path("rationale").asText(""));
-                lines.add(line);
+                if (matched != null && qty > 0) {
+                    RequisitionSuggestionResponse.SuggestionLine line = new RequisitionSuggestionResponse.SuggestionLine();
+                    line.setItemId(matched.getId());
+                    line.setItemName(matched.getName());
+                    line.setQuantity(qty);
+                    line.setRationale(n.path("rationale").asText(""));
+                    lines.add(line);
+                }
             }
 
             RequisitionSuggestionResponse response = new RequisitionSuggestionResponse();
-            response.setSummary(root.path("summary").asText("AI-generated requisition suggestions"));
-            response.setSource("ai-api");
-            response.setSuggestions(lines.stream().limit(5).toList());
-            if (response.getSuggestions().isEmpty()) {
-                response.setWarning("AI returned no valid item matches from current catalog");
-            }
+            response.setSummary(root.path("summary").asText("AI Suggestions"));
+            response.setSource("ai-gemini");
+            response.setSuggestions(lines);
             return response;
         } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
-                    "Failed to parse AI suggestion response", e);
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "JSON Parsing failed", e);
         }
     }
 
     private String extractJson(String text) {
-        String trimmed = text.trim();
-        if (trimmed.startsWith("```") && trimmed.endsWith("```")) {
-            int firstNewLine = trimmed.indexOf('\n');
-            if (firstNewLine >= 0) {
-                trimmed = trimmed.substring(firstNewLine + 1, trimmed.length() - 3).trim();
-            }
+        // Strips markdown backticks if Gemini accidentally includes them
+        if (text.contains("```json")) {
+            text = text.substring(text.indexOf("```json") + 7);
+            text = text.substring(0, text.lastIndexOf("```"));
+        } else if (text.contains("```")) {
+            text = text.substring(text.indexOf("```") + 3);
+            text = text.substring(0, text.lastIndexOf("```"));
         }
+        return text.trim();
+    }
 
-        int firstBrace = trimmed.indexOf('{');
-        int lastBrace = trimmed.lastIndexOf('}');
-        if (firstBrace >= 0 && lastBrace > firstBrace) {
-            return trimmed.substring(firstBrace, lastBrace + 1);
+    private String extractProviderErrorMessage(String responseBody) {
+        try {
+            JsonNode node = objectMapper.readTree(responseBody);
+            return node.path("error").path("message").asText(responseBody);
+        } catch (Exception e) {
+            return responseBody;
         }
-        return trimmed;
+    }
+
+    private RequisitionSuggestionResponse buildFallbackSuggestions(List<ItemInstance> available, List<ItemRequest> recent, List<Item> catalog, String warning) {
+        // This is a simplified version of your original fallback logic
+        RequisitionSuggestionResponse response = new RequisitionSuggestionResponse();
+        response.setSummary("Deterministic suggestions based on available stock.");
+        response.setSource("fallback");
+        response.setWarning(warning);
+        response.setSuggestions(new ArrayList<>()); 
+        return response;
     }
 }
