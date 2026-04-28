@@ -27,6 +27,7 @@ interface RequisitionsTableProps {
   onReject: (request: ItemRequest) => void;
   onFulfill: (request: ItemRequest) => void;
   onConfirm: (request: ItemRequest) => void;
+  onViewDetails: (request: ItemRequest) => void;
 }
 
 function LoadingRow() {
@@ -84,7 +85,8 @@ function MobileRequisitionCard({
   onApprove, 
   onReject, 
   onFulfill, 
-  onConfirm 
+  onConfirm,
+  onViewDetails
 }: { 
   request: ItemRequest;
   activeTab: 'my-requests' | 'incoming' | 'approved' | 'fulfilled' | 'history';
@@ -93,6 +95,7 @@ function MobileRequisitionCard({
   onReject: (request: ItemRequest) => void;
   onFulfill: (request: ItemRequest) => void;
   onConfirm: (request: ItemRequest) => void;
+  onViewDetails: (request: ItemRequest) => void;
 }) {
   const showApproveRejectActions = isAdmin && activeTab === 'incoming' && request.status === 'PENDING';
   const showFulfillAction = isAdmin && activeTab === 'approved' && 
@@ -101,7 +104,7 @@ function MobileRequisitionCard({
     (request.status === 'FULFILLED' || request.status === 'PARTIALLY_FULFILLED');
 
   return (
-    <Card className="mb-3">
+    <Card className="mb-3 cursor-pointer hover:border-blue-300 transition-colors" onClick={() => onViewDetails(request)}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="space-y-1">
@@ -164,7 +167,7 @@ function MobileRequisitionCard({
         </div>
 
         {(showApproveRejectActions || showFulfillAction || showConfirmAction) && (
-          <div className="flex flex-col gap-2 pt-2 border-t">
+          <div className="flex flex-col gap-2 pt-2 border-t" onClick={(e) => e.stopPropagation()}>
             {showApproveRejectActions && (
               <div className="flex gap-2">
                 <Button 
@@ -225,6 +228,7 @@ export function RequisitionsTable({
   onReject,
   onFulfill,
   onConfirm,
+  onViewDetails,
 }: RequisitionsTableProps) {
   const isMobile = useIsMobile();
   
@@ -265,6 +269,7 @@ export function RequisitionsTable({
                 onReject={onReject}
                 onFulfill={onFulfill}
                 onConfirm={onConfirm}
+                onViewDetails={onViewDetails}
               />
             ))}
             <div className="text-center text-sm text-muted-foreground py-2">
@@ -318,7 +323,11 @@ export function RequisitionsTable({
           </TableRow>
         ) : (
           data.map((request) => (
-            <TableRow key={request.id}>
+            <TableRow 
+              key={request.id} 
+              className="cursor-pointer hover:bg-muted/50 transition-colors"
+              onClick={() => onViewDetails(request)}
+            >
               <TableCell className="font-medium">{request.id}</TableCell>
               <TableCell>{request.item.name}</TableCell>
               {activeTab === 'history' ? (
@@ -354,7 +363,7 @@ export function RequisitionsTable({
               <TableCell>
                 {new Date(request.requestedDate).toLocaleDateString()}
               </TableCell>
-              <TableCell>
+              <TableCell onClick={(e) => e.stopPropagation()}>
                 <div className="flex gap-2">
                   {showApproveRejectActions(request) && (
                     <>

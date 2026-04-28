@@ -33,6 +33,7 @@ import { RejectRequestDialog } from "./components/RejectRequestDialog";
 import { FulfillRequestDialog } from "./components/FulfillRequestDialog";
 import { ConfirmReceiptDialog } from "./components/ConfirmReceiptDialog";
 import { RequisitionsTable } from "./components/RequisitionsTable";
+import { RequisitionDetailsDialog } from "./components/RequisitionDetailsDialog";
 import { useRequisitionForm } from "./hooks/useRequisitionForm";
 
 const searchConfig = {
@@ -70,6 +71,7 @@ export default function RequisitionsPage() {
   const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [showFulfillDialog, setShowFulfillDialog] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [aiUnavailableHint, setAiUnavailableHint] = useState<string>("");
   const autoSuggestKeyRef = useRef<string>("");
 
@@ -98,6 +100,7 @@ export default function RequisitionsPage() {
     fulfillmentData,
     setFulfillmentData,
     selectedRequest,
+    setSelectedRequest,
     prepareApprovalForm,
     prepareRejectionForm,
     prepareFulfillmentForm,
@@ -223,6 +226,11 @@ export default function RequisitionsPage() {
   const openConfirmDialog = (request: ItemRequest) => {
     prepareConfirmationForm(request);
     setShowConfirmDialog(true);
+  };
+
+  const openDetailsDialog = (request: ItemRequest) => {
+    setSelectedRequest(request);
+    setShowDetailsDialog(true);
   };
 
   const handleConfirm = async () => {
@@ -450,6 +458,7 @@ export default function RequisitionsPage() {
               onReject={openRejectDialog}
               onFulfill={openFulfillDialog}
               onConfirm={openConfirmDialog}
+              onViewDetails={openDetailsDialog}
             />
             <Pagination 
               data={filteredData} 
@@ -479,6 +488,18 @@ export default function RequisitionsPage() {
         isSuggesting={suggestionMutation.isPending}
         aiUnavailableHint={aiUnavailableHint}
         lockOfficeSelection={isOfficeSelectionLocked}
+      />
+
+      <RequisitionDetailsDialog
+        open={showDetailsDialog}
+        onOpenChange={setShowDetailsDialog}
+        request={selectedRequest}
+        isAdmin={isAdmin}
+        activeTab={activeTab}
+        onApprove={openApproveDialog}
+        onReject={openRejectDialog}
+        onFulfill={openFulfillDialog}
+        onConfirm={openConfirmDialog}
       />
       
       <ApproveRequestDialog

@@ -135,8 +135,8 @@ export function CreateRequestDialog({
 
           <div className="border rounded-lg p-4 space-y-3">
             <Label>Add Items</Label>
-            <div className="grid grid-cols-12 gap-2">
-              <div className="col-span-6">
+            <div className="flex flex-col sm:grid sm:grid-cols-12 gap-3 sm:gap-2">
+              <div className="sm:col-span-6">
                 <Select
                   value={selectedItemId.toString()}
                   onValueChange={(value) => setSelectedItemId(parseInt(value))}
@@ -153,7 +153,7 @@ export function CreateRequestDialog({
                   </SelectContent>
                 </Select>
               </div>
-              <div className="col-span-4">
+              <div className="sm:col-span-4">
                 <Input
                   type="number"
                   min="0"
@@ -163,14 +163,15 @@ export function CreateRequestDialog({
                   placeholder="Quantity"
                 />
               </div>
-              <div className="col-span-2">
+              <div className="sm:col-span-2">
                 <Button
                   type="button"
                   onClick={handleAddItem}
                   disabled={!selectedItemId || quantity <= 0}
                   className="w-full"
                 >
-                  <Plus className="h-4 w-4" />
+                  <Plus className="h-4 w-4 mr-2 sm:mr-0" />
+                  <span className="sm:hidden">Add Item</span>
                 </Button>
               </div>
             </div>

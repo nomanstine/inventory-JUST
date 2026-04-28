@@ -297,6 +297,7 @@ export function useRequisitionForm() {
     rejectRequest,
     fulfillRequest,
     confirmReceipt,
+    setSelectedRequest,
     isCreating: createMutation.isPending,
     isApproving: approveMutation.isPending,
     isRejecting: rejectMutation.isPending,
