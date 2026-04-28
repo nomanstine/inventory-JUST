@@ -40,15 +40,13 @@ export function RequisitionDetailsDialog({
 }: RequisitionDetailsDialogProps) {
   if (!request) return null;
 
-  const showApproveRejectActions = isAdmin && activeTab === 'incoming' && request.status === 'PENDING';
-  const showFulfillAction = isAdmin && activeTab === 'approved' && 
-    (request.status === 'APPROVED' || request.status === 'PARTIALLY_FULFILLED');
-  const showConfirmAction = isAdmin && activeTab === 'fulfilled' && 
-    (request.status === 'FULFILLED' || request.status === 'PARTIALLY_FULFILLED');
+  const showApproveRejectActions = isAdmin && request.status === 'PENDING';
+  const showFulfillAction = isAdmin && (request.status === 'APPROVED' || request.status === 'PARTIALLY_FULFILLED');
+  const showConfirmAction = (request.status === 'FULFILLED' || request.status === 'PARTIALLY_FULFILLED');
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle>Requisition Details</DialogTitle>
@@ -80,7 +78,7 @@ export function RequisitionDetailsDialog({
                       <p className="text-xs text-muted-foreground">Requested</p>
                       <p className="text-sm">{request.requestedQuantity}</p>
                     </div>
-                    {request.approvedQuantity !== null && (
+                    {request.approvedQuantity !== undefined && request.approvedQuantity !== null && (
                       <div>
                         <p className="text-xs text-muted-foreground">Approved</p>
                         <p className="text-sm">{request.approvedQuantity}</p>
@@ -129,7 +127,7 @@ export function RequisitionDetailsDialog({
                       </AvatarFallback>
                     </Avatar>
                     <p className="text-sm text-muted-foreground">
-                      {request.requestedBy.name} ({request.requestedBy.username})
+                      {request.requestedBy.name || request.requestedBy.username}
                     </p>
                   </div>
                 </div>
@@ -139,35 +137,44 @@ export function RequisitionDetailsDialog({
 
           <Separator />
 
-          <div>
-            <p className="text-sm font-medium mb-2">Remarks / Reason</p>
-            <div className="bg-muted p-3 rounded-md min-h-[60px]">
-              <p className="text-sm text-muted-foreground">
-                {request.remarks || "No remarks provided."}
-              </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm font-medium mb-2">Requester Reason</p>
+              <div className="bg-muted p-3 rounded-md min-h-[60px]">
+                <p className="text-sm text-muted-foreground italic">
+                  "{request.reason || "No reason provided."}"
+                </p>
+              </div>
             </div>
+            {(request.remarks || request.status === 'REJECTED' || request.status === 'APPROVED') && (
+              <div>
+                <p className="text-sm font-medium mb-2">Admin Remarks</p>
+                <div className="bg-muted p-3 rounded-md min-h-[60px]">
+                  <p className="text-sm text-muted-foreground italic">
+                    "{request.remarks || "No remarks provided."}"
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
 
-          {(request.approvedBy || request.rejectedBy) && (
+          {(request.approvedBy || request.approvedDate || request.rejectedDate) && (
             <div className="bg-muted/50 p-3 rounded-md">
               <p className="text-xs font-semibold uppercase text-muted-foreground mb-2">
                 {request.status === 'REJECTED' ? 'Rejection Details' : 'Approval Details'}
               </p>
               <div className="flex items-center gap-2">
-                <Avatar className="h-5 w-5">
-                  <AvatarFallback className="text-[8px]">
-                    {getInitials(
-                      request.approvedBy?.name || request.rejectedBy?.name || "", 
-                      request.approvedBy?.username || request.rejectedBy?.username || ""
-                    )}
-                  </AvatarFallback>
-                </Avatar>
+                {request.approvedBy && (
+                  <Avatar className="h-5 w-5">
+                    <AvatarFallback className="text-[8px]">
+                      {getInitials(request.approvedBy.name || "", request.approvedBy.username)}
+                    </AvatarFallback>
+                  </Avatar>
+                )}
                 <p className="text-xs text-muted-foreground">
-                  {request.status === 'REJECTED' ? 'Rejected' : 'Approved'} by{' '}
-                  <span className="font-medium text-foreground">
-                    {request.approvedBy?.name || request.rejectedBy?.name}
-                  </span>
-                  {' '}on {new Date(request.approvalDate || "").toLocaleDateString()}
+                  {request.status === 'REJECTED' ? 'Rejected' : 'Approved'}
+                  {request.approvedBy && ` by ${request.approvedBy.name || request.approvedBy.username}`}
+                  {' '}on {new Date(request.approvedDate || request.rejectedDate || "").toLocaleString()}
                 </p>
               </div>
             </div>
