@@ -241,8 +241,6 @@ export default function SuggestiveRequisitionPage() {
       onAddItem={addItem}
       onRemoveItem={removeItem}
       onUpdateQuantity={updateItemQuantity}
-      onSuggest={handleRefresh} // Reuse refresh logic
-      isSuggesting={isLoadingPurchases}
     />
   </>
 );

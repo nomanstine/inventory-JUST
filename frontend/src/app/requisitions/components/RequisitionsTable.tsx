@@ -129,22 +129,22 @@ function MobileRequisitionCard({
           {activeTab === 'history' ? (
             <>
               <div>
-                <p className="text-xs text-muted-foreground">Source Office</p>
+                <p className="text-xs text-muted-foreground">Requested From</p>
                 <p className="font-medium">{request.parentOffice.name}</p>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Destination Office</p>
+                <p className="text-xs text-muted-foreground">Requested To</p>
                 <p className="font-medium">{request.requestingOffice.name}</p>
               </div>
             </>
-          ) : activeTab === 'my-requests' || activeTab === 'approved' || activeTab === 'fulfilled' ? (
+          ) : activeTab === 'my-requests' ? (
             <div>
-              <p className="text-xs text-muted-foreground">Requested From</p>
+              <p className="text-xs text-muted-foreground">Requested To</p>
               <p className="font-medium">{request.parentOffice.name}</p>
             </div>
           ) : (
             <div>
-              <p className="text-xs text-muted-foreground">Requesting Office</p>
+              <p className="text-xs text-muted-foreground">Requested From</p>
               <div className="flex items-center gap-2 mt-1">
                 <Avatar className="h-6 w-6">
                   <AvatarImage src={request.requestedBy.avatarUrl || ""} />
@@ -305,13 +305,13 @@ export function RequisitionsTable({
           <TableHead>Item</TableHead>
           {activeTab === 'history' ? (
             <>
-              <TableHead>Source Office</TableHead>
-              <TableHead>Destination Office</TableHead>
+              <TableHead>Requested From</TableHead>
+              <TableHead>Requested To</TableHead>
             </>
-          ) : activeTab === 'my-requests' || activeTab === 'approved' || activeTab === 'fulfilled' ? (
-            <TableHead>Requested From</TableHead>
+          ) : activeTab === 'my-requests' ? (
+            <TableHead>Requested To</TableHead>
           ) : (
-            <TableHead>Requesting Office</TableHead>
+            <TableHead>Requested From</TableHead>
           )}
           <TableHead>Quantity</TableHead>
           <TableHead>Approved</TableHead>
@@ -347,23 +347,10 @@ export function RequisitionsTable({
                   <TableCell>{request.parentOffice.name}</TableCell>
                   <TableCell>{request.requestingOffice.name}</TableCell>
                 </>
-              ) : activeTab === 'my-requests' || activeTab === 'approved' || activeTab === 'fulfilled' ? (
+              ) : activeTab === 'my-requests' ? (
                 <TableCell>{request.parentOffice.name}</TableCell>
               ) : (
-                <TableCell>
-                  <div className="flex flex-col">
-                    <span className="font-medium">{request.requestingOffice.name}</span>
-                    <div className="flex items-center gap-1.5 mt-1 text-xs text-muted-foreground">
-                      <Avatar className="h-5 w-5">
-                        <AvatarImage src={request.requestedBy.avatarUrl || ""} />
-                        <AvatarFallback className="text-[8px]">
-                          {getInitials(request.requestedBy.name, request.requestedBy.username)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span>{request.requestedBy.name || request.requestedBy.username}</span>
-                    </div>
-                  </div>
-                </TableCell>
+                <TableCell>{request.requestingOffice.name}</TableCell>
               )}
               <TableCell>{request.requestedQuantity}</TableCell>
               <TableCell>{request.approvedQuantity ?? '-'}</TableCell>

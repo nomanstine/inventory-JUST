@@ -321,9 +321,6 @@ export default function AIRecommendationsPage() {
       onAddItem={addItem}
       onRemoveItem={removeItem}
       onUpdateQuantity={updateItemQuantity}
-      onSuggest={handleSuggest}
-      isSuggesting={suggestionMutation.isPending}
-      aiUnavailableHint={aiUnavailableHint}
     />
   </>
 );

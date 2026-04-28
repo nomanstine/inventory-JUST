@@ -76,7 +76,6 @@ export default function RequisitionsPage() {
   const [showFulfillDialog, setShowFulfillDialog] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
-  const [aiUnavailableHint, setAiUnavailableHint] = useState<string>("");
   const autoSuggestKeyRef = useRef<string>("");
 
   const { data: myRequests = EMPTY_ARRAY, isLoading: loadingMyRequests } = useMyRequests();
@@ -122,7 +121,6 @@ export default function RequisitionsPage() {
     isFulfilling,
     isConfirming,
   } = useRequisitionForm();
-  const suggestionMutation = useRequisitionSuggestions();
 
   const currentData = activeTab === 'my-requests' ? myRequests : 
                       activeTab === 'incoming' ? incomingRequests : 
@@ -249,43 +247,6 @@ export default function RequisitionsPage() {
     }
   };
 
-  const handleSuggestRequest = useCallback(async () => {
-    try {
-      if (!parentOfficeId) {
-        throw new Error("Please select an office first");
-      }
-
-      const result = await suggestionMutation.mutateAsync({
-        parentOfficeId,
-        reason,
-      });
-
-      if (!result.suggestions || result.suggestions.length === 0) {
-        throw new Error(result.warning || "AI returned no usable suggestions");
-      }
-
-      replaceItems(
-        result.suggestions.map((line) => ({
-          itemId: line.itemId,
-          itemName: line.itemName,
-          quantity: line.quantity,
-          rationale: line.rationale,
-        }))
-      );
-
-      if (result.summary) {
-        toast.success(result.summary);
-      }
-      setAiUnavailableHint("");
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to fetch suggestions";
-      const normalized = message.toLowerCase();
-      if (normalized.includes("api key") || normalized.includes("disabled")) {
-        setAiUnavailableHint("AI suggestions are unavailable right now. Ask an admin to configure backend AI_REQUISITION_API_KEY.");
-      }
-      toast.error(message);
-    }
-  }, [parentOfficeId, reason, replaceItems, suggestionMutation]);
 
   const isAdmin = checkIsAdmin(user?.role);
   const currentUserOfficeId = user?.officeId ? parseInt(user.officeId) : 0;
@@ -316,35 +277,6 @@ export default function RequisitionsPage() {
     }
   }, [showCreateDialog, officeOptionsForRequisition, parentOfficeId, setParentOfficeId]);
 
-  useEffect(() => {
-    if (!showCreateDialog || !isAdmin || !parentOfficeId) {
-      return;
-    }
-    if (suggestionMutation.isPending || requestItems.length > 0) {
-      return;
-    }
-
-    const key = `${parentOfficeId}`;
-    if (autoSuggestKeyRef.current === key) {
-      return;
-    }
-    autoSuggestKeyRef.current = key;
-
-    void handleSuggestRequest();
-  }, [
-    showCreateDialog,
-    isAdmin,
-    parentOfficeId,
-    requestItems.length,
-    suggestionMutation.isPending,
-    handleSuggestRequest,
-  ]);
-
-  useEffect(() => {
-    if (!showCreateDialog) {
-      autoSuggestKeyRef.current = "";
-    }
-  }, [showCreateDialog]);
 
   useEffect(() => {
     if (!isAdmin) {
@@ -489,9 +421,6 @@ export default function RequisitionsPage() {
         onAddItem={addItem}
         onRemoveItem={removeItem}
         onUpdateQuantity={updateItemQuantity}
-        onSuggest={handleSuggestRequest}
-        isSuggesting={suggestionMutation.isPending}
-        aiUnavailableHint={aiUnavailableHint}
         lockOfficeSelection={isOfficeSelectionLocked}
       />
 

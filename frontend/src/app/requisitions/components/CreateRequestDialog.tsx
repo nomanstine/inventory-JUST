@@ -48,9 +48,6 @@ interface CreateRequestDialogProps {
   onAddItem: (itemId: number, itemName: string, quantity: number) => void;
   onRemoveItem: (index: number) => void;
   onUpdateQuantity: (index: number, quantity: number) => void;
-  onSuggest: () => Promise<void>;
-  isSuggesting: boolean;
-  aiUnavailableHint?: string;
   lockOfficeSelection?: boolean;
 }
 
@@ -70,9 +67,6 @@ export function CreateRequestDialog({
   onAddItem,
   onRemoveItem,
   onUpdateQuantity,
-  onSuggest,
-  isSuggesting,
-  aiUnavailableHint,
   lockOfficeSelection = false,
 }: CreateRequestDialogProps) {
   const [selectedItemId, setSelectedItemId] = useState<number>(0);
@@ -93,10 +87,6 @@ export function CreateRequestDialog({
     }
   };
 
-  const handleSuggest = async () => {
-    await onSuggest();
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -109,7 +99,7 @@ export function CreateRequestDialog({
         
         <div className="space-y-4">
           <div>
-            <Label htmlFor="office">Requested From (Source Office) *</Label>
+            <Label htmlFor="office">Requested To *</Label>
             <Select
               value={parentOfficeId.toString()}
               onValueChange={(value) => onParentOfficeChange(parseInt(value))}
@@ -193,9 +183,6 @@ export function CreateRequestDialog({
                       <TableCell>
                         <div className="space-y-1">
                           <div>{item.itemName}</div>
-                          {item.rationale && (
-                            <p className="text-xs text-muted-foreground">{item.rationale}</p>
-                          )}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -228,6 +215,7 @@ export function CreateRequestDialog({
 
           <div>
             <Label htmlFor="remarks">Remarks</Label>
+            <span className="text-xs text-muted-foreground ml-2">(Reason for request)</span>
             <Textarea
               id="remarks"
               value={reason}
@@ -236,31 +224,6 @@ export function CreateRequestDialog({
               rows={3}
             />
           </div>
-
-          <div className="flex justify-end">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={handleSuggest}
-              disabled={isSuggesting || !parentOfficeId}
-            >
-              {isSuggesting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Suggesting...
-                </>
-              ) : (
-                "Refresh AI Suggestions"
-              )}
-            </Button>
-          </div>
-
-          {aiUnavailableHint && (
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{aiUnavailableHint}</AlertDescription>
-            </Alert>
-          )}
         </div>
 
         <DialogFooter>
