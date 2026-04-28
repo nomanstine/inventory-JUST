@@ -109,7 +109,7 @@ export function CreateRequestDialog({
         
         <div className="space-y-4">
           <div>
-            <Label htmlFor="office">Request From Office *</Label>
+            <Label htmlFor="office">Requested From (Source Office) *</Label>
             <Select
               value={parentOfficeId.toString()}
               onValueChange={(value) => onParentOfficeChange(parseInt(value))}

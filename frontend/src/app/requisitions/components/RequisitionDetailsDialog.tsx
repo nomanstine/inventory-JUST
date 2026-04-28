@@ -116,12 +116,12 @@ export function RequisitionDetailsDialog({
                   <p className="text-sm font-medium">Offices</p>
                   <div className="space-y-2">
                     <div>
-                      <p className="text-xs text-muted-foreground">Requesting Office</p>
-                      <p className="text-sm">{request.requestingOffice.name}</p>
+                      <p className="text-xs text-muted-foreground">Requesting Office (Destination)</p>
+                      <p className="text-sm font-medium">{request.requestingOffice.name}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-muted-foreground">Requested From</p>
-                      <p className="text-sm">{request.parentOffice.name}</p>
+                      <p className="text-xs text-muted-foreground">Fulfilling Office (Source)</p>
+                      <p className="text-sm font-medium">{request.parentOffice.name}</p>
                     </div>
                   </div>
                 </div>

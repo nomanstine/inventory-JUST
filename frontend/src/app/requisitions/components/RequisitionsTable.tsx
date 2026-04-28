@@ -129,22 +129,22 @@ function MobileRequisitionCard({
           {activeTab === 'history' ? (
             <>
               <div>
-                <p className="text-xs text-muted-foreground">From</p>
+                <p className="text-xs text-muted-foreground">Source Office</p>
                 <p className="font-medium">{request.parentOffice.name}</p>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">To</p>
+                <p className="text-xs text-muted-foreground">Destination Office</p>
                 <p className="font-medium">{request.requestingOffice.name}</p>
               </div>
             </>
           ) : activeTab === 'my-requests' || activeTab === 'approved' || activeTab === 'fulfilled' ? (
             <div>
-              <p className="text-xs text-muted-foreground">Requested To</p>
+              <p className="text-xs text-muted-foreground">Requested From</p>
               <p className="font-medium">{request.parentOffice.name}</p>
             </div>
           ) : (
             <div>
-              <p className="text-xs text-muted-foreground">Requested By</p>
+              <p className="text-xs text-muted-foreground">Requesting Office</p>
               <div className="flex items-center gap-2 mt-1">
                 <Avatar className="h-6 w-6">
                   <AvatarImage src={request.requestedBy.avatarUrl || ""} />
@@ -305,13 +305,13 @@ export function RequisitionsTable({
           <TableHead>Item</TableHead>
           {activeTab === 'history' ? (
             <>
-              <TableHead>From</TableHead>
-              <TableHead>To</TableHead>
+              <TableHead>Source Office</TableHead>
+              <TableHead>Destination Office</TableHead>
             </>
           ) : activeTab === 'my-requests' || activeTab === 'approved' || activeTab === 'fulfilled' ? (
-            <TableHead>Requested To</TableHead>
+            <TableHead>Requested From</TableHead>
           ) : (
-            <TableHead>Requested By</TableHead>
+            <TableHead>Requesting Office</TableHead>
           )}
           <TableHead>Quantity</TableHead>
           <TableHead>Approved</TableHead>
