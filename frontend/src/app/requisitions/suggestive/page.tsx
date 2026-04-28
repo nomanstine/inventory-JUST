@@ -18,7 +18,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useItems } from "@/services/itemService";
 import { useOffices, Office } from "@/services/officeService";
 import { usePurchases } from "@/services/purchaseService";
-import { saveRequisitionDraft } from "@/lib/requisitionDraft";
+import { useRequisitionForm } from "../hooks/useRequisitionForm";
+import { CreateRequestDialog } from "../components/CreateRequestDialog";
 import { buildSuggestiveRequisition, SuggestedRequisitionItem } from "../utils/suggestiveRequisition";
 
 
@@ -31,6 +32,21 @@ export default function SuggestiveRequisitionPage() {
   const { data: items = [] } = useItems();
   const { data: offices = [] } = useOffices();
 
+  const {
+    items: requestItems,
+    parentOfficeId: formParentOfficeId,
+    setParentOfficeId: setFormParentOfficeId,
+    reason: formReason,
+    setReason: setFormReason,
+    addItem,
+    removeItem,
+    updateItemQuantity,
+    replaceItems,
+    createRequest,
+    isCreating,
+  } = useRequisitionForm();
+
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
   const currentUserOfficeId = user?.officeId ? parseInt(user.officeId, 10) : 0;
   const currentOffice = offices.find((o) => o.id === currentUserOfficeId);
   const parentOfficeId = currentOffice?.parent?.id || currentUserOfficeId;
@@ -78,19 +94,29 @@ export default function SuggestiveRequisitionPage() {
       return;
     }
 
-    saveRequisitionDraft({
-      parentOfficeId,
-      reason: "Automatically suggested from frequent purchase history",
-      items: suggestions.map((item) => ({
+    setFormParentOfficeId(parentOfficeId);
+    setFormReason("Automatically suggested from frequent purchase history");
+    replaceItems(
+      suggestions.map((item) => ({
         itemId: item.itemId,
         itemName: item.itemName,
         quantity: item.quantity,
         rationale: item.rationale,
-      })),
-    });
+      }))
+    );
 
-    toast.success("Suggestive requisition loaded into draft");
-    router.push("/requisitions");
+    setShowCreateDialog(true);
+  };
+
+  const handleFinalSubmit = async () => {
+    try {
+      await createRequest();
+      toast.success("Requisition created successfully");
+      setShowCreateDialog(false);
+      router.push("/requisitions");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to create requisition");
+    }
   };
 
   const handleRefresh = async () => {
@@ -99,6 +125,7 @@ export default function SuggestiveRequisitionPage() {
   };
 
   return (
+    <>
     <PageLayout
       header={
         <Header
@@ -197,5 +224,26 @@ export default function SuggestiveRequisitionPage() {
         </div>
       }
     />
-  );
+
+    <CreateRequestDialog
+      open={showCreateDialog}
+      onOpenChange={setShowCreateDialog}
+      items={items}
+      offices={offices}
+      currentUserOfficeId={currentUserOfficeId}
+      onSubmit={handleFinalSubmit}
+      isSubmitting={isCreating}
+      requestItems={requestItems}
+      parentOfficeId={formParentOfficeId}
+      reason={formReason}
+      onParentOfficeChange={setFormParentOfficeId}
+      onReasonChange={setFormReason}
+      onAddItem={addItem}
+      onRemoveItem={removeItem}
+      onUpdateQuantity={updateItemQuantity}
+      onSuggest={handleRefresh} // Reuse refresh logic
+      isSuggesting={isLoadingPurchases}
+    />
+  </>
+);
 }

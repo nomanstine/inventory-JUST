@@ -14,19 +14,36 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 
 import { useOffices } from "@/services/officeService";
+import { useItems } from "@/services/itemService";
 import { useRequisitionSuggestions } from "@/services/itemRequestService";
-import { saveRequisitionDraft } from "@/lib/requisitionDraft";
+import { useRequisitionForm } from "../requisitions/hooks/useRequisitionForm";
+import { CreateRequestDialog } from "../requisitions/components/CreateRequestDialog";
 import { canCreateByRole } from "@/lib/permissions";
 
 export default function AIRecommendationsPage() {
   const router = useRouter();
   const { user } = useAuth();
   const { data: offices = [] } = useOffices();
+  const { data: items = [] } = useItems();
   const canCreate = canCreateByRole(user?.role);
 
   const suggestionMutation = useRequisitionSuggestions();
+  const {
+    items: requestItems,
+    parentOfficeId: formParentOfficeId,
+    setParentOfficeId: setFormParentOfficeId,
+    reason: formReason,
+    setReason: setFormReason,
+    addItem,
+    removeItem,
+    updateItemQuantity,
+    replaceItems,
+    createRequest,
+    isCreating,
+  } = useRequisitionForm();
 
   const [reason, setReason] = useState("");
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
   const currentUserOfficeId = user?.officeId ? parseInt(user.officeId, 10) : 0;
   const currentOffice = offices.find((o) => o.id === currentUserOfficeId);
   const parentOfficeId = currentOffice?.parent?.id || currentUserOfficeId;
@@ -102,22 +119,33 @@ export default function AIRecommendationsPage() {
       return;
     }
 
-    saveRequisitionDraft({
-      parentOfficeId,
-      reason: reason || "Prepared from AI recommendations",
-      items: suggestions.map((item) => ({
+    setFormParentOfficeId(parentOfficeId);
+    setFormReason(reason || "Prepared from AI recommendations");
+    replaceItems(
+      suggestions.map((item) => ({
         itemId: item.itemId,
         itemName: item.itemName,
         quantity: item.quantity,
         rationale: item.rationale,
-      })),
-    });
+      }))
+    );
 
-    toast.success("Recommendations loaded into requisition draft");
-    router.push("/requisitions");
+    setShowCreateDialog(true);
+  };
+
+  const handleFinalSubmit = async () => {
+    try {
+      await createRequest();
+      toast.success("Requisition created successfully");
+      setShowCreateDialog(false);
+      router.push("/requisitions");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to create requisition");
+    }
   };
 
   return (
+    <>
     <PageLayout
       header={
         <Header
@@ -276,5 +304,27 @@ export default function AIRecommendationsPage() {
         </div>
       }
     />
-  );
+
+    <CreateRequestDialog
+      open={showCreateDialog}
+      onOpenChange={setShowCreateDialog}
+      items={items}
+      offices={offices}
+      currentUserOfficeId={currentUserOfficeId}
+      onSubmit={handleFinalSubmit}
+      isSubmitting={isCreating}
+      requestItems={requestItems}
+      parentOfficeId={formParentOfficeId}
+      reason={formReason}
+      onParentOfficeChange={setFormParentOfficeId}
+      onReasonChange={setFormReason}
+      onAddItem={addItem}
+      onRemoveItem={removeItem}
+      onUpdateQuantity={updateItemQuantity}
+      onSuggest={handleSuggest}
+      isSuggesting={suggestionMutation.isPending}
+      aiUnavailableHint={aiUnavailableHint}
+    />
+  </>
+);
 }
