@@ -60,6 +60,10 @@ const filterConfig = [
 
 const EMPTY_ARRAY: any[] = [];
 const normalizeRole = (role?: string) => (role || "").replace(/^ROLE_/, "").toUpperCase();
+const checkIsAdmin = (role?: string) => {
+  const norm = normalizeRole(role);
+  return norm.includes('ADMIN');
+};
 
 export default function RequisitionsPage() {
   const { user } = useAuth();
@@ -283,7 +287,7 @@ export default function RequisitionsPage() {
     }
   }, [parentOfficeId, reason, replaceItems, suggestionMutation]);
 
-  const isAdmin = normalizeRole(user?.role) === 'ADMIN';
+  const isAdmin = checkIsAdmin(user?.role);
   const currentUserOfficeId = user?.officeId ? parseInt(user.officeId) : 0;
 
   const currentOffice = useMemo(

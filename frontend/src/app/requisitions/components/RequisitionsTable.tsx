@@ -97,11 +97,11 @@ function MobileRequisitionCard({
   onConfirm: (request: ItemRequest) => void;
   onViewDetails: (request: ItemRequest) => void;
 }) {
-  const showApproveRejectActions = isAdmin && activeTab === 'incoming' && request.status === 'PENDING';
-  const showFulfillAction = isAdmin && activeTab === 'approved' && 
-    (request.status === 'APPROVED' || request.status === 'PARTIALLY_FULFILLED');
-  const showConfirmAction = isAdmin && activeTab === 'fulfilled' && 
-    (request.status === 'FULFILLED' || request.status === 'PARTIALLY_FULFILLED');
+  const showApproveRejectActions = isAdmin && request.status === 'PENDING' && (activeTab === 'incoming' || activeTab === 'history');
+  const showFulfillAction = isAdmin && (request.status === 'APPROVED' || request.status === 'PARTIALLY_FULFILLED') && 
+    (activeTab === 'approved' || activeTab === 'history');
+  const showConfirmAction = (request.status === 'FULFILLED' || request.status === 'PARTIALLY_FULFILLED') && 
+    (activeTab === 'fulfilled' || activeTab === 'my-requests' || activeTab === 'history');
 
   return (
     <Card className="mb-3 cursor-pointer hover:border-blue-300 transition-colors" onClick={() => onViewDetails(request)}>
@@ -233,16 +233,17 @@ export function RequisitionsTable({
   const isMobile = useIsMobile();
   
   const showApproveRejectActions = (request: ItemRequest) => {
-    return isAdmin && activeTab === 'incoming' && request.status === 'PENDING';
+    return isAdmin && request.status === 'PENDING' && (activeTab === 'incoming' || activeTab === 'history');
   };
 
   const showFulfillAction = (request: ItemRequest) => {
-    return isAdmin && activeTab === 'approved' && 
-           (request.status === 'APPROVED' || request.status === 'PARTIALLY_FULFILLED');
+    return isAdmin && (request.status === 'APPROVED' || request.status === 'PARTIALLY_FULFILLED') && 
+           (activeTab === 'approved' || activeTab === 'history');
   };
 
   const showConfirmAction = (request: ItemRequest) => {
-    return isAdmin && activeTab === 'fulfilled' && (request.status === 'FULFILLED' || request.status === 'PARTIALLY_FULFILLED');
+    return (request.status === 'FULFILLED' || request.status === 'PARTIALLY_FULFILLED') && 
+           (activeTab === 'fulfilled' || activeTab === 'my-requests' || activeTab === 'history');
   };
 
   // Mobile view
