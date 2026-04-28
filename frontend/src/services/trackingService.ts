@@ -60,6 +60,7 @@ export interface BarcodeSearchResult {
   currentOwnerOfficeCode?: string;
   purchaseDate?: string;
   warrantyExpiry?: string;
+  unitPrice?: number;
   remarks?: string;
   createdAt: string;
   purchaseInformation?: PurchaseInformation;

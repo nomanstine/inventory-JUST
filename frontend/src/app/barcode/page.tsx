@@ -128,6 +128,10 @@ function BarcodePageContent() {
                   <p>{data.serialNumber || 'N/A'}</p>
                 </div>
                 <div>
+                  <p className="font-semibold">Unit Price:</p>
+                  <p>৳{data.unitPrice || data.purchaseInformation?.unitPrice || 'N/A'}</p>
+                </div>
+                <div>
                   <p className="font-semibold">Current Status:</p>
                   <Badge variant={data.currentStatus === 'ACTIVE' ? 'default' : 'secondary'}>
                     {data.currentStatus}
@@ -171,16 +175,8 @@ function BarcodePageContent() {
                     <p>{data.purchaseInformation.purchaseId}</p>
                   </div>
                   <div>
-                    <p className="font-semibold">Quantity:</p>
-                    <p>{data.purchaseInformation.quantity}</p>
-                  </div>
-                  <div>
                     <p className="font-semibold">Unit Price:</p>
                     <p>৳{data.purchaseInformation.unitPrice}</p>
-                  </div>
-                  <div>
-                    <p className="font-semibold">Total Cost:</p>
-                    <p>৳{data.purchaseInformation?.totalCost}</p>
                   </div>
                   <div>
                     <p className="font-semibold">Supplier:</p>
