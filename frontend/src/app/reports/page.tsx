@@ -118,11 +118,10 @@ export default function ReportsPage() {
 
   const formatCurrency = (value?: number) => {
     if (typeof value !== "number") return "-";
-    return value.toLocaleString(undefined, {
-      style: "currency",
-      currency: "USD",
+    return `৳${value.toLocaleString(undefined, {
       minimumFractionDigits: 2,
-    });
+      maximumFractionDigits: 2,
+    })}`;
   };
 
   const isInDateRange = (value?: string) => {
@@ -290,9 +289,9 @@ export default function ReportsPage() {
           rows: filtered.map((request) => ({
             "Requested Date": formatDate(request.requestedDate),
             Item: request.item?.name ?? "-",
-            Requested: request.requestedQuantity,
-            Approved: request.approvedQuantity ?? 0,
-            Fulfilled: request.fulfilledQuantity ?? 0,
+            Requested: Math.floor(request.requestedQuantity) === request.requestedQuantity ? request.requestedQuantity : request.requestedQuantity.toFixed(2),
+            Approved: Math.floor(request.approvedQuantity || 0) === (request.approvedQuantity || 0) ? (request.approvedQuantity || 0) : (request.approvedQuantity || 0).toFixed(2),
+            Fulfilled: Math.floor(request.fulfilledQuantity || 0) === (request.fulfilledQuantity || 0) ? (request.fulfilledQuantity || 0) : (request.fulfilledQuantity || 0).toFixed(2),
             Status: request.status,
             "Requesting Office": request.requestingOffice?.name ?? "-",
             "Parent Office": request.parentOffice?.name ?? "-",

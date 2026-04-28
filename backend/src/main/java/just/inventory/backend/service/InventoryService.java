@@ -49,7 +49,25 @@ public class InventoryService {
         summary.put("officeId", officeId);
         summary.put("totalItems", instances.size());
         
-        // Group by item
+        // Calculate total value
+        double totalValue = instances.stream()
+                .filter(i -> i.getPurchasePrice() != null)
+                .mapToDouble(ItemInstance::getPurchasePrice)
+                .sum();
+        summary.put("totalValue", totalValue);
+        
+        // Group by category
+        Map<String, Long> byCategory = instances.stream()
+                .filter(i -> i.getItem() != null && i.getItem().getCategory() != null)
+                .collect(Collectors.groupingBy(i -> i.getItem().getCategory().getName(), Collectors.counting()));
+        summary.put("itemsByCategory", byCategory);
+        
+        // Group by status
+        Map<String, Long> byStatus = instances.stream()
+                .collect(Collectors.groupingBy(i -> i.getStatus().name(), Collectors.counting()));
+        summary.put("itemsByStatus", byStatus);
+        
+        // Group by item for detailed breakdown
         Map<String, List<ItemInstance>> byItem = instances.stream()
                 .collect(Collectors.groupingBy(i -> i.getItem().getName()));
         
@@ -59,6 +77,12 @@ public class InventoryService {
                     itemSummary.put("itemName", entry.getKey());
                     itemSummary.put("itemId", entry.getValue().get(0).getItem().getId());
                     itemSummary.put("quantity", entry.getValue().size());
+                    
+                    double itemTotalValue = entry.getValue().stream()
+                            .filter(i -> i.getPurchasePrice() != null)
+                            .mapToDouble(ItemInstance::getPurchasePrice)
+                            .sum();
+                    itemSummary.put("totalValue", itemTotalValue);
                     
                     // Group by status
                     Map<ItemInstance.ItemStatus, Long> statusCount = entry.getValue().stream()
@@ -70,11 +94,6 @@ public class InventoryService {
                 .collect(Collectors.toList());
         
         summary.put("items", itemSummaries);
-        
-        // Overall status breakdown
-        Map<ItemInstance.ItemStatus, Long> overallStatus = instances.stream()
-                .collect(Collectors.groupingBy(ItemInstance::getStatus, Collectors.counting()));
-        summary.put("overallStatusBreakdown", overallStatus);
         
         return summary;
     }

@@ -252,7 +252,7 @@ function BarcodePageContent() {
                           </p>
                         )}
                         <p className="text-sm">
-                          <span className="font-medium">Quantity:</span> {transaction.quantity}
+                          <span className="font-medium">Quantity:</span> {Math.floor(transaction.quantity) === transaction.quantity ? transaction.quantity : transaction.quantity.toFixed(2)}
                         </p>
                         {transaction.remarks && (
                           <p className="text-sm col-span-2">
