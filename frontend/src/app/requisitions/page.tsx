@@ -257,13 +257,8 @@ export default function RequisitionsPage() {
   );
 
   const officeOptionsForRequisition = useMemo(() => {
-    const parentOfficeId = currentOffice?.parent?.id;
-    if (parentOfficeId) {
-      const parentOffice = offices.find((office) => office.id === parentOfficeId);
-      return parentOffice ? [parentOffice] : [];
-    }
     return offices.filter((office) => office.id !== currentUserOfficeId);
-  }, [offices, currentOffice, currentUserOfficeId]);
+  }, [offices, currentUserOfficeId]);
 
   const isOfficeSelectionLocked = officeOptionsForRequisition.length === 1;
 
