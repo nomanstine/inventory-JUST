@@ -458,6 +458,7 @@ export default function RequisitionsPage() {
               activeTab={activeTab}
               isLoading={isLoading}
               isAdmin={isAdmin}
+              currentUserOfficeId={currentUserOfficeId}
               onApprove={openApproveDialog}
               onReject={openRejectDialog}
               onFulfill={openFulfillDialog}
@@ -499,6 +500,7 @@ export default function RequisitionsPage() {
         onOpenChange={setShowDetailsDialog}
         request={selectedRequest}
         isAdmin={isAdmin}
+        currentUserOfficeId={currentUserOfficeId}
         activeTab={activeTab}
         onApprove={openApproveDialog}
         onReject={openRejectDialog}

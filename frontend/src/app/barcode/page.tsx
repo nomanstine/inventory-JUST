@@ -129,7 +129,7 @@ function BarcodePageContent() {
                 </div>
                 <div>
                   <p className="font-semibold">Unit Price:</p>
-                  <p>৳{data.unitPrice || data.purchaseInformation?.unitPrice || 'N/A'}</p>
+                  <p>৳{(data.unitPrice || data.purchaseInformation?.unitPrice || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                 </div>
                 <div>
                   <p className="font-semibold">Current Status:</p>
@@ -176,7 +176,7 @@ function BarcodePageContent() {
                   </div>
                   <div>
                     <p className="font-semibold">Unit Price:</p>
-                    <p>৳{data.purchaseInformation.unitPrice}</p>
+                    <p>৳{(data.purchaseInformation.unitPrice || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                   </div>
                   <div>
                     <p className="font-semibold">Supplier:</p>

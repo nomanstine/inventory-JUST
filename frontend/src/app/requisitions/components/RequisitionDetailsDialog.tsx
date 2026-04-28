@@ -20,6 +20,7 @@ interface RequisitionDetailsDialogProps {
   onOpenChange: (open: boolean) => void;
   request: ItemRequest | null;
   isAdmin: boolean;
+  currentUserOfficeId: number;
   activeTab: string;
   onApprove: (request: ItemRequest) => void;
   onReject: (request: ItemRequest) => void;
@@ -32,6 +33,7 @@ export function RequisitionDetailsDialog({
   onOpenChange,
   request,
   isAdmin,
+  currentUserOfficeId,
   activeTab,
   onApprove,
   onReject,
@@ -40,9 +42,12 @@ export function RequisitionDetailsDialog({
 }: RequisitionDetailsDialogProps) {
   if (!request) return null;
 
-  const showApproveRejectActions = isAdmin && request.status === 'PENDING';
-  const showFulfillAction = isAdmin && (request.status === 'APPROVED' || request.status === 'PARTIALLY_FULFILLED');
-  const showConfirmAction = (request.status === 'FULFILLED' || request.status === 'PARTIALLY_FULFILLED');
+  const isTargetOffice = request.parentOffice.id === currentUserOfficeId;
+  const isRequestingOffice = request.requestingOffice.id === currentUserOfficeId;
+
+  const showApproveRejectActions = isAdmin && isTargetOffice && request.status === 'PENDING';
+  const showFulfillAction = isAdmin && isTargetOffice && (request.status === 'APPROVED' || request.status === 'PARTIALLY_FULFILLED');
+  const showConfirmAction = isRequestingOffice && (request.status === 'FULFILLED' || request.status === 'PARTIALLY_FULFILLED');
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -78,10 +83,16 @@ export function RequisitionDetailsDialog({
                       <p className="text-xs text-muted-foreground">Requested</p>
                       <p className="text-sm">{request.requestedQuantity}</p>
                     </div>
-                    {request.approvedQuantity !== undefined && request.approvedQuantity !== null && (
+                    {request.status !== 'PENDING' && request.approvedQuantity !== undefined && request.approvedQuantity !== null && (
                       <div>
                         <p className="text-xs text-muted-foreground">Approved</p>
-                        <p className="text-sm">{request.approvedQuantity}</p>
+                        <p className="text-sm font-medium">{request.approvedQuantity}</p>
+                      </div>
+                    )}
+                    {(request.status === 'FULFILLED' || request.status === 'PARTIALLY_FULFILLED' || request.status === 'CONFIRMED') && (
+                      <div>
+                        <p className="text-xs text-muted-foreground">Fulfilled</p>
+                        <p className="text-sm font-medium text-blue-600">{request.fulfilledQuantity || 0}</p>
                       </div>
                     )}
                   </div>
@@ -146,9 +157,9 @@ export function RequisitionDetailsDialog({
                 </p>
               </div>
             </div>
-            {(request.remarks || request.status === 'REJECTED' || request.status === 'APPROVED') && (
+            {(request.remarks || request.status === 'REJECTED' || request.status === 'APPROVED' || request.status === 'FULFILLED' || request.status === 'PARTIALLY_FULFILLED' || request.status === 'CONFIRMED') && (
               <div>
-                <p className="text-sm font-medium mb-2">Admin Remarks</p>
+                <p className="text-sm font-medium mb-2">Admin Remarks / Notes</p>
                 <div className="bg-muted p-3 rounded-md min-h-[60px]">
                   <p className="text-sm text-muted-foreground italic">
                     "{request.remarks || "No remarks provided."}"
@@ -158,24 +169,57 @@ export function RequisitionDetailsDialog({
             )}
           </div>
 
-          {(request.approvedBy || request.approvedDate || request.rejectedDate) && (
-            <div className="bg-muted/50 p-3 rounded-md">
-              <p className="text-xs font-semibold uppercase text-muted-foreground mb-2">
+          {(request.status === 'CONFIRMED' && (request.confirmedBy || request.confirmedDate)) && (
+            <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
+              <p className="text-xs font-bold uppercase tracking-wider text-indigo-700 mb-3">
+                Confirmation Details
+              </p>
+              <div className="flex items-center gap-3">
+                {request.confirmedBy && (
+                  <Avatar className="h-8 w-8 ring-2 ring-white">
+                    <AvatarFallback className="text-xs bg-indigo-100 text-indigo-700">
+                      {getInitials(request.confirmedBy.name || "", request.confirmedBy.username)}
+                    </AvatarFallback>
+                  </Avatar>
+                )}
+                <div>
+                  <p className="text-sm font-medium text-indigo-900">
+                    Received and Confirmed
+                    {request.confirmedBy && ` by ${request.confirmedBy.name || request.confirmedBy.username}`}
+                  </p>
+                  <p className="text-xs text-indigo-600">
+                    {new Date(request.confirmedDate || "").toLocaleString()}
+                  </p>
+                  {request.confirmationRemarks && (
+                    <p className="text-xs mt-2 text-indigo-800 italic">"{request.confirmationRemarks}"</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {(request.status !== 'PENDING' && (request.approvedBy || request.approvedDate || request.rejectedDate)) && (
+            <div className="bg-muted/50 p-4 rounded-xl border border-border/50">
+              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">
                 {request.status === 'REJECTED' ? 'Rejection Details' : 'Approval Details'}
               </p>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 {request.approvedBy && (
-                  <Avatar className="h-5 w-5">
-                    <AvatarFallback className="text-[8px]">
+                  <Avatar className="h-8 w-8 ring-2 ring-background">
+                    <AvatarFallback className="text-xs bg-primary/10 text-primary">
                       {getInitials(request.approvedBy.name || "", request.approvedBy.username)}
                     </AvatarFallback>
                   </Avatar>
                 )}
-                <p className="text-xs text-muted-foreground">
-                  {request.status === 'REJECTED' ? 'Rejected' : 'Approved'}
-                  {request.approvedBy && ` by ${request.approvedBy.name || request.approvedBy.username}`}
-                  {' '}on {new Date(request.approvedDate || request.rejectedDate || "").toLocaleString()}
-                </p>
+                <div>
+                  <p className="text-sm font-medium">
+                    {request.status === 'REJECTED' ? 'Rejected' : 'Approved'}
+                    {request.approvedBy && ` by ${request.approvedBy.name || request.approvedBy.username}`}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {new Date(request.approvedDate || request.rejectedDate || "").toLocaleString()}
+                  </p>
+                </div>
               </div>
             </div>
           )}

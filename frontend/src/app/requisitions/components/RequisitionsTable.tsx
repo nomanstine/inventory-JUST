@@ -22,8 +22,9 @@ interface RequisitionsTableProps {
   data: ItemRequest[];
   activeTab: 'my-requests' | 'incoming' | 'approved' | 'fulfilled' | 'history';
   isLoading: boolean;
-  isAdmin: boolean;
-  onApprove: (request: ItemRequest) => void;
+   isAdmin: boolean;
+   currentUserOfficeId: number;
+   onApprove: (request: ItemRequest) => void;
   onReject: (request: ItemRequest) => void;
   onFulfill: (request: ItemRequest) => void;
   onConfirm: (request: ItemRequest) => void;
@@ -86,7 +87,8 @@ function MobileRequisitionCard({
   onReject, 
   onFulfill, 
   onConfirm,
-  onViewDetails
+  onViewDetails,
+  currentUserOfficeId
 }: { 
   request: ItemRequest;
   activeTab: 'my-requests' | 'incoming' | 'approved' | 'fulfilled' | 'history';
@@ -96,11 +98,15 @@ function MobileRequisitionCard({
   onFulfill: (request: ItemRequest) => void;
   onConfirm: (request: ItemRequest) => void;
   onViewDetails: (request: ItemRequest) => void;
+  currentUserOfficeId: number;
 }) {
-  const showApproveRejectActions = isAdmin && request.status === 'PENDING' && (activeTab === 'incoming' || activeTab === 'history');
-  const showFulfillAction = isAdmin && (request.status === 'APPROVED' || request.status === 'PARTIALLY_FULFILLED') && 
+  const isTargetOffice = request.parentOffice.id === currentUserOfficeId;
+  const isRequestingOffice = request.requestingOffice.id === currentUserOfficeId;
+
+  const showApproveRejectActions = isAdmin && isTargetOffice && request.status === 'PENDING' && (activeTab === 'incoming' || activeTab === 'history');
+  const showFulfillAction = isAdmin && isTargetOffice && (request.status === 'APPROVED' || request.status === 'PARTIALLY_FULFILLED') && 
     (activeTab === 'approved' || activeTab === 'history');
-  const showConfirmAction = (request.status === 'FULFILLED' || request.status === 'PARTIALLY_FULFILLED') && 
+  const showConfirmAction = isRequestingOffice && (request.status === 'FULFILLED' || request.status === 'PARTIALLY_FULFILLED') && 
     (activeTab === 'fulfilled' || activeTab === 'my-requests' || activeTab === 'history');
 
   return (
@@ -224,6 +230,7 @@ export function RequisitionsTable({
   activeTab,
   isLoading,
   isAdmin,
+  currentUserOfficeId,
   onApprove,
   onReject,
   onFulfill,
@@ -233,16 +240,19 @@ export function RequisitionsTable({
   const isMobile = useIsMobile();
   
   const showApproveRejectActions = (request: ItemRequest) => {
-    return isAdmin && request.status === 'PENDING' && (activeTab === 'incoming' || activeTab === 'history');
+    const isTargetOffice = request.parentOffice.id === currentUserOfficeId;
+    return isAdmin && isTargetOffice && request.status === 'PENDING' && (activeTab === 'incoming' || activeTab === 'history');
   };
 
   const showFulfillAction = (request: ItemRequest) => {
-    return isAdmin && (request.status === 'APPROVED' || request.status === 'PARTIALLY_FULFILLED') && 
+    const isTargetOffice = request.parentOffice.id === currentUserOfficeId;
+    return isAdmin && isTargetOffice && (request.status === 'APPROVED' || request.status === 'PARTIALLY_FULFILLED') && 
            (activeTab === 'approved' || activeTab === 'history');
   };
 
   const showConfirmAction = (request: ItemRequest) => {
-    return (request.status === 'FULFILLED' || request.status === 'PARTIALLY_FULFILLED') && 
+    const isRequestingOffice = request.requestingOffice.id === currentUserOfficeId;
+    return isRequestingOffice && (request.status === 'FULFILLED' || request.status === 'PARTIALLY_FULFILLED') && 
            (activeTab === 'fulfilled' || activeTab === 'my-requests' || activeTab === 'history');
   };
 
@@ -271,6 +281,7 @@ export function RequisitionsTable({
                 onFulfill={onFulfill}
                 onConfirm={onConfirm}
                 onViewDetails={onViewDetails}
+                currentUserOfficeId={currentUserOfficeId}
               />
             ))}
             <div className="text-center text-sm text-muted-foreground py-2">
@@ -365,52 +376,60 @@ export function RequisitionsTable({
                 {new Date(request.requestedDate).toLocaleDateString()}
               </TableCell>
               <TableCell onClick={(e) => e.stopPropagation()}>
-                <div className="flex gap-2">
-                  {showApproveRejectActions(request) && (
-                    <>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => onViewDetails(request)}
+                      className="text-xs"
+                    >
+                      Details
+                    </Button>
+                    {showApproveRejectActions(request) && (
+                      <>
+                        <Button 
+                          size="sm"
+                          variant="default"
+                          onClick={() => onApprove(request)}
+                          className="flex items-center gap-1"
+                        >
+                          <Check className="h-4 w-4" />
+                          Approve
+                        </Button>
+                        <Button 
+                          size="sm"
+                          variant="outline"
+                          onClick={() => onReject(request)}
+                          className="flex items-center gap-1"
+                        >
+                          <X className="h-4 w-4" />
+                          Reject
+                        </Button>
+                      </>
+                    )}
+                    {showFulfillAction(request) && (
                       <Button 
                         size="sm"
                         variant="default"
-                        onClick={() => onApprove(request)}
+                        onClick={() => onFulfill(request)}
                         className="flex items-center gap-1"
                       >
-                        <Check className="h-4 w-4" />
-                        Approve
+                        <PackageCheck className="h-4 w-4" />
+                        Fulfill
                       </Button>
+                    )}
+                    {showConfirmAction(request) && (
                       <Button 
                         size="sm"
-                        variant="outline"
-                        onClick={() => onReject(request)}
+                        variant="default"
+                        onClick={() => onConfirm(request)}
                         className="flex items-center gap-1"
                       >
-                        <X className="h-4 w-4" />
-                        Reject
+                        <ClipboardCheck className="h-4 w-4" />
+                        Confirm Receipt
                       </Button>
-                    </>
-                  )}
-                  {showFulfillAction(request) && (
-                    <Button 
-                      size="sm"
-                      variant="default"
-                      onClick={() => onFulfill(request)}
-                      className="flex items-center gap-1"
-                    >
-                      <PackageCheck className="h-4 w-4" />
-                      Fulfill
-                    </Button>
-                  )}
-                  {showConfirmAction(request) && (
-                    <Button 
-                      size="sm"
-                      variant="default"
-                      onClick={() => onConfirm(request)}
-                      className="flex items-center gap-1"
-                    >
-                      <ClipboardCheck className="h-4 w-4" />
-                      Confirm Receipt
-                    </Button>
-                  )}
-                </div>
+                    )}
+                  </div>
               </TableCell>
             </TableRow>
           ))
